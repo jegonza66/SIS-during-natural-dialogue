@@ -199,35 +199,7 @@ for sesion in sesiones:
                 predicho = mod.predict(dstims_test)
                 Predicciones[test_round] = predicho
                 
-                # Calculo psd de pred y señal
-                # fmin, fmax = 0, 40
-                # psds_test, freqs_mean = mne.time_frequency.psd_array_welch(eeg_test.transpose(), info['sfreq'], fmin, fmax)
-                # psds_pred, freqs_mean = mne.time_frequency.psd_array_welch(predicho.transpose(), info['sfreq'], fmin, fmax)
-                
-                # psds_channel_corr = np.array([np.corrcoef(psds_test[ii].ravel(), np.array(psds_pred[ii]).ravel())[0,1] for ii in range(len(psds_test))])
-                # psd_pred_correlations.append(np.mean(psds_channel_corr))
-                
-                # Ploteo PSD
-                # Plot.Plot_PSD(sesion, sujeto, test_round, situacion, Display_PSD, Save_PSD, 'Prediccion', info, predicho.transpose())           
-                # Plot.Plot_PSD(sesion, sujeto, test_round, situacion, Display_PSD, Save_PSD, 'Test', info, eeg_test.transpose())                
-                
-                # Matriz de Covarianza
-                # raw = mne.io.RawArray(predicho.transpose(), info)
-                # cov_mat = mne.compute_raw_covariance(raw)
-                # plt.ion()
-                # ax1, ax2 = cov_mat.plot(info)
-                # try: os.makedirs('gráficos/Covariance/Cov_prediccion')
-                # except: pass
-                # ax1.savefig('gráficos/Covariance/Cov_prediccion/Sesion{} - Sujeto{} - {}'.format(sesion,sujeto,situacion))
-        
-                # raw = mne.io.RawArray(eeg_test.transpose(), info)
-                # cov_mat = mne.compute_raw_covariance(raw)
-                # plt.ion()
-                # ax1, ax2 = cov_mat.plot(info)
-                # try: os.makedirs('gráficos/Covariance/Cov_test')
-                # except: pass
-                # ax1.savefig('gráficos/Covariance/Cov_test/Sesion{} - Sujeto{} - {}'.format(sesion,sujeto,situacion))
-                
+               
                 ###### Calculo Correlacion ######
                 Rcorr = np.array([np.corrcoef(eeg_test[:,ii].ravel(), np.array(predicho[:,ii]).ravel())[0,1] for ii in range(eeg_test.shape[1])])
                 mejor_canal_corr = Rcorr.argmax()
@@ -235,44 +207,7 @@ for sesion in sesiones:
                 Correl_prom = np.mean(Rcorr)
                 ###### Guardo las correlaciones de esta ronda ######
                 Corr_buenas_ronda_canal[test_round] = Rcorr
-                
-                # plt.ion()
-                
-                # fig, axs = plt.subplots(3,1)
-                # fig.suptitle('Pearson Correlation = {}'.format(Rcorr[0]))
-                
-                # axs[0].plot(eeg_test[:,0], label = 'Signal')
-                # axs[0].plot(predicho[:,0], label = 'Prediction')
-                # axs[0].set_title('Original Signals')
-                # axs[0].set_xlabel('Samples')
-                # axs[0].set_ylabel('Amplitude')
-                # axs[0].grid()
-                # axs[0].legend()
-                
-                
-                # norm = Processing.normalizar(axis = 0, porcent = 5)
-                # norm.fit_normalize_percent(eeg_test)
-                # norm.fit_normalize_percent(predicho)
 
-                # axs[1].set_title('Scaled signals')
-                # axs[1].plot(eeg_test[:,0], label = 'signal')
-                # axs[1].plot(predicho[:,0], label = 'prediction')
-                # axs[1].set_xlabel('Samples')
-                # axs[1].set_ylabel('Amplitude')
-                # axs[1].grid()
-                # axs[1].legend()
-                
-                # axs[2].plot(eeg_test[:,0], label = 'signal')
-                # axs[2].plot(predicho[:,0], label = 'prediction')
-                # axs[2].set_title('Zoom in')
-                # axs[2].set_xlabel('Samples')
-                # axs[2].set_ylabel('Amplitude')
-                # axs[2].set_xlim([1900,2700])
-                # axs[2].grid()
-                # axs[2].legend()
-
-                # fig.tight_layout()
-                # break
                 
                 ###### Calculo Error ######
                 Rmse = np.array(np.sqrt(np.power((predicho - eeg_test),2).mean(0)))
