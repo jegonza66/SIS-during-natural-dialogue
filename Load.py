@@ -304,40 +304,7 @@ class Sesion:
         Sesion = {'Sujeto_1': Sujeto_1, 'Sujeto_2': Sujeto_2}
         
         return  Sesion
-    
-# def load_files_process_data(sesion, sr, tmin, tmax, Band, Save_procesed_data, procesed_data_path, situacion, valores_faltantes_pitch, Calculate_pitch, Subsamplear_promediando):
-#     ###### Armo estructura de datos de sujeto ######
-    
-#     eeg_sujeto_1, envelope_para_sujeto_1, pitch_para_sujeto_1, eeg_sujeto_2, envelope_para_sujeto_2, pitch_para_sujeto_2, info = Sesion(sesion, Band, sr, tmin, tmax, valores_faltantes_pitch, Subsamplear_promediando, situacion, Calculate_pitch).load_from_raw()
-    
-#     if Save_procesed_data:
-#         if Subsamplear_promediando: EEG_path = procesed_data_path + 'EEG_promediado/Sit_{}_Band_{}(tmin{}_tmax{})/'.format(situacion, Band, tmin,tmax)
-#         else: EEG_path = procesed_data_path + 'EEG/Sit_{}_Band_{}(tmin{}_tmax{})/'.format(situacion, Band, tmin,tmax)
-#         Envelope_path = procesed_data_path + 'Envelope/Sit_{}(tmin{}_tmax{})/'.format(situacion,tmin,tmax)
-#         Pitch_path = procesed_data_path + 'Pitch/Sit_{}_Faltantes_0(tmin{}_tmax{})/'.format(situacion, tmin,tmax)
-#         for path in [EEG_path, Envelope_path, Pitch_path]:
-#             try: os.makedirs(path)
-#             except: pass
-        
-#         f = open(EEG_path + 'Sesion{}.pkl'.format(sesion), 'wb')
-#         pickle.dump([eeg_sujeto_1, eeg_sujeto_2], f)
-#         f.close()
-        
-#         f = open(Envelope_path + 'Sesion{}.pkl'.format(sesion), 'wb')
-#         pickle.dump([envelope_para_sujeto_1, envelope_para_sujeto_2], f)
-#         f.close()
-        
-#         f = open(Pitch_path + 'Sesion{}.pkl'.format(sesion), 'wb')
-#         pickle.dump([pitch_para_sujeto_1, pitch_para_sujeto_2], f)
-#         f.close()
-        
-#         f = open(procesed_data_path + 'EEG/info.pkl', 'wb')
-#         pickle.dump(info, f)
-#         f.close()
-
-#     return eeg_sujeto_1, envelope_para_sujeto_1, pitch_para_sujeto_1, eeg_sujeto_2, envelope_para_sujeto_2, pitch_para_sujeto_2, info
-
-
+   
 def rename_paths(Estandarizar, Normalizar, stim, valores_faltantes_pitch, Band, tmin, tmax, Causal_filter, *paths):  
     returns = []
     for path in paths:
