@@ -1,4 +1,7 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 17055a93ec525c0153e6b8105814ecb64d38a89e
 # -*- coding: utf-8 -*-
 """
 Created on Wed Jul  7 01:28:34 2021
@@ -289,6 +292,7 @@ def estandarizacion(eeg, dstims, Estandarizar, axis = 0):
 #         dstims_train_val = estandarizar(dstims_train_val, axis)
 #         dstims_test = estandarizar(dstims_test, axis)
 
+<<<<<<< HEAD
 =======
 # -*- coding: utf-8 -*-
 """
@@ -581,3 +585,5 @@ def estandarizacion(eeg, dstims, Estandarizar, axis = 0):
 #         dstims_test = estandarizar(dstims_test, axis)
 
 >>>>>>> 84f0a87c261eaf6f64ecdfe637ee7050c0c0dc44
+=======
+>>>>>>> 17055a93ec525c0153e6b8105814ecb64d38a89e

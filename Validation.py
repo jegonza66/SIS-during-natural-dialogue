@@ -1,4 +1,7 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 17055a93ec525c0153e6b8105814ecb64d38a89e
 # -*- coding: utf-8 -*-
 """
 Created on Sat Jul 10 03:29:31 2021
@@ -93,6 +96,7 @@ def buscar_alpha(tStim, tResp, rStim, rResp, Plot_alphas, Prints, min_busqueda, 
         else: Plot.plot_alphas(alphas, correlaciones, best_alpha, lista_Rmse, linea = 2, fino = False)
         
     return best_alpha, pesos, intercepts, lista_Rmse
+<<<<<<< HEAD
 =======
 # -*- coding: utf-8 -*-
 """
@@ -189,3 +193,5 @@ def buscar_alpha(tStim, tResp, rStim, rResp, Plot_alphas, Prints, min_busqueda, 
         
     return best_alpha, pesos, intercepts, lista_Rmse
 >>>>>>> 84f0a87c261eaf6f64ecdfe637ee7050c0c0dc44
+=======
+>>>>>>> 17055a93ec525c0153e6b8105814ecb64d38a89e

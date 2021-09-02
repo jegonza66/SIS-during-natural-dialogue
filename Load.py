@@ -1,4 +1,7 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 17055a93ec525c0153e6b8105814ecb64d38a89e
 # -*- coding: utf-8 -*-
 """
 Created on Wed Jul  7 01:30:36 2021
@@ -376,6 +379,7 @@ def rename_paths(Estandarizar, Normalizar, stim, valores_faltantes_pitch, Band, 
         if Causal_filter: path += '_EEG_Causal_Band_{}(tmin{}_tmax{})/'.format(Band, tmin, tmax)
         else: path += '_EEG_Band_{}(tmin{}_tmax{})/'.format(Band, tmin, tmax)
         returns.append(path) 
+<<<<<<< HEAD
 =======
 # -*- coding: utf-8 -*-
 """
@@ -755,4 +759,6 @@ def rename_paths(Estandarizar, Normalizar, stim, valores_faltantes_pitch, Band, 
         else: path += '_EEG_Band_{}(tmin{}_tmax{})/'.format(Band, tmin, tmax)
         returns.append(path) 
 >>>>>>> 84f0a87c261eaf6f64ecdfe637ee7050c0c0dc44
+=======
+>>>>>>> 17055a93ec525c0153e6b8105814ecb64d38a89e
     return tuple(returns)

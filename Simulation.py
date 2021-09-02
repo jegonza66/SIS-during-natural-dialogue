@@ -1,4 +1,7 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 17055a93ec525c0153e6b8105814ecb64d38a89e
 # -*- coding: utf-8 -*-
 """
 Created on Sat Jul 10 03:36:32 2021
@@ -178,6 +181,7 @@ def simular_iteraciones_mtrf(iteraciones, sesion, sujeto, test_round, sr, info, 
         except: pass                      
         f = open(Path_it + 'Corr_Rmse_fake_ronda_it_canal_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto), 'wb')
         pickle.dump([Correlaciones_fake, Errores_fake], f)
+<<<<<<< HEAD
 =======
 # -*- coding: utf-8 -*-
 """
@@ -359,4 +363,6 @@ def simular_iteraciones_mtrf(iteraciones, sesion, sujeto, test_round, sr, info, 
         f = open(Path_it + 'Corr_Rmse_fake_ronda_it_canal_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto), 'wb')
         pickle.dump([Correlaciones_fake, Errores_fake], f)
 >>>>>>> 84f0a87c261eaf6f64ecdfe637ee7050c0c0dc44
+=======
+>>>>>>> 17055a93ec525c0153e6b8105814ecb64d38a89e
         f.close()

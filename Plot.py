@@ -1,4 +1,7 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 17055a93ec525c0153e6b8105814ecb64d38a89e
 # -*- coding: utf-8 -*-
 """
 Created on Wed Jul  7 01:38:20 2021
@@ -765,6 +768,7 @@ def PSD_boxplot(psd_pred_correlations, psd_rand_correlations, Display_PSD_boxplo
     
     
         
+<<<<<<< HEAD
 =======
 # -*- coding: utf-8 -*-
 """
@@ -1533,3 +1537,5 @@ def PSD_boxplot(psd_pred_correlations, psd_rand_correlations, Display_PSD_boxplo
     
         
 >>>>>>> 84f0a87c261eaf6f64ecdfe637ee7050c0c0dc44
+=======
+>>>>>>> 17055a93ec525c0153e6b8105814ecb64d38a89e

@@ -1,4 +1,7 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 17055a93ec525c0153e6b8105814ecb64d38a89e
 # -*- coding: utf-8 -*-
 """
 Created on Fri Apr 23 14:38:57 2021
@@ -443,6 +446,7 @@ if Save_Final_Correlation:
     pickle.dump(Correlaciones_totales_sujetos, f)
     f.close()
 
+<<<<<<< HEAD
 =======
 # -*- coding: utf-8 -*-
 """
@@ -889,3 +893,5 @@ if Save_Final_Correlation:
     f.close()
 
 >>>>>>> 84f0a87c261eaf6f64ecdfe637ee7050c0c0dc44
+=======
+>>>>>>> 17055a93ec525c0153e6b8105814ecb64d38a89e
