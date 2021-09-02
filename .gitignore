@@ -10,6 +10,7 @@ plot_receptive_field_mtrf_modified
 Plot_señal_envolvente
 PSD - Cov - Pitch
 Spectrogram
+.gitignore
 
 .ipynb_checkpoints/
 .pylint.d/
