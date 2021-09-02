@@ -31,7 +31,7 @@ Buscar_alpha = False
 if not Buscar_alpha: alpha_forzado = 1000
 Plot_alphas = False
 
-Fit_Model = True # If false it loads the correlations and weights of every channel for every test round
+Fit_Model = True # If false it loads the correlations and weights of every channel for every test round from saved data
 Save_Pesos_Predicciones_Corr_Rmse_buenas = False
 
 Simulate_random_data = False
@@ -41,35 +41,38 @@ Save_iterations = False
 
 Prints_alphas = False
 
+Save_Final_Correlation = False
+
 # FIGURAS IND
 Display_Ind = False
 if Display_Ind: Display_figures_beta, Display_figures_shadows, Display_cabezas_canales, Display_PSD = True, True, True, True
 else: Display_figures_beta, Display_figures_shadows, Display_cabezas_canales, Display_PSD = False, False, False, False
-Save_Ind = False
+Save_Ind = True
 if Save_Ind: Save_grafico_betas, Save_grafico_shadows, Save_cabezas_canales, Save_PSD = True, True, True, True
 else: Save_grafico_betas, Save_grafico_shadows, Save_cabezas_canales, Save_PSD = False, False, False, False
   
 # FIGURAS TODOS
-Display_Total = True
+Display_Total = False
 if Display_Total: Display_correlacion_promedio, Display_canales_repetidos, Display_figure_instantes, Display_correlation_matrix, Display_channel_correlation_topo, Display_PSD_boxplot = True, True, True, True, True, True
 else: Display_correlacion_promedio, Display_canales_repetidos, Display_figure_instantes, Display_correlation_matrix, Display_channel_correlation_topo, Display_PSD_boxplot = False, False, False,  False,  False,  False
-Save_Total = False
+Save_Total = True
 if Save_Total: Save_correlacion_promedio, Save_canales_repetidos, Save_figure_instantes, Save_correlation_matrix, Save_channel_correlation_topo, Save_PSD_boxplot = True, True, True, True, True, True
 else: Save_correlacion_promedio, Save_canales_repetidos, Save_figure_instantes, Save_correlation_matrix, Save_channel_correlation_topo, Save_PSD_boxplot = False, False, False, False,  False,  False
 
 ###### DEFINO PARAMETROS ######
-stim = 'Envelope'
+stim = 'Envelope_Pitch_Pitch_der'
+Stims_Order = ['Envelope','Pitch', 'Pitch_der', 'Spectrogram', 'Phonemes']
 ###### Defino banda de eeg ######
-Band = 'All'
+Band = 'Theta'
 ###### Defino situacion de interes ######
 situacion = 'Escucha'
 ###### Defino estandarizacion
-Normalizar = 'All'
-Estandarizar = None
+Normalizar = 'Stims'
+Estandarizar = 'EEG'
 # Defino tiempos
 sr = 128
 n_canales = 128
-tmin, tmax = -0.53, -0.003
+tmin, tmax = -0.53, 0.3
 delays = - np.arange(np.floor(tmin*sr), np.ceil(tmax*sr), dtype=int)
 times = np.linspace(delays[0]*np.sign(tmin)*1/sr, np.abs(delays[-1])*np.sign(tmax)*1/sr, len(delays))
 
@@ -100,15 +103,15 @@ for sesion in sesiones:
     Sesion_obj = Load.Sesion(sesion, Band, sr, tmin, tmax, valores_faltantes_pitch, Causal_filter, situacion, Calculate_pitch, procesed_data_path, Save_procesed_data)
     if Load_procesed_data:
         # Intento cargar preprocesados
-        try: 
+        try:
             Sesion = Sesion_obj.load_procesed()
             Sujeto_1, Sujeto_2 = Sesion['Sujeto_1'], Sesion['Sujeto_2']
 
-            eeg_sujeto_1, envelope_para_sujeto_1, pitch_para_sujeto_1 = Sujeto_1['EEG'], Sujeto_2['Envelope'], Sujeto_2['Pitch']
-            eeg_sujeto_2, envelope_para_sujeto_2, pitch_para_sujeto_2 = Sujeto_2['EEG'], Sujeto_1['Envelope'], Sujeto_1['Pitch']
+            eeg_sujeto_1, envelope_para_sujeto_1, pitch_para_sujeto_1, pitch_der_para_sujeto_1 = Sujeto_1['EEG'], Sujeto_2['Envelope'], Sujeto_2['Pitch'], Sujeto_2['Pitch_der']
+            eeg_sujeto_2, envelope_para_sujeto_2, pitch_para_sujeto_2, pitch_der_para_sujeto_2 = Sujeto_2['EEG'], Sujeto_1['Envelope'], Sujeto_1['Pitch'], Sujeto_1['Pitch_der']
             info = Sujeto_1['info']       
         # Si falla cargo de raw y guardo en Auto_save    
-        except:  
+        except:
             if not sujeto_total: procesed_data_path += 'Auto_save/'
             Save_procesed_data = True
             Sesion_obj = Load.Sesion(sesion, Band, sr, tmin, tmax, valores_faltantes_pitch, Causal_filter, situacion, Calculate_pitch, procesed_data_path, Save_procesed_data)
@@ -116,8 +119,8 @@ for sesion in sesiones:
             Sesion = Sesion_obj.load_from_raw() 
             Sujeto_1, Sujeto_2  = Sesion['Sujeto_1'], Sesion['Sujeto_2']
             
-            eeg_sujeto_1, envelope_para_sujeto_1, pitch_para_sujeto_1 = Sujeto_1['EEG'], Sujeto_2['Envelope'], Sujeto_2['Pitch']
-            eeg_sujeto_2, envelope_para_sujeto_2, pitch_para_sujeto_2 = Sujeto_2['EEG'], Sujeto_1['Envelope'], Sujeto_1['Pitch']
+            eeg_sujeto_1, envelope_para_sujeto_1, pitch_para_sujeto_1, pitch_der_para_sujeto_1 = Sujeto_1['EEG'], Sujeto_2['Envelope'], Sujeto_2['Pitch'], Sujeto_2['Pitch_der']
+            eeg_sujeto_2, envelope_para_sujeto_2, pitch_para_sujeto_2, pitch_der_para_sujeto_2 = Sujeto_2['EEG'], Sujeto_1['Envelope'], Sujeto_1['Pitch'], Sujeto_1['Pitch_der']
             info = Sujeto_1['info']
     # Cargo directo de raw
     else: 
@@ -125,18 +128,19 @@ for sesion in sesiones:
         
         Sujeto_1, Sujeto_2 = Sesion['Sujeto_1'], Sesion['Sujeto_2']
         
-        eeg_sujeto_1, envelope_para_sujeto_1, pitch_para_sujeto_1 = Sujeto_1['EEG'], Sujeto_2['Envelope'], Sujeto_2['Pitch']
-        eeg_sujeto_2, envelope_para_sujeto_2, pitch_para_sujeto_2 = Sujeto_2['EEG'], Sujeto_1['Envelope'], Sujeto_1['Pitch']
+        eeg_sujeto_1, envelope_para_sujeto_1, pitch_para_sujeto_1, pitch_der_para_sujeto_1 = Sujeto_1['EEG'], Sujeto_2['Envelope'], Sujeto_2['Pitch'], Sujeto_2['Pitch_der']
+        eeg_sujeto_2, envelope_para_sujeto_2, pitch_para_sujeto_2, pitch_der_para_sujeto_2 = Sujeto_2['EEG'], Sujeto_1['Envelope'], Sujeto_1['Pitch'], Sujeto_1['Pitch_der']
         info = Sujeto_1['info']
     
-    if stim == 'Envelope': dstims_para_sujeto_1, dstims_para_sujeto_2 = envelope_para_sujeto_1, envelope_para_sujeto_2
-    elif stim == 'Pitch': 
-        dstims_para_sujeto_1, dstims_para_sujeto_2 = pitch_para_sujeto_1[pd.DataFrame(pitch_para_sujeto_1).notna().all(1)], pitch_para_sujeto_2[pd.DataFrame(pitch_para_sujeto_2).notna().all(1)]
-        eeg_sujeto_1, eeg_sujeto_2 = eeg_sujeto_1[pd.DataFrame(pitch_para_sujeto_1).notna().all(1)], eeg_sujeto_2[pd.DataFrame(pitch_para_sujeto_2).notna().all(1)]
-    elif stim == 'Full': dstims_para_sujeto_1, dstims_para_sujeto_2 = np.hstack(envelope_para_sujeto_1,pitch_para_sujeto_1), np.hstack(envelope_para_sujeto_2,pitch_para_sujeto_2)
+    if stim == 'Envelope': dstims_para_sujeto_1, dstims_para_sujeto_2 = (envelope_para_sujeto_1,), (envelope_para_sujeto_2,)
+    elif stim == 'Pitch': dstims_para_sujeto_1, dstims_para_sujeto_2 = (pitch_para_sujeto_1,), (pitch_para_sujeto_2,)
+    elif stim == 'Pitch_der': dstims_para_sujeto_1, dstims_para_sujeto_2 = (pitch_der_para_sujeto_1,), (pitch_der_para_sujeto_2,)
+    elif stim == 'Envelope_Pitch': dstims_para_sujeto_1, dstims_para_sujeto_2 = (envelope_para_sujeto_1,pitch_para_sujeto_1), (envelope_para_sujeto_2,pitch_para_sujeto_2)
+    elif stim == 'Envelope_Pitch_Pitch_der': dstims_para_sujeto_1, dstims_para_sujeto_2 = (envelope_para_sujeto_1,pitch_para_sujeto_1, pitch_der_para_sujeto_1), (envelope_para_sujeto_2,pitch_para_sujeto_2,pitch_der_para_sujeto_2)
     else:
-        print('Invalid sitmulus')
+        print('Invalid sitmulus: {}'.format(stim))
         break
+    Cant_Estimulos = len(dstims_para_sujeto_1)
     
     for sujeto, eeg, dstims in zip((1,2), (eeg_sujeto_1, eeg_sujeto_2), (dstims_para_sujeto_1, dstims_para_sujeto_2)):
     # for sujeto, eeg, dstims in zip([1], [eeg_sujeto_1], [dstims_para_sujeto_1]):    
@@ -145,9 +149,9 @@ for sesion in sesiones:
         Predicciones = {}
         n_splits = 5
         iteraciones = 3000
-    
+          
         ###### Defino variables donde voy a guardar mil cosas ######
-        Pesos_ronda_canales = np.zeros((n_splits, n_canales, len(delays)))
+        Pesos_ronda_canales = np.zeros((n_splits, n_canales, len(delays)*Cant_Estimulos))
         
         Prob_Corr_ronda_canales = np.ones((n_splits, n_canales))
         Prob_Rmse_ronda_canales = np.ones((n_splits, n_canales))
@@ -157,6 +161,18 @@ for sesion in sesiones:
         
         Corr_buenas_ronda_canal = np.zeros((n_splits, n_canales))
         Rmse_buenos_ronda_canal = np.zeros((n_splits, n_canales))
+        
+        if Normalizar: 
+            axis = 0
+            porcent = 5
+            Processing.normalizacion(eeg, dstims,  Normalizar, axis, porcent)
+        
+        if Estandarizar:
+            axis = 0
+            Processing.estandarizacion(eeg, dstims, Estandarizar, axis)
+        
+        # Desarmo las tuplas de estimulos en matrices de n*len(times) x n_timepoints
+        dstims = np.hstack([dstims[i] for i in range(len(dstims))])
         
         ###### Empiezo el KFold de test ######
         kf_test = KFold(n_splits, shuffle = False)
@@ -179,15 +195,6 @@ for sesion in sesiones:
 
             else: best_alpha = alpha_forzado
              
-            if Normalizar: 
-                axis = 0
-                porcent = 5
-                Processing.normalizacion(eeg_train_val, eeg_test, dstims_train_val, dstims_test, Normalizar, axis, porcent)
-                          
-            elif Estandarizar:
-                axis = 0
-                Processing.estandarizacion(eeg_train_val, eeg_test, dstims_train_val, dstims_test, Estandarizar, axis)
-                
             if Fit_Model:
                 ###### Entreno el modelo con el mejor alpha ######
                 mod = linear_model.Ridge(alpha = best_alpha, random_state=123)
@@ -199,7 +206,35 @@ for sesion in sesiones:
                 predicho = mod.predict(dstims_test)
                 Predicciones[test_round] = predicho
                 
-               
+                # Calculo psd de pred y señal
+                # fmin, fmax = 0, 40
+                # psds_test, freqs_mean = mne.time_frequency.psd_array_welch(eeg_test.transpose(), info['sfreq'], fmin, fmax)
+                # psds_pred, freqs_mean = mne.time_frequency.psd_array_welch(predicho.transpose(), info['sfreq'], fmin, fmax)
+                
+                # psds_channel_corr = np.array([np.corrcoef(psds_test[ii].ravel(), np.array(psds_pred[ii]).ravel())[0,1] for ii in range(len(psds_test))])
+                # psd_pred_correlations.append(np.mean(psds_channel_corr))
+                
+                # Ploteo PSD
+                # Plot.Plot_PSD(sesion, sujeto, test_round, situacion, Display_PSD, Save_PSD, 'Prediccion', info, predicho.transpose())           
+                # Plot.Plot_PSD(sesion, sujeto, test_round, situacion, Display_PSD, Save_PSD, 'Test', info, eeg_test.transpose())                
+                
+                # Matriz de Covarianza
+                # raw = mne.io.RawArray(predicho.transpose(), info)
+                # cov_mat = mne.compute_raw_covariance(raw)
+                # plt.ion()
+                # ax1, ax2 = cov_mat.plot(info)
+                # try: os.makedirs('gráficos/Covariance/Cov_prediccion')
+                # except: pass
+                # ax1.savefig('gráficos/Covariance/Cov_prediccion/Sesion{} - Sujeto{} - {}'.format(sesion,sujeto,situacion))
+        
+                # raw = mne.io.RawArray(eeg_test.transpose(), info)
+                # cov_mat = mne.compute_raw_covariance(raw)
+                # plt.ion()
+                # ax1, ax2 = cov_mat.plot(info)
+                # try: os.makedirs('gráficos/Covariance/Cov_test')
+                # except: pass
+                # ax1.savefig('gráficos/Covariance/Cov_test/Sesion{} - Sujeto{} - {}'.format(sesion,sujeto,situacion))
+                
                 ###### Calculo Correlacion ######
                 Rcorr = np.array([np.corrcoef(eeg_test[:,ii].ravel(), np.array(predicho[:,ii]).ravel())[0,1] for ii in range(eeg_test.shape[1])])
                 mejor_canal_corr = Rcorr.argmax()
@@ -207,7 +242,44 @@ for sesion in sesiones:
                 Correl_prom = np.mean(Rcorr)
                 ###### Guardo las correlaciones de esta ronda ######
                 Corr_buenas_ronda_canal[test_round] = Rcorr
+                
+                # plt.ion()
+                
+                # fig, axs = plt.subplots(3,1)
+                # fig.suptitle('Pearson Correlation = {}'.format(Rcorr[0]))
+                
+                # axs[0].plot(eeg_test[:,0], label = 'Signal')
+                # axs[0].plot(predicho[:,0], label = 'Prediction')
+                # axs[0].set_title('Original Signals')
+                # axs[0].set_xlabel('Samples')
+                # axs[0].set_ylabel('Amplitude')
+                # axs[0].grid()
+                # axs[0].legend()
+                
+                
+                # norm = Processing.normalizar(axis = 0, porcent = 5)
+                # norm.fit_normalize_percent(eeg_test)
+                # norm.fit_normalize_percent(predicho)
 
+                # axs[1].set_title('Scaled signals')
+                # axs[1].plot(eeg_test[:,0], label = 'signal')
+                # axs[1].plot(predicho[:,0], label = 'prediction')
+                # axs[1].set_xlabel('Samples')
+                # axs[1].set_ylabel('Amplitude')
+                # axs[1].grid()
+                # axs[1].legend()
+                
+                # axs[2].plot(eeg_test[:,0], label = 'signal')
+                # axs[2].plot(predicho[:,0], label = 'prediction')
+                # axs[2].set_title('Zoom in')
+                # axs[2].set_xlabel('Samples')
+                # axs[2].set_ylabel('Amplitude')
+                # axs[2].set_xlim([1900,2700])
+                # axs[2].grid()
+                # axs[2].legend()
+
+                # fig.tight_layout()
+                # break
                 
                 ###### Calculo Error ######
                 Rmse = np.array(np.sqrt(np.power((predicho - eeg_test),2).mean(0)))
@@ -303,18 +375,23 @@ for sesion in sesiones:
         Plot.plot_cabezas_canales(info.ch_names, info, sr, sesion, sujeto, Canales_sobrevivientes_rmse, Rmse_promedio, Display_cabezas_canales, n_canales, 'Rmse', Save_cabezas_canales, Run_graficos_path)
         
         ###### Grafico Pesos, Corr, Rmse ######
-        Plot.plot_grafico_pesos_todos(Display_figures_beta, sesion, sujeto, best_alpha, Pesos_promedio, 
-                                Canales_sobrevivientes_corr, info, times, sr, 
-                                Corr_promedio_abs, Rmse_promedio, Canales_sobrevivientes_rmse, 
-                                Save_grafico_betas, Run_graficos_path, 
-                                Corr_buenas_ronda_canal, Rmse_buenos_ronda_canal,
-                                Errores_fake, Correlaciones_fake)
+        # Plot.plot_grafico_pesos_shadows(Display_figures_beta, sesion, sujeto, best_alpha, Pesos_promedio, 
+        #                         Canales_sobrevivientes_corr, info, times, sr, 
+        #                         Corr_promedio_abs, Rmse_promedio, Canales_sobrevivientes_rmse, 
+        #                         Save_grafico_betas, Run_graficos_path, 
+        #                         Corr_buenas_ronda_canal, Rmse_buenos_ronda_canal,
+        #                         Errores_fake, Correlaciones_fake)
+        
+        ###### Grafico Pesos ######
+        Plot.plot_grafico_pesos(Display_figures_beta, sesion, sujeto, best_alpha, Pesos_promedio, 
+                                info, times, sr, Corr_promedio_abs, Rmse_promedio, Save_grafico_betas,
+                                Run_graficos_path, Cant_Estimulos, Stims_Order)
          
         ###### Grafico Shadows ######
-        # Plot.plot_grafico_shadows(channel_names, Display_figures_shadows, sesion, sujeto, best_alpha,
-        #                           Canales_sobrevivientes_corr, info, sr,
-        #                           Corr_promedio_abs, Save_grafico_shadows, Run_graficos_path, 
-        #                           Corr_buenas_ronda_canal, Correlaciones_fake)
+        Plot.plot_grafico_shadows(Display_figures_shadows, sesion, sujeto, best_alpha,
+                                  Canales_sobrevivientes_corr, info, sr,
+                                  Corr_promedio_abs, Save_grafico_shadows, Run_graficos_path, 
+                                  Corr_buenas_ronda_canal, Correlaciones_fake)
         
         # Guardo pesos promediados entre todos los canales (buenos) del sujeto y lo adjunto a lista para correlacionar entre sujetos
         Pesos_totales_sujetos_significativos.append(Pesos_promedio[Canales_sobrevivientes_corr].mean(0))
@@ -348,7 +425,7 @@ Plot.Cabezas_corr_promedio(Correlaciones_totales_sujetos, info, Display_correlac
 Plot.Cabezas_canales_rep(Canales_repetidos_sujetos, info, Display_canales_repetidos, Save_canales_repetidos, Run_graficos_path)    
 
 ###### Instantes de interés ######
-curva_pesos_totales = Plot.Plot_instantes_interes(Pesos_totales_sujetos_todos_canales, info, Band, times, sr, delays, Display_figure_instantes, Save_figure_instantes, Run_graficos_path)
+curva_pesos_totales = Plot.Plot_instantes_interes(Pesos_totales_sujetos_todos_canales, info, Band, times, sr, delays, Display_figure_instantes, Save_figure_instantes, Run_graficos_path, Cant_Estimulos, Stims_Order, stim)
 
 # Matriz de Correlacion
 Plot. Matriz_corr_channel_wise(Pesos_totales_sujetos_todos_canales, Display_correlation_matrix, Save_correlation_matrix, Run_graficos_path)
@@ -358,3 +435,10 @@ Plot.Channel_wise_correlation_topomap(Pesos_totales_sujetos_todos_canales, info,
 
 # PSD Boxplot
 Plot.PSD_boxplot(psd_pred_correlations, psd_rand_correlations, Display_PSD_boxplot, Save_PSD_boxplot, Run_graficos_path)
+
+
+if Save_Final_Correlation:
+    f = open('saves/Ridge/Final_Correlation/{}_EEG_{}(tmin{}_tmax{}).pkl'.format(stim,Band, tmin,tmax), 'wb')
+    pickle.dump(Correlaciones_totales_sujetos, f)
+    f.close()
+

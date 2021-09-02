@@ -78,6 +78,21 @@ def labeling(s,trial,canal_hablante, sr):
     
     return hablantes
 
+def butter_filter(data, frecuencias, sampling_freq, btype, order, axis, ftype):
+    
+    if btype =='lowpass' or btype =='highpass':
+        frecuencia = frecuencias/(sampling_freq/2) 
+        b, a = signal.butter(order, frecuencia, btype = btype)
+    elif btype == 'bandpass':
+        frecuencias = [frecuencia/(sampling_freq/2) for frecuencia in frecuencias]
+        b, a = signal.butter(order, frecuencias, btype = btype)
+    
+    if ftype == 'Causal':
+        y = signal.lfilter(b, a, data, axis = axis)
+    elif ftype == 'NonCausal':
+        y = signal.filtfilt(b, a, data, axis = axis, padlen = None)
+    return y
+
 def butter_bandpass_filter(data, frecuencia, sampling_freq, order, axis):
     frecuencia /= (sampling_freq/2) 
     b, a = signal.butter(order, frecuencia, btype='lowpass')
@@ -125,8 +140,31 @@ def igualar_largos(*args):
     
     return tuple(returns)
  
+
+def preproc(momentos_escucha, delays, situacion, *args):
+
+    momentos_escucha_matriz = matriz_shifteada(momentos_escucha, delays).astype(float)
+
+    if situacion == 'Todo':
+        return args
     
-def preproc(eeg, envelope, pitch, momentos_escucha, delays, situacion):
+    elif situacion == 'Silencio': situacion = 0    
+    elif situacion == 'Escucha': situacion = 1
+    elif situacion == 'Habla': situacion = 2
+    elif situacion == 'Ambos': situacion = 3
+    
+    momentos_escucha_matriz[momentos_escucha_matriz == situacion] = float("nan")
+    
+    keep_indexes = pd.isnull(momentos_escucha_matriz).all(1).nonzero()[0]
+    
+    returns = []
+    for var in args:
+        var = var[keep_indexes,:]
+        returns.append(var)
+
+    return tuple(returns)
+    
+def preproc_viejo(eeg, envelope, pitch, pitch_der, momentos_escucha, delays, situacion):
 
     momentos_escucha_matriz = matriz_shifteada(momentos_escucha, delays).astype(float)
 
@@ -146,6 +184,17 @@ def preproc(eeg, envelope, pitch, momentos_escucha, delays, situacion):
     pitch = pitch[keep_indexes,:]
 
     return eeg, envelope, pitch
+
+
+class estandarizar():
+
+    def __init__(self, axis = 0):
+        self.axis = axis
+        
+    def estandarizar_data(self, data):
+        data -= np.mean(data, axis = self.axis)
+        data /= np.std(data, axis = self.axis)
+
 
 class normalizar():
     
@@ -174,36 +223,68 @@ class normalizar():
         matrix -= np.min(matrix, axis = self.axis)   
         matrix /= np.max(matrix, axis = self.axis) 
 
-def estandarizar(data, axis):
-    data = (data - data.mean(axis)) / data.std(axis)
-    return data
 
-def normalizacion(eeg_train_val, eeg_test, dstims_train_val, dstims_test, Normalizar, axis = 0, porcent = 5):
-    
+def normalizacion(eeg, dstims, Normalizar, axis = 0, porcent = 5):   
     norm = normalizar(axis, porcent)
-    if Normalizar == 'EEG':    
-        norm.fit_normalize_percent(eeg_train_val)
-        norm.fit_normalize_percent(eeg_test)
+    if Normalizar == 'EEG':
+        norm.fit_normalize_percent(eeg)
     elif Normalizar == 'Stims':
-        norm.normalize_stims(dstims_train_val)
-        norm.normalize_stims(dstims_test)
-    elif Normalizar == 'All':   
-        norm.fit_normalize_percent(eeg_train_val)
-        norm.fit_normalize_percent(eeg_test)
-        norm.normalize_stims(dstims_train_val)
-        norm.normalize_stims(dstims_test)
+        for stim in list(dstims):
+            norm.normalize_stims(stim)
+    elif Normalizar == 'All':
+        norm.fit_normalize_percent(eeg)
+        for stim in list(dstims):
+            norm.normalize_stims(stim)
 
-def estandarizacion(eeg_train_val, eeg_test, dstims_train_val, dstims_test, Estandarizar, axis = 0):        
-    
+def estandarizacion(eeg, dstims, Estandarizar, axis = 0):          
+    estandar = estandarizar(axis)
     if Estandarizar == 'EEG':
-       eeg_train_val = estandarizar(eeg_train_val, axis)
-       eeg_test = estandarizar(eeg_test, axis)         
+        estandar.estandarizar_data(eeg)  
     elif Estandarizar == 'Stims':
-        dstims_train_val = estandarizar(dstims_train_val, axis)
-        dstims_test = estandarizar(dstims_test, axis)   
+        for stim in list(dstims):
+            estandar.estandarizar_data(stim)   
     elif Estandarizar == 'All':
-        eeg_train_val = estandarizar(eeg_train_val, axis)
-        eeg_test = estandarizar(eeg_test, axis)
-        dstims_train_val = estandarizar(dstims_train_val, axis)
-        dstims_test = estandarizar(dstims_test, axis)
+        estandar.estandarizar_data(eeg)
+        for stim in list(dstims):
+            estandar.estandarizar_data(stim)
+
+
+# def normalizar_stims(dstims, axis):
+#     returns = []
+#     for stim in [dstims]:
+#         stim -= np.min(stim, axis = axis) 
+#         stim /= np.max(stim, axis = axis)
+#         returns.append(stim)   
+#     dstims = np.hstack([returns[i] for i in range(len(returns))])       
+#     return dstims
+
+# def normalizacion(eeg_train_val, eeg_test, dstims_train_val, dstims_test, Normalizar, axis = 0, porcent = 5):
+    
+#     norm = normalizar(axis, porcent)
+#     if Normalizar == 'EEG':    
+#         norm.fit_normalize_percent(eeg_train_val)
+#         norm.fit_normalize_percent(eeg_test)
+#     elif Normalizar == 'Stims':
+#         for stim in [dstims]:
+#             norm.normalize_stims(dstims_train_val)
+#             norm.normalize_stims(dstims_test)
+#     elif Normalizar == 'All':   
+#         norm.fit_normalize_percent(eeg_train_val)
+#         norm.fit_normalize_percent(eeg_test)
+#         norm.normalize_stims(dstims_train_val)
+#         norm.normalize_stims(dstims_test)
+
+# def estandarizacion(eeg_train_val, eeg_test, dstims_train_val, dstims_test, Estandarizar, axis = 0):        
+    
+#     if Estandarizar == 'EEG':
+#         eeg_train_val = estandarizar(eeg_train_val, axis)
+#         eeg_test = estandarizar(eeg_test, axis)         
+#     elif Estandarizar == 'Stims':
+#         dstims_train_val = estandarizar(dstims_train_val, axis)
+#         dstims_test = estandarizar(dstims_test, axis)   
+#     elif Estandarizar == 'All':
+#         eeg_train_val = estandarizar(eeg_train_val, axis)
+#         eeg_test = estandarizar(eeg_test, axis)
+#         dstims_train_val = estandarizar(dstims_train_val, axis)
+#         dstims_test = estandarizar(dstims_test, axis)
 

@@ -83,7 +83,8 @@ class Trial_channel:
         
         ### envelope
         envelope = np.abs(sgn.hilbert(wav1))
-        envelope = Processing.butter_bandpass_filter(envelope, 25, self.audio_sr, 3, 0)
+        envelope = Processing.butter_filter(envelope, frecuencias = 25, sampling_freq = self.audio_sr,
+                                            btype = 'lowpass', order = 3, axis = 0, ftype = 'NonCausal')
         window_size = 125
         stride = 125
         envelope = np.array([np.mean(envelope[i:i+window_size]) for i in range(0, len(envelope), stride) if i+window_size <= len(envelope)])
@@ -115,16 +116,38 @@ class Trial_channel:
         pitch = np.array(read_file['pitch'])
         intensity = np.array(read_file['intensity'])
         
-        if self.valores_faltantes_pitch == None:
-            pitch = pitch[pitch!='--undefined--'] # saco nans
+        pitch[pitch=='--undefined--'] = np.nan
+        pitch = np.array(pitch, dtype = float)
+
+        pitch_der = []
+        for i in range(len(pitch)-1):
+            try: 
+                diff = pitch[i+1] - pitch[i]
+                pitch_der.append(diff)     
+            except: pitch_der.append(None)
+        pitch_der.append(None)
+        pitch_der = np.array(pitch_der, dtype = float)
+        
+        if not self.valores_faltantes_pitch:
+            pitch[np.isnan(pitch)] = self.valores_faltantes_pitch
+            pitch_der[np.isnan(pitch_der)] = self.valores_faltantes_pitch
+        elif not np.isfinite(self.valores_faltantes_pitch):
+            pitch[np.isnan(pitch)] = float(self.valores_faltantes_pitch)
+            pitch_der[np.isnan(pitch_der)] = float(self.valores_faltantes_pitch)
         elif np.isfinite(self.valores_faltantes_pitch):
-            pitch[pitch=='--undefined--'] = float(self.valores_faltantes_pitch)
+            pitch[np.isnan(pitch)] = np.float(self.valores_faltantes_pitch)
+            pitch_der[np.isnan(pitch_der)] = np.float(self.valores_faltantes_pitch)
+        else: print('Invalid missing value for pitch {}'.format(self.valores_faltantes_pitch)+'\nMust be finite.')
        
         pitch = np.array(np.repeat(pitch,self.audio_sr*self.sampleStep), dtype = float)
         pitch = Processing.subsamplear(pitch,125)
         pitch = Processing.matriz_shifteada(pitch,self.delays)
-    
-        return pitch    
+        
+        pitch_der = np.array(np.repeat(pitch_der, self.audio_sr*self.sampleStep), dtype = float)
+        pitch_der = Processing.subsamplear(pitch_der, 125)
+        pitch_der = Processing.matriz_shifteada(pitch_der,self.delays)
+            
+        return pitch, pitch_der
     
     def load_pitch(self):
         read_file = pd.read_csv(self.pitch_fname)
@@ -133,23 +156,45 @@ class Trial_channel:
         pitch = np.array(read_file['pitch'])
         intensity = np.array(read_file['intensity'])
         
-        if self.valores_faltantes_pitch == None:
-            pitch = pitch[pitch!='--undefined--'] # saco nans
+        pitch[pitch=='--undefined--'] = np.nan
+        pitch = np.array(pitch, dtype = float)
+
+        pitch_der = []
+        for i in range(len(pitch)-1):
+            try: 
+                diff = pitch[i+1] - pitch[i]
+                pitch_der.append(diff if np.abs(diff)<20 else None)     
+            except: pitch_der.append(None)
+        pitch_der.append(None)
+        pitch_der = np.array(pitch_der, dtype = float)
+        
+        if not self.valores_faltantes_pitch:
+            pitch[np.isnan(pitch)] = self.valores_faltantes_pitch
+            pitch_der[np.isnan(pitch_der)] = self.valores_faltantes_pitch
+        elif not np.isfinite(self.valores_faltantes_pitch):
+            pitch[np.isnan(pitch)] = float(self.valores_faltantes_pitch)
+            pitch_der[np.isnan(pitch_der)] = float(self.valores_faltantes_pitch)
         elif np.isfinite(self.valores_faltantes_pitch):
-            pitch[pitch=='--undefined--'] = np.float(self.valores_faltantes_pitch)
+            pitch[np.isnan(pitch)] = np.float(self.valores_faltantes_pitch)
+            pitch_der[np.isnan(pitch_der)] = np.float(self.valores_faltantes_pitch)
+        else: print('Invalid missing value for pitch {}'.format(self.valores_faltantes_pitch)+'\nMust be finite.')
        
         pitch = np.array(np.repeat(pitch,self.audio_sr*self.sampleStep), dtype = float)
         pitch = Processing.subsamplear(pitch,125)
         pitch = Processing.matriz_shifteada(pitch,self.delays)
-    
-        return pitch
-    
+        
+        pitch_der = np.array(np.repeat(pitch_der, self.audio_sr*self.sampleStep), dtype = float)
+        pitch_der = Processing.subsamplear(pitch_der, 125)
+        pitch_der = Processing.matriz_shifteada(pitch_der,self.delays)
+        
+        return pitch, pitch_der
+        
     def load_trial(self):
         channel = {}    
         channel['eeg'] = self.f_eeg()
         channel['info'] = self.f_info()
         channel['envelope'] = self.f_envelope()
-        channel['pitch'] = self.load_pitch()  
+        channel['pitch'], channel['pitch_der'] = self.load_pitch()  
         return channel
 
 
@@ -179,10 +224,12 @@ class Sesion:
         eeg_sujeto_1 = pd.DataFrame()
         envelope_para_sujeto_1 = pd.DataFrame()
         pitch_para_sujeto_1 = pd.DataFrame()
+        pitch_der_para_sujeto_1 = pd.DataFrame()
         
         eeg_sujeto_2 = pd.DataFrame()
         envelope_para_sujeto_2 = pd.DataFrame()
         pitch_para_sujeto_2 = pd.DataFrame()
+        pitch_der_para_sujeto_2 = pd.DataFrame()
         
         run = True
         trial = 1
@@ -200,12 +247,12 @@ class Sesion:
                                                 Causal_filter = self.Causal_filter).load_trial()
                 
                 ###### Cargo data ######        
-                eeg_trial_sujeto_1, envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1 = Trial_channel_1['eeg'], Trial_channel_2['envelope'], Trial_channel_2['pitch']
-                if self.Calculate_pitch: pitch_trial_para_sujeto_1 = Trial_channel_2.f_calculate_pitch()
+                eeg_trial_sujeto_1, envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1, pitch_der_trial_para_sujeto_1 = Trial_channel_1['eeg'], Trial_channel_2['envelope'], Trial_channel_2['pitch'], Trial_channel_2['pitch_der']
+                if self.Calculate_pitch: pitch_trial_para_sujeto_1, pitch_der_trial_para_sujeto_1 = Trial_channel_2.f_calculate_pitch()
                 momentos_sujeto_1_trial = Processing.labeling(self.sesion, trial, canal_hablante = 2, sr = self.sr)
                 
-                eeg_trial_sujeto_2, envelope_trial_para_sujeto_2, pitch_trial_para_sujeto_2 = Trial_channel_2['eeg'], Trial_channel_1['envelope'], Trial_channel_1['pitch']
-                if self.Calculate_pitch: pitch_trial_para_sujeto_2 = Trial_channel_1.f_calculate_pitch()
+                eeg_trial_sujeto_2, envelope_trial_para_sujeto_2, pitch_trial_para_sujeto_2, pitch_der_trial_para_sujeto_2 = Trial_channel_2['eeg'], Trial_channel_1['envelope'], Trial_channel_1['pitch'], Trial_channel_1['pitch_der']
+                if self.Calculate_pitch: pitch_trial_para_sujeto_2, pitch_der_trial_para_sujeto_1 = Trial_channel_1.f_calculate_pitch()
                 momentos_sujeto_2_trial = Processing.labeling(self.sesion, trial, canal_hablante = 1, sr = self.sr)
                 
             except: 
@@ -213,39 +260,41 @@ class Sesion:
                 
             if run: 
                 ###### Igualar largos ######
-                eeg_trial_sujeto_1, envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1, momentos_sujeto_1_trial = Processing.igualar_largos(eeg_trial_sujeto_1, envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1, momentos_sujeto_1_trial)
-                eeg_trial_sujeto_2, envelope_trial_para_sujeto_2, pitch_trial_para_sujeto_2, momentos_sujeto_2_trial = Processing.igualar_largos(eeg_trial_sujeto_2, envelope_trial_para_sujeto_2, pitch_trial_para_sujeto_2, momentos_sujeto_2_trial)
+                eeg_trial_sujeto_1, envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1, pitch_der_trial_para_sujeto_1, momentos_sujeto_1_trial = Processing.igualar_largos(eeg_trial_sujeto_1, envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1, pitch_der_trial_para_sujeto_1, momentos_sujeto_1_trial)
+                eeg_trial_sujeto_2, envelope_trial_para_sujeto_2, pitch_trial_para_sujeto_2, pitch_der_trial_para_sujeto_2, momentos_sujeto_2_trial = Processing.igualar_largos(eeg_trial_sujeto_2, envelope_trial_para_sujeto_2, pitch_trial_para_sujeto_2, pitch_der_trial_para_sujeto_2, momentos_sujeto_2_trial)
                 
                 ###### Preprocesamiento ######
-                eeg_trial_sujeto_1, envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1 = Processing.preproc(eeg_trial_sujeto_1, envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1, momentos_sujeto_1_trial, self.delays, self.situacion)
-                eeg_trial_sujeto_2, envelope_trial_para_sujeto_2, pitch_trial_para_sujeto_2 = Processing.preproc(eeg_trial_sujeto_2, envelope_trial_para_sujeto_2, pitch_trial_para_sujeto_2, momentos_sujeto_2_trial, self.delays, self.situacion)
+                eeg_trial_sujeto_1, envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1, pitch_der_trial_para_sujeto_1 = Processing.preproc(momentos_sujeto_1_trial, self.delays, self.situacion, eeg_trial_sujeto_1, envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1, pitch_der_trial_para_sujeto_1)
+                eeg_trial_sujeto_2, envelope_trial_para_sujeto_2, pitch_trial_para_sujeto_2, pitch_der_trial_para_sujeto_2 = Processing.preproc(momentos_sujeto_2_trial, self.delays, self.situacion, eeg_trial_sujeto_2, envelope_trial_para_sujeto_2, pitch_trial_para_sujeto_2, pitch_der_trial_para_sujeto_2)
                 
                 # Convierto a DF
-                eeg_trial_sujeto_1, envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1, eeg_trial_sujeto_2, envelope_trial_para_sujeto_2, pitch_trial_para_sujeto_2 = Processing.make_df(eeg_trial_sujeto_1, envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1, eeg_trial_sujeto_2, envelope_trial_para_sujeto_2, pitch_trial_para_sujeto_2)
+                eeg_trial_sujeto_1, envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1, pitch_der_trial_para_sujeto_1, eeg_trial_sujeto_2, envelope_trial_para_sujeto_2, pitch_trial_para_sujeto_2, pitch_der_trial_para_sujeto_2 = Processing.make_df(eeg_trial_sujeto_1, envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1, pitch_der_trial_para_sujeto_1, eeg_trial_sujeto_2, envelope_trial_para_sujeto_2, pitch_trial_para_sujeto_2, pitch_der_trial_para_sujeto_2)
                 
                 ###### Adjunto a datos de sujeto ######
                 if len(eeg_trial_sujeto_1): 
                     eeg_sujeto_1 = eeg_sujeto_1.append(eeg_trial_sujeto_1)
                     envelope_para_sujeto_1 = envelope_para_sujeto_1.append(envelope_trial_para_sujeto_1)
                     pitch_para_sujeto_1 = pitch_para_sujeto_1.append(pitch_trial_para_sujeto_1)
-                    
+                    pitch_der_para_sujeto_1 = pitch_der_para_sujeto_1.append(pitch_der_trial_para_sujeto_1)
                 if len(eeg_trial_sujeto_2):
                     eeg_sujeto_2 = eeg_sujeto_2.append(eeg_trial_sujeto_2)
                     envelope_para_sujeto_2 = envelope_para_sujeto_2.append(envelope_trial_para_sujeto_2)
                     pitch_para_sujeto_2 = pitch_para_sujeto_2.append(pitch_trial_para_sujeto_2)
+                    pitch_der_para_sujeto_2 = pitch_der_para_sujeto_2.append(pitch_der_trial_para_sujeto_2)
                     
                 trial += 1
         info = Trial_channel_1['info']
         
         #Convierto a array
-        eeg_sujeto_1, envelope_para_sujeto_1, pitch_para_sujeto_1, eeg_sujeto_2, envelope_para_sujeto_2, pitch_para_sujeto_2 = Processing.make_array(eeg_sujeto_1, envelope_para_sujeto_1, pitch_para_sujeto_1, eeg_sujeto_2, envelope_para_sujeto_2, pitch_para_sujeto_2)
+        eeg_sujeto_1, envelope_para_sujeto_1, pitch_para_sujeto_1, pitch_der_para_sujeto_1,eeg_sujeto_2, envelope_para_sujeto_2, pitch_para_sujeto_2, pitch_der_para_sujeto_2 = Processing.make_array(eeg_sujeto_1, envelope_para_sujeto_1, pitch_para_sujeto_1, pitch_der_para_sujeto_1,eeg_sujeto_2, envelope_para_sujeto_2, pitch_para_sujeto_2, pitch_der_para_sujeto_2)
         
         if self.Save_procesed_data:
             if self.Causal_filter: EEG_path = self.procesed_data_path + 'EEG/Causal_Sit_{}_Band_{}(tmin{}_tmax{})/'.format(self.situacion, self.Band, self.tmin, self.tmax)
             else: EEG_path = self.procesed_data_path + 'EEG/Sit_{}_Band_{}(tmin{}_tmax{})/'.format(self.situacion, self.Band, self.tmin, self.tmax)
             Envelope_path = self.procesed_data_path + 'Envelope/Sit_{}(tmin{}_tmax{})/'.format(self.situacion, self.tmin, self.tmax)
             Pitch_path = self.procesed_data_path + 'Pitch/Sit_{}_Faltantes_0(tmin{}_tmax{})/'.format(self.situacion, self.tmin, self.tmax)
-            for path in [EEG_path, Envelope_path, Pitch_path]:
+            Pitch_der_path = self.procesed_data_path + 'Pitch_der/Sit_{}_Faltantes_0(tmin{}_tmax{})/'.format(self.situacion, self.tmin, self.tmax)
+            for path in [EEG_path, Envelope_path, Pitch_path, Pitch_der_path]:
                 try: os.makedirs(path)
                 except: pass
             
@@ -261,12 +310,16 @@ class Sesion:
             pickle.dump([pitch_para_sujeto_1, pitch_para_sujeto_2], f)
             f.close()
             
+            f = open(Pitch_der_path + 'Sesion{}.pkl'.format(self.sesion), 'wb')
+            pickle.dump([pitch_der_para_sujeto_1, pitch_der_para_sujeto_2], f)
+            f.close()
+            
             f = open(self.procesed_data_path + 'EEG/info.pkl', 'wb')
             pickle.dump(info, f)
             f.close()
                 
-        Sujeto_1 = {'EEG':eeg_sujeto_1, 'Envelope': envelope_para_sujeto_2, 'Pitch': pitch_para_sujeto_2, 'info': info}
-        Sujeto_2 = {'EEG':eeg_sujeto_2, 'Envelope': envelope_para_sujeto_1, 'Pitch': pitch_para_sujeto_1, 'info': info}
+        Sujeto_1 = {'EEG':eeg_sujeto_1, 'Envelope': envelope_para_sujeto_2, 'Pitch': pitch_para_sujeto_2, 'Pitch_der': pitch_der_para_sujeto_2, 'info': info}
+        Sujeto_2 = {'EEG':eeg_sujeto_2, 'Envelope': envelope_para_sujeto_1, 'Pitch': pitch_para_sujeto_1, 'Pitch_der': pitch_der_para_sujeto_1, 'info': info}
         Sesion = {'Sujeto_1': Sujeto_1, 'Sujeto_2': Sujeto_2}
         
         return Sesion
@@ -290,21 +343,28 @@ class Sesion:
         pitch_para_sujeto_1, pitch_para_sujeto_2 = pickle.load(f)
         f.close()
         
+        f = open(self.procesed_data_path + 'Pitch_der/Sit_{}_Faltantes_0(tmin{}_tmax{})/'.format(self.situacion, self.tmin, self.tmax) + 'Sesion{}.pkl'.format(self.sesion), 'rb')
+        pitch_der_para_sujeto_1, pitch_der_para_sujeto_2 = pickle.load(f)
+        f.close()
+        
         f = open(self.procesed_data_path + 'EEG/info.pkl', 'rb')
         info = pickle.load(f)
         f.close()
         
         if self.valores_faltantes_pitch == None:
             pitch_para_sujeto_1, pitch_para_sujeto_2 =  pitch_para_sujeto_1[pitch_para_sujeto_1 != 0], pitch_para_sujeto_2[pitch_para_sujeto_2 != 0] # saco 0s
+        elif not np.isfinite(self.valores_faltantes_pitch) and self.valores_faltantes_pitch:
+            pitch_para_sujeto_1[pitch_para_sujeto_1 == 0], pitch_para_sujeto_2[pitch_para_sujeto_2 == 0] = self.valores_faltantes_pitch, self.valores_faltantes_pitch # cambio 0s
         elif np.isfinite(self.valores_faltantes_pitch) and self.valores_faltantes_pitch:
             pitch_para_sujeto_1[pitch_para_sujeto_1 == 0], pitch_para_sujeto_2[pitch_para_sujeto_2 == 0] = self.valores_faltantes_pitch, self.valores_faltantes_pitch # cambio 0s
             
-        Sujeto_1 = {'EEG':eeg_sujeto_1, 'Envelope': envelope_para_sujeto_2, 'Pitch': pitch_para_sujeto_2, 'info': info}
-        Sujeto_2 = {'EEG':eeg_sujeto_2, 'Envelope': envelope_para_sujeto_1, 'Pitch': pitch_para_sujeto_1, 'info': info}
+        Sujeto_1 = {'EEG':eeg_sujeto_1, 'Envelope': envelope_para_sujeto_2, 'Pitch': pitch_para_sujeto_2, 'Pitch_der': pitch_der_para_sujeto_2, 'info': info}
+        Sujeto_2 = {'EEG':eeg_sujeto_2, 'Envelope': envelope_para_sujeto_1, 'Pitch': pitch_para_sujeto_1, 'Pitch_der': pitch_der_para_sujeto_1, 'info': info}
         Sesion = {'Sujeto_1': Sujeto_1, 'Sujeto_2': Sujeto_2}
         
         return  Sesion
-   
+
+
 def rename_paths(Estandarizar, Normalizar, stim, valores_faltantes_pitch, Band, tmin, tmax, Causal_filter, *paths):  
     returns = []
     for path in paths:
