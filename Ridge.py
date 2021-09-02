@@ -47,15 +47,15 @@ Save_Final_Correlation = False
 Display_Ind = False
 if Display_Ind: Display_figures_beta, Display_figures_shadows, Display_cabezas_canales, Display_PSD = True, True, True, True
 else: Display_figures_beta, Display_figures_shadows, Display_cabezas_canales, Display_PSD = False, False, False, False
-Save_Ind = True
+Save_Ind = False
 if Save_Ind: Save_grafico_betas, Save_grafico_shadows, Save_cabezas_canales, Save_PSD = True, True, True, True
 else: Save_grafico_betas, Save_grafico_shadows, Save_cabezas_canales, Save_PSD = False, False, False, False
   
 # FIGURAS TODOS
-Display_Total = False
+Display_Total = True
 if Display_Total: Display_correlacion_promedio, Display_canales_repetidos, Display_figure_instantes, Display_correlation_matrix, Display_channel_correlation_topo, Display_PSD_boxplot = True, True, True, True, True, True
 else: Display_correlacion_promedio, Display_canales_repetidos, Display_figure_instantes, Display_correlation_matrix, Display_channel_correlation_topo, Display_PSD_boxplot = False, False, False,  False,  False,  False
-Save_Total = True
+Save_Total = False
 if Save_Total: Save_correlacion_promedio, Save_canales_repetidos, Save_figure_instantes, Save_correlation_matrix, Save_channel_correlation_topo, Save_PSD_boxplot = True, True, True, True, True, True
 else: Save_correlacion_promedio, Save_canales_repetidos, Save_figure_instantes, Save_correlation_matrix, Save_channel_correlation_topo, Save_PSD_boxplot = False, False, False, False,  False,  False
 
