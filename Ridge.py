@@ -5,15 +5,12 @@ Created on Fri Apr 23 14:38:57 2021
 @author: joaco
 """
 import numpy as np
-import mne
-import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn import linear_model
 from sklearn.model_selection import KFold
-from scipy import stats
 import os
 import pickle
-from numpy.fft import fft, fftfreq    
+  
 import Processing
 import Plot
 import Load, Validation, Simulation
@@ -23,6 +20,7 @@ Load_procesed_data = True
 Save_procesed_data = False
 
 Causal_filter = True
+Hilbert_eeg = False
 
 Calculate_pitch = False # Solo si cambias threshold, sampleStep, min o max
 valores_faltantes_pitch = 0
@@ -60,7 +58,7 @@ if Save_Total: Save_correlacion_promedio, Save_canales_repetidos, Save_figure_in
 else: Save_correlacion_promedio, Save_canales_repetidos, Save_figure_instantes, Save_correlation_matrix, Save_channel_correlation_topo, Save_PSD_boxplot = False, False, False, False,  False,  False
 
 ###### DEFINO PARAMETROS ######
-stim = 'Envelope_Pitch_Pitch_der'
+stim = 'Envelope'
 Stims_Order = ['Envelope','Pitch', 'Pitch_der', 'Spectrogram', 'Phonemes']
 ###### Defino banda de eeg ######
 Band = 'Theta'
@@ -83,7 +81,7 @@ Run_graficos_path = 'gráficos/Ridge/'
 Path_it = 'saves/Ridge/Fake_it/'
 Path_Pesos_Predicciones_Corr_Rmse = 'saves/Ridge/Corr_Rmse_Pesos_Predicciones/'
 
-Path_it, Run_graficos_path, Path_Pesos_Predicciones_Corr_Rmse = Load.rename_paths(Estandarizar, Normalizar, stim, valores_faltantes_pitch, Band, tmin, tmax, Causal_filter, Path_it, Run_graficos_path, Path_Pesos_Predicciones_Corr_Rmse)
+Path_it, Run_graficos_path, Path_Pesos_Predicciones_Corr_Rmse = Load.rename_paths(Estandarizar, Normalizar, stim, valores_faltantes_pitch, Band, tmin, tmax, Causal_filter, Hilbert_eeg, Path_it, Run_graficos_path, Path_Pesos_Predicciones_Corr_Rmse)
 
 # lista para guardar los mejores alphas elegidos y los pesos totales de los sujetos
 best_alphas_total = []
@@ -100,46 +98,15 @@ sesiones = np.arange(21, 26)
 sujeto_total = 0
 for sesion in sesiones:
     print('Sesion {}'.format(sesion))
-    Sesion_obj = Load.Sesion(sesion, Band, sr, tmin, tmax, valores_faltantes_pitch, Causal_filter, situacion, Calculate_pitch, procesed_data_path, Save_procesed_data)
-    if Load_procesed_data:
-        # Intento cargar preprocesados
-        try:
-            Sesion = Sesion_obj.load_procesed()
-            Sujeto_1, Sujeto_2 = Sesion['Sujeto_1'], Sesion['Sujeto_2']
-
-            eeg_sujeto_1, envelope_para_sujeto_1, pitch_para_sujeto_1, pitch_der_para_sujeto_1 = Sujeto_1['EEG'], Sujeto_2['Envelope'], Sujeto_2['Pitch'], Sujeto_2['Pitch_der']
-            eeg_sujeto_2, envelope_para_sujeto_2, pitch_para_sujeto_2, pitch_der_para_sujeto_2 = Sujeto_2['EEG'], Sujeto_1['Envelope'], Sujeto_1['Pitch'], Sujeto_1['Pitch_der']
-            info = Sujeto_1['info']       
-        # Si falla cargo de raw y guardo en Auto_save    
-        except:
-            if not sujeto_total: procesed_data_path += 'Auto_save/'
-            Save_procesed_data = True
-            Sesion_obj = Load.Sesion(sesion, Band, sr, tmin, tmax, valores_faltantes_pitch, Causal_filter, situacion, Calculate_pitch, procesed_data_path, Save_procesed_data)
-
-            Sesion = Sesion_obj.load_from_raw() 
-            Sujeto_1, Sujeto_2  = Sesion['Sujeto_1'], Sesion['Sujeto_2']
-            
-            eeg_sujeto_1, envelope_para_sujeto_1, pitch_para_sujeto_1, pitch_der_para_sujeto_1 = Sujeto_1['EEG'], Sujeto_2['Envelope'], Sujeto_2['Pitch'], Sujeto_2['Pitch_der']
-            eeg_sujeto_2, envelope_para_sujeto_2, pitch_para_sujeto_2, pitch_der_para_sujeto_2 = Sujeto_2['EEG'], Sujeto_1['Envelope'], Sujeto_1['Pitch'], Sujeto_1['Pitch_der']
-            info = Sujeto_1['info']
-    # Cargo directo de raw
-    else: 
-        Sesion = Sesion_obj.load_from_raw() 
-        
-        Sujeto_1, Sujeto_2 = Sesion['Sujeto_1'], Sesion['Sujeto_2']
-        
-        eeg_sujeto_1, envelope_para_sujeto_1, pitch_para_sujeto_1, pitch_der_para_sujeto_1 = Sujeto_1['EEG'], Sujeto_2['Envelope'], Sujeto_2['Pitch'], Sujeto_2['Pitch_der']
-        eeg_sujeto_2, envelope_para_sujeto_2, pitch_para_sujeto_2, pitch_der_para_sujeto_2 = Sujeto_2['EEG'], Sujeto_1['Envelope'], Sujeto_1['Pitch'], Sujeto_1['Pitch_der']
-        info = Sujeto_1['info']
     
-    if stim == 'Envelope': dstims_para_sujeto_1, dstims_para_sujeto_2 = (envelope_para_sujeto_1,), (envelope_para_sujeto_2,)
-    elif stim == 'Pitch': dstims_para_sujeto_1, dstims_para_sujeto_2 = (pitch_para_sujeto_1,), (pitch_para_sujeto_2,)
-    elif stim == 'Pitch_der': dstims_para_sujeto_1, dstims_para_sujeto_2 = (pitch_der_para_sujeto_1,), (pitch_der_para_sujeto_2,)
-    elif stim == 'Envelope_Pitch': dstims_para_sujeto_1, dstims_para_sujeto_2 = (envelope_para_sujeto_1,pitch_para_sujeto_1), (envelope_para_sujeto_2,pitch_para_sujeto_2)
-    elif stim == 'Envelope_Pitch_Pitch_der': dstims_para_sujeto_1, dstims_para_sujeto_2 = (envelope_para_sujeto_1,pitch_para_sujeto_1, pitch_der_para_sujeto_1), (envelope_para_sujeto_2,pitch_para_sujeto_2,pitch_der_para_sujeto_2)
-    else:
-        print('Invalid sitmulus: {}'.format(stim))
-        break
+    ##### LOAD DATA BY SUBJECT #####
+    Sujeto_1, Sujeto_2 = Load.Load_Data(sesion, Band, sr, tmin, tmax, valores_faltantes_pitch, Causal_filter, Hilbert_eeg, situacion, Calculate_pitch, procesed_data_path, Save_procesed_data, Load_procesed_data, sujeto_total)
+    
+    ##### LOAD EEG BY SUBJECT #####
+    eeg_sujeto_1, eeg_sujeto_2 = Sujeto_1['EEG'], Sujeto_2['EEG']
+    
+    ##### LOAD STIMULUS BY SUBJECT #####
+    dstims_para_sujeto_1, dstims_para_sujeto_2, info = Load.Estimulos(stim, Sujeto_1, Sujeto_2)
     Cant_Estimulos = len(dstims_para_sujeto_1)
     
     for sujeto, eeg, dstims in zip((1,2), (eeg_sujeto_1, eeg_sujeto_2), (dstims_para_sujeto_1, dstims_para_sujeto_2)):
@@ -365,32 +332,32 @@ for sesion in sesiones:
         Pesos_promedio = Pesos_ronda_canales.mean(0)
         
         ###### Tomo promedio del modulo de Corr y Rmse entre las rondas de test para todos los canales (para no desvirtuar las cabezas) ######
-        Corr_promedio_abs = abs(Corr_buenas_ronda_canal).mean(0)
+        Corr_promedio = Corr_buenas_ronda_canal.mean(0)
         Rmse_promedio = abs(Rmse_buenos_ronda_canal).mean(0)  
                
         ###### Grafico cabezas y canales ######       
         Plot.plot_cabezas_canales(info.ch_names, info, sr, sesion, sujeto, Canales_sobrevivientes_corr, 
-                                  Corr_promedio_abs, Display_cabezas_canales, n_canales, 'Correlación', 
+                                  Corr_promedio, Display_cabezas_canales, n_canales, 'Correlación', 
                                   Save_cabezas_canales, Run_graficos_path)
         Plot.plot_cabezas_canales(info.ch_names, info, sr, sesion, sujeto, Canales_sobrevivientes_rmse, Rmse_promedio, Display_cabezas_canales, n_canales, 'Rmse', Save_cabezas_canales, Run_graficos_path)
         
         ###### Grafico Pesos, Corr, Rmse ######
         # Plot.plot_grafico_pesos_shadows(Display_figures_beta, sesion, sujeto, best_alpha, Pesos_promedio, 
         #                         Canales_sobrevivientes_corr, info, times, sr, 
-        #                         Corr_promedio_abs, Rmse_promedio, Canales_sobrevivientes_rmse, 
+        #                         Corr_promedio, Rmse_promedio, Canales_sobrevivientes_rmse, 
         #                         Save_grafico_betas, Run_graficos_path, 
         #                         Corr_buenas_ronda_canal, Rmse_buenos_ronda_canal,
         #                         Errores_fake, Correlaciones_fake)
         
         ###### Grafico Pesos ######
         Plot.plot_grafico_pesos(Display_figures_beta, sesion, sujeto, best_alpha, Pesos_promedio, 
-                                info, times, sr, Corr_promedio_abs, Rmse_promedio, Save_grafico_betas,
+                                info, times, sr, Corr_promedio, Rmse_promedio, Save_grafico_betas,
                                 Run_graficos_path, Cant_Estimulos, Stims_Order)
          
         ###### Grafico Shadows ######
         Plot.plot_grafico_shadows(Display_figures_shadows, sesion, sujeto, best_alpha,
                                   Canales_sobrevivientes_corr, info, sr,
-                                  Corr_promedio_abs, Save_grafico_shadows, Run_graficos_path, 
+                                  Corr_promedio, Save_grafico_shadows, Run_graficos_path, 
                                   Corr_buenas_ronda_canal, Correlaciones_fake)
         
         # Guardo pesos promediados entre todos los canales (buenos) del sujeto y lo adjunto a lista para correlacionar entre sujetos
@@ -405,14 +372,13 @@ for sesion in sesiones:
         if not sujeto_total:
             # if len(Canales_sobrevivientes_corr):
             Pesos_totales_sujetos_todos_canales = Pesos_promedio
-            Correlaciones_totales_sujetos = Corr_promedio_abs
-            sujeto_total += 1              
+            Correlaciones_totales_sujetos = Corr_promedio            
         else:
             # if len(Canales_sobrevivientes_corr):
             Pesos_totales_sujetos_todos_canales = np.dstack((Pesos_totales_sujetos_todos_canales, 
                                                              Pesos_promedio))
-            Correlaciones_totales_sujetos = np.vstack((Correlaciones_totales_sujetos, Corr_promedio_abs))
-            sujeto_total += 1  
+            Correlaciones_totales_sujetos = np.vstack((Correlaciones_totales_sujetos, Corr_promedio))
+        sujeto_total += 1  
     
 # f = open('saves/Alphas/Best_Alphas_Total.pkl', 'wb')
 # pickle.dump(best_alphas_total, f)
@@ -426,6 +392,15 @@ Plot.Cabezas_canales_rep(Canales_repetidos_sujetos, info, Display_canales_repeti
 
 ###### Instantes de interés ######
 curva_pesos_totales = Plot.Plot_instantes_interes(Pesos_totales_sujetos_todos_canales, info, Band, times, sr, delays, Display_figure_instantes, Save_figure_instantes, Run_graficos_path, Cant_Estimulos, Stims_Order, stim)
+
+# weights_autocorr = np.correlate(curva_pesos_totales[0],curva_pesos_totales[0], mode = 'same')
+# plt.figure()
+# plt.plot(np.arange(len(weights_autocorr)/2)*1000/sr, weights_autocorr[int(len(weights_autocorr)/2):])
+# plt.title('Weights Autocorrelation')
+# plt.grid()
+# plt.ylabel('Magitude')
+# plt.xlabel('Time [ms]')
+# plt.savefig(Run_graficos_path + 'Weights Autocorrelation.png')
 
 # Matriz de Correlacion
 Plot. Matriz_corr_channel_wise(Pesos_totales_sujetos_todos_canales, Display_correlation_matrix, Save_correlation_matrix, Run_graficos_path)

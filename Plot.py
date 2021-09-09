@@ -104,15 +104,15 @@ def plot_cabezas_canales(channel_names, info, sr, sesion, sujeto, Canales_sobrev
 
 def plot_grafico_pesos_significativos(Display_figures_beta, sesion, sujeto, best_alpha, Pesos_promedio, 
                        Canales_sobrevivientes_corr, info, times, sr, 
-                       Corr_promedio_abs, Rmse_promedio, Canales_sobrevivientes_rmse, 
+                       Corr_promedio, Rmse_promedio, Canales_sobrevivientes_rmse, 
                        Save_grafico_betas, Run_graficos_path, 
                        Corr_buenas_ronda_canal, Rmse_buenos_ronda_canal,
                        Errores_fake, Correlaciones_fake):
     
     # Defino cosas que voy a graficar
-    mejor_canal_corr = Corr_promedio_abs.argmax()
-    Corr_mejor_canal = Corr_promedio_abs[mejor_canal_corr]
-    # Correl_prom = np.mean(Corr_promedio_abs[Canales_sobrevivientes_corr])
+    mejor_canal_corr = Corr_promedio.argmax()
+    Corr_mejor_canal = Corr_promedio[mejor_canal_corr]
+    # Correl_prom = np.mean(Corr_promedio[Canales_sobrevivientes_corr])
     
     mejor_canal_rmse = Rmse_promedio.argmax()
     Rmse_mejor_canal = Rmse_promedio[mejor_canal_rmse]
@@ -151,13 +151,13 @@ def plot_grafico_pesos_significativos(Display_figures_beta, sesion, sujeto, best
     else: 
         plt.text(0.5,0.5, "No surviving channels", size = 'xx-large', ha = 'center')
     
-    axs[1].plot(Corr_promedio_abs, '.', color = 'C0', label = "Promedio de Correlaciones (Descartados)")
-    axs[1].plot(Canales_sobrevivientes_corr, Corr_promedio_abs[Canales_sobrevivientes_corr], '*', 
+    axs[1].plot(Corr_promedio, '.', color = 'C0', label = "Promedio de Correlaciones (Descartados)")
+    axs[1].plot(Canales_sobrevivientes_corr, Corr_promedio[Canales_sobrevivientes_corr], '*', 
                 color = 'C1', label = "Promedio de Correlaciones (Pasan test)")
-    axs[1].fill_between(np.arange(len(Corr_promedio_abs)), abs(Corr_buenas_ronda_canal).min(0), 
+    axs[1].fill_between(np.arange(len(Corr_promedio)), abs(Corr_buenas_ronda_canal).min(0), 
                                   abs(Corr_buenas_ronda_canal).max(0), alpha = 0.5, 
                                   label = 'Distribución de Corr (Stims reales)')
-    axs[1].fill_between(np.arange(len(Corr_promedio_abs)), abs(Correlaciones_fake_min), 
+    axs[1].fill_between(np.arange(len(Corr_promedio)), abs(Correlaciones_fake_min), 
                                   abs(Correlaciones_fake_max), alpha = 0.5, 
                                   label = 'Distribución de Corr (Stims rand)')
     axs[1].set_xlim([-1,129])
@@ -191,14 +191,14 @@ def plot_grafico_pesos_significativos(Display_figures_beta, sesion, sujeto, best
         
 def plot_grafico_pesos_shadows(Display_figures_beta, sesion, sujeto, best_alpha, Pesos_promedio, 
                             Canales_sobrevivientes_corr, info, times, sr, 
-                            Corr_promedio_abs, Rmse_promedio, Canales_sobrevivientes_rmse, 
+                            Corr_promedio, Rmse_promedio, Canales_sobrevivientes_rmse, 
                             Save_grafico_betas, Run_graficos_path, 
                             Corr_buenas_ronda_canal, Rmse_buenos_ronda_canal,
                             Errores_fake, Correlaciones_fake):
     
     # Defino cosas que voy a graficar
-    mejor_canal_corr = Corr_promedio_abs.argmax()
-    Corr_mejor_canal = Corr_promedio_abs[mejor_canal_corr]
+    mejor_canal_corr = Corr_promedio.argmax()
+    Corr_mejor_canal = Corr_promedio[mejor_canal_corr]
     
     mejor_canal_rmse = Rmse_promedio.argmax()
     Rmse_mejor_canal = Rmse_promedio[mejor_canal_rmse]
@@ -236,15 +236,15 @@ def plot_grafico_pesos_shadows(Display_figures_beta, sesion, sujeto, best_alpha,
     else: 
         plt.text(0.5,0.5, "No surviving channels", size = 'xx-large', ha = 'center')
     
-    axs[1].plot(Corr_promedio_abs, '.', color = 'C0', label = "Promedio de Correlaciones (Descartados)")
-    axs[1].plot(Canales_sobrevivientes_corr, Corr_promedio_abs[Canales_sobrevivientes_corr], '*', 
+    axs[1].plot(Corr_promedio, '.', color = 'C0', label = "Promedio de Correlaciones (Descartados)")
+    axs[1].plot(Canales_sobrevivientes_corr, Corr_promedio[Canales_sobrevivientes_corr], '*', 
                 color = 'C1', label = "Promedio de Correlaciones (Pasan test)")
     # axs[1].hlines(Correl_prom, axs[1].get_xlim()[0], axs[1].get_xlim()[1], label = 'Promedio = {:0.2f}'.format(Correl_prom), color = 'C3')
     # axs[1].plot(Correlaciones_fake_mean, color = 'C3', linewidth = 0.5)
-    axs[1].fill_between(np.arange(len(Corr_promedio_abs)), abs(Corr_buenas_ronda_canal).min(0), 
+    axs[1].fill_between(np.arange(len(Corr_promedio)), abs(Corr_buenas_ronda_canal).min(0), 
                                   abs(Corr_buenas_ronda_canal).max(0), alpha = 0.5, 
                                   label = 'Distribución de Corr (Stims reales)')
-    axs[1].fill_between(np.arange(len(Corr_promedio_abs)), abs(Correlaciones_fake_min), 
+    axs[1].fill_between(np.arange(len(Corr_promedio)), abs(Correlaciones_fake_min), 
                                   abs(Correlaciones_fake_max), alpha = 0.5, 
                                   label = 'Distribución de Corr (Stims rand)')
     axs[1].set_xlim([-1,129])
@@ -278,13 +278,13 @@ def plot_grafico_pesos_shadows(Display_figures_beta, sesion, sujeto, best_alpha,
 
 
 def plot_grafico_pesos(Display_figures_beta, sesion, sujeto, best_alpha, Pesos_promedio, 
-                       info, times, sr, Corr_promedio_abs, Rmse_promedio, Save_grafico_betas,
+                       info, times, sr, Corr_promedio, Rmse_promedio, Save_grafico_betas,
                        Run_graficos_path, Cant_Estimulos, Stims_Order):
     
     # Defino cosas que voy a graficar
-    mejor_canal_corr = Corr_promedio_abs.argmax()
-    Corr_mejor_canal = Corr_promedio_abs[mejor_canal_corr]
-    # Correl_prom = np.mean(Corr_promedio_abs)
+    mejor_canal_corr = Corr_promedio.argmax()
+    Corr_mejor_canal = Corr_promedio[mejor_canal_corr]
+    # Correl_prom = np.mean(Corr_promedio)
     
     mejor_canal_rmse = Rmse_promedio.argmax()
     Rmse_mejor_canal = Rmse_promedio[mejor_canal_rmse]
@@ -324,7 +324,7 @@ def plot_grafico_pesos(Display_figures_beta, sesion, sujeto, best_alpha, Pesos_p
         
 def plot_grafico_shadows(Display_figures_shadows, sesion, sujeto, best_alpha, 
                          Canales_sobrevivientes_corr, info, sr, 
-                         Corr_promedio_abs, Save_grafico_shadows, Run_graficos_path, 
+                         Corr_promedio, Save_grafico_shadows, Run_graficos_path, 
                          Corr_buenas_ronda_canal, Correlaciones_fake):
      
     # Defino cosas que voy a graficar  
@@ -338,14 +338,14 @@ def plot_grafico_shadows(Display_figures_shadows, sesion, sujeto, best_alpha,
     fig.suptitle('Session {} - Subject {}'.format(sesion, sujeto))
     
     
-    ax.plot(Corr_promedio_abs, '.', color = 'C0', label = "Mean of correlations among folds (Discarded)")
-    ax.plot(Canales_sobrevivientes_corr, Corr_promedio_abs[Canales_sobrevivientes_corr], '*', 
+    ax.plot(Corr_promedio, '.', color = 'C0', label = "Mean of correlations among folds (Discarded)")
+    ax.plot(Canales_sobrevivientes_corr, Corr_promedio[Canales_sobrevivientes_corr], '*', 
                 color = 'C1', label = "Mean of correlations among folds (Test passed)")
     
-    ax.fill_between(np.arange(len(Corr_promedio_abs)), abs(Corr_buenas_ronda_canal).min(0), 
+    ax.fill_between(np.arange(len(Corr_promedio)), abs(Corr_buenas_ronda_canal).min(0), 
                                   abs(Corr_buenas_ronda_canal).max(0), alpha = 0.5, 
                                   label = 'Correlation distribution (Real data)')
-    ax.fill_between(np.arange(len(Corr_promedio_abs)), abs(Correlaciones_fake_min), 
+    ax.fill_between(np.arange(len(Corr_promedio)), abs(Correlaciones_fake_min), 
                                   abs(Correlaciones_fake_max), alpha = 0.5, 
                                   label = 'Correlation distribution (Random data)')
     ax.set_xlim([-1,129])
@@ -494,7 +494,7 @@ def Plot_instantes_interes(Pesos_totales_sujetos_todos_canales, info, Band, time
                             evoked._data[:,instantes_index[i]].max(), 4).round(decimals = 2)])
         
         axs[i+2].remove()
-        axs[i+4].remove()  
+        axs[i+4].remove()
         fig.tight_layout()
        
         if Save_figure_instantes: 
@@ -503,7 +503,7 @@ def Plot_instantes_interes(Pesos_totales_sujetos_todos_canales, info, Band, time
             except: pass
             fig.savefig(save_path_graficos + 'Instantes_interes_{}.png'.format(Stims_Order[j]))  
         
-    return tuple(returns)
+    return returns
 
 
 def Plot_instantes_casera(Pesos_totales_sujetos_todos_canales, info, Band, times, sr, delays, Display_figure_instantes, Save_figure_instantes, Run_graficos_path):  

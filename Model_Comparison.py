@@ -8,7 +8,7 @@ import pickle
 import matplotlib.pyplot as plt
 import numpy as np
 
-Band = 'Theta'
+Band = 'Delta'
 tmin, tmax = -0.53, 0.3
 
 f = open('saves/Ridge/Final_Correlation/Envelope_EEG_{}(tmin{}_tmax{}).pkl'.format(Band, tmin,tmax), 'rb')
@@ -41,4 +41,5 @@ plt.plot([0,np.max(Corr_Envelope_Pitch_Pitch_der)*1.25], [0,np.max(Corr_Envelope
 plt.ylabel('Individual model (r)')
 plt.xlabel('Full model (r)')
 plt.grid()
+plt.title(Band)
 # plt.legend()
