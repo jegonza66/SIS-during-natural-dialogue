@@ -29,11 +29,9 @@ def simular_iteraciones_Ridge_plot(info, sr, situacion, best_alpha, iteraciones,
         
         mod_fake.fit(dstims_train_random, eeg_train_val) ## entreno el modelo
         
-        ###### TESTEO EN VAL SET  ######
+        ###### TESTEO EN TEST SET  ######
         # Predigo
-        dstims_test_random = copy.deepcopy(dstims_test)
-        np.random.shuffle(dstims_test_random)
-        predicho_fake = mod_fake.predict(dstims_test_random)
+        predicho_fake = mod_fake.predict(dstims_test)
         
         # Correlacion
         Rcorr_fake = np.array([np.corrcoef(eeg_test[:,ii].ravel(), np.array(predicho_fake[:,ii]).ravel())[0,1] for ii in range(eeg_test.shape[1])])
@@ -77,6 +75,20 @@ def simular_iteraciones_Ridge_plot(info, sr, situacion, best_alpha, iteraciones,
         # axs[1].set_title('Señal predicha')
         # axs[1].legend()
         # fig.tight_layout()
+        
+        plt.ion()
+        
+        fig = plt.figure()
+        # fig.suptitle('Pearson Correlation = {}'.format(Rcorr[0]))
+        
+        plt.plot(eeg_test[:,0], label = 'Signal')
+        plt.plot(predicho_fake[:,0], label = 'Prediction')
+        plt.title('Fake prediction')
+        plt.xlim([2000,3000])
+        plt.xlabel('Samples')
+        plt.ylabel('Amplitude')
+        plt.grid()
+        plt.legend()
              
         psds_test, freqs_mean = mne.time_frequency.psd_array_welch(eeg_test.transpose(), info['sfreq'], fmin, fmax)
         psds_random, freqs_mean = mne.time_frequency.psd_array_welch(predicho_fake.transpose(), info['sfreq'], fmin, fmax)          
@@ -98,7 +110,7 @@ def simular_iteraciones_Ridge_plot(info, sr, situacion, best_alpha, iteraciones,
     return psds_rand_correlations
     
     
-def simular_iteraciones_Ridge(best_alpha, iteraciones, sesion, sujeto, test_round, dstims_train_val, eeg_train_val, dstims_test, eeg_test, Correlaciones_fake, Errores_fake, Save_iterations, Path_it):
+def simular_iteraciones_Ridge(best_alpha, iteraciones, sesion, sujeto, test_round, dstims_train_val, eeg_train_val, dstims_test, eeg_test, Correlaciones_fake, Errores_fake, Path_it, Save_iterations = True):
     
     mod_fake = linear_model.Ridge(alpha = best_alpha, random_state=123)
     print("\nSesion {} - Sujeto {} - Test round {}".format(sesion, sujeto, test_round + 1))
@@ -108,11 +120,9 @@ def simular_iteraciones_Ridge(best_alpha, iteraciones, sesion, sujeto, test_roun
         
         mod_fake.fit(dstims_train_random, eeg_train_val) ## entreno el modelo
         
-        ###### TESTEO EN VAL SET  ######
+        ###### TESTEO EN TEST SET  ######
         # Predigo
-        dstims_test_random = copy.deepcopy(dstims_test)
-        np.random.shuffle(dstims_test_random)
-        predicho_fake = mod_fake.predict(dstims_test_random)
+        predicho_fake = mod_fake.predict(dstims_test)
         
         # Correlacion
         Rcorr_fake = np.array([np.corrcoef(eeg_test[:,ii].ravel(), np.array(predicho_fake[:,ii]).ravel())[0,1] for ii in range(eeg_test.shape[1])])
@@ -130,8 +140,9 @@ def simular_iteraciones_Ridge(best_alpha, iteraciones, sesion, sujeto, test_roun
         f = open(Path_it + 'Corr_Rmse_fake_ronda_it_canal_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto), 'wb')
         pickle.dump([Correlaciones_fake, Errores_fake], f)
         f.close()
+    
         
-def simular_iteraciones_mtrf(iteraciones, sesion, sujeto, test_round, sr, info, tmin, tmax, dstims_train, eeg_train, dstims_test, eeg_test, scores, coefs, Correlaciones_fake, Errores_fake, Save_iterations, Path_it):
+def simular_iteraciones_mtrf(iteraciones, sesion, sujeto, test_round, sr, info, tmin, tmax, dstims_train, eeg_train, dstims_test, eeg_test, scores, coefs, Correlaciones_fake, Errores_fake, Path_it, Save_iterations = True):
     
     rf_fake = ReceptiveField(tmin, tmax, sr, feature_names=['envelope'],
                                     estimator=1., scoring='corrcoef')

@@ -191,7 +191,18 @@ class estandarizar():
     def __init__(self, axis = 0):
         self.axis = axis
         
-    def estandarizar_data(self, data):
+    def fit_standarize_train_data(self, train_data):
+        self.mean = np.mean(train_data, axis = self.axis)
+        self.std = np.std(train_data, axis = self.axis)
+        
+        train_data -= self.mean
+        train_data /= self.std
+    
+    def standarize_test_data(self, data):
+        data -= self.mean
+        data /= self.std
+    
+    def standarize_data(self, data):
         data -= np.mean(data, axis = self.axis)
         data /= np.std(data, axis = self.axis)
 
@@ -202,6 +213,17 @@ class normalizar():
         self.axis = axis
         self.porcent = porcent
         
+    def fit_normalize_train_data(self, train_matrix):
+        self.min = np.min(train_matrix, axis = self.axis)
+        train_matrix -= self.min
+        
+        self.max = np.max(train_matrix, axis = self.axis)
+        train_matrix /= self.max
+        
+    def normlize_test_data(self, test_matrix):
+        test_matrix -= self.min
+        test_matrix /= self.max
+    
     def fit_normalize_percent(self, matrix):
         # Defino el termino a agarrar
         self.n = int((self.porcent*len(matrix)-1)/100)
@@ -218,36 +240,101 @@ class normalizar():
         self.maxn_matrix = sorted_matrix[-self.n]
         matrix /= self.maxn_matrix    
         
-    def normalize_stims(self, matrix):
+    def normalize_01(self, matrix):
         # Los estimulos los normalizo todos entre 0 y 1 estricto, la envolvente no tiene picos
         matrix -= np.min(matrix, axis = self.axis)   
         matrix /= np.max(matrix, axis = self.axis) 
 
 
-def normalizacion(eeg, dstims, Normalizar, axis = 0, porcent = 5):   
+def normalizacion(eeg, dstims_train_val, dstims_test, Normalizar, axis = 0, porcent = 5):  
+      
     norm = normalizar(axis, porcent)
+    
     if Normalizar == 'EEG':
         norm.fit_normalize_percent(eeg)
+        
     elif Normalizar == 'Stims':
-        for stim in list(dstims):
-            norm.normalize_stims(stim)
+        for i in range(len(dstims_train_val)):
+            norm.fit_normalize_train_data(dstims_train_val[i])
+            norm.normlize_test_data(dstims_test[i])
+      
+        dstims_train_val = np.hstack([dstims_train_val[i] for i in range(len(dstims_train_val))])
+        dstims_test = np.hstack([dstims_test[i] for i in range(len(dstims_test))])
+
     elif Normalizar == 'All':
         norm.fit_normalize_percent(eeg)
-        for stim in list(dstims):
-            norm.normalize_stims(stim)
+        
+        for i in range(len(dstims_train_val)):
+            norm.fit_normalize_train_data(dstims_train_val[i])
+            norm.normlize_test_data(dstims_test[i])
+      
+        dstims_train_val = np.hstack([dstims_train_val[i] for i in range(len(dstims_train_val))])
+        dstims_test = np.hstack([dstims_test[i] for i in range(len(dstims_test))])
 
-def estandarizacion(eeg, dstims, Estandarizar, axis = 0):          
+    return eeg, dstims_train_val, dstims_test
+
+def estandarizacion(eeg, dstims_train_val, dstims_test, Estandarizar, axis = 0):          
+    
     estandar = estandarizar(axis)
+    
     if Estandarizar == 'EEG':
-        estandar.estandarizar_data(eeg)  
+        estandar.standarize_data(eeg)  
+        
     elif Estandarizar == 'Stims':
-        for stim in list(dstims):
-            estandar.estandarizar_data(stim)   
+        for i in range(len(dstims_train_val)):
+            estandar.fit_standarize_train_data(dstims_train_val[i])
+            estandar.standarize_test_data(dstims_test[i]
+                                          )
+        dstims_train_val = np.hstack([dstims_train_val[i] for i in range(len(dstims_train_val))])
+        dstims_test = np.hstack([dstims_test[i] for i in range(len(dstims_test))])
+            
     elif Estandarizar == 'All':
-        estandar.estandarizar_data(eeg)
-        for stim in list(dstims):
-            estandar.estandarizar_data(stim)
+        estandar.standarize_data(eeg)
+        
+        for i in range(len(dstims_train_val)):
+            estandar.fit_standarize_train_data(dstims_train_val[i])
+            estandar.standarize_test_data(dstims_test[i])
+            
+        dstims_train_val = np.hstack([dstims_train_val[i] for i in range(len(dstims_train_val))])
+        dstims_test = np.hstack([dstims_test[i] for i in range(len(dstims_test))])
+    
+    return eeg, dstims_train_val, dstims_test
 
+def standarize_normalize(eeg, dstims_train_val, dstims_test, Stims_preprocess, EEG_preprocess, axis = 0, porcent = 5):
+    
+    norm = normalizar(axis, porcent)
+    estandar = estandarizar(axis)
+    
+    if Stims_preprocess == 'Standarize':
+        for i in range(len(dstims_train_val)):
+            estandar.fit_standarize_train_data(dstims_train_val[i])
+            estandar.standarize_test_data(dstims_test[i])
+        dstims_train_val = np.hstack([dstims_train_val[i] for i in range(len(dstims_train_val))])
+        dstims_test = np.hstack([dstims_test[i] for i in range(len(dstims_test))]) 
+        
+    if Stims_preprocess == 'Normalize':
+        for i in range(len(dstims_train_val)):
+            norm.fit_normalize_train_data(dstims_train_val[i])
+            norm.normlize_test_data(dstims_test[i])
+        dstims_train_val = np.hstack([dstims_train_val[i] for i in range(len(dstims_train_val))])
+        dstims_test = np.hstack([dstims_test[i] for i in range(len(dstims_test))])
+        
+    if EEG_preprocess == 'Standarize':
+        estandar.standarize_data(eeg)  
+    
+    if  EEG_preprocess == 'Normalize':
+        norm.fit_normalize_percent(eeg)
+    
+    return eeg, dstims_train_val, dstims_test
+
+def correlacion (a, b):
+    corr=[1.] 
+    if (len(a)!= len(b)):
+        print('Error: Vectores de diferente tamaño: {} y {}.'.format(len(a), len(b)))
+    else:
+        for i in range(int(len(a)/2)):
+            corr.append(np.corrcoef(a[:-i-1], b[i+1:])[0,1])
+    return np.array(corr)
 
 # def normalizar_stims(dstims, axis):
 #     returns = []

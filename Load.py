@@ -20,7 +20,7 @@ class Trial_channel:
     def __init__(
                 self, s=21, trial=1, channel=1, Band = 'All',
                  sr=128, tmin = -0.53, tmax = -0.003, valores_faltantes_pitch = 0, 
-                 Causal_filter = True, Hilbert_eeg = False,  drop_bads = False 
+                 Causal_filter = True, drop_bads = False 
                  ):
         
         sex_list = ['M','M','M','F','F','F','F','M','M','M','F','F','F','F','M','M','M','F','F','M']
@@ -36,7 +36,6 @@ class Trial_channel:
         self.sex = sex_list[(s-21)*2 + channel-1] 
         self.Causal_filter = Causal_filter
         self.drop_bads = drop_bads
-        self.hilbert_eeg = Hilbert_eeg
         self.bads = ['C7','B27','B26','B25','B14','B15','B10','B11','B9','B8','A26','A27','A25','A24','A13','A14','A12','A11','D32','D31','D24','D25','D23','D22','D8','D7','C30','C29']
         
         self.eeg_fname = "Datos/EEG/S"+str(s)+"/s"+str(s)+"-"+str(channel)+"-Trial"+str(trial)+"-Deci-Filter-Trim-ICA-Pruned.set"
@@ -50,13 +49,10 @@ class Trial_channel:
         # Hago un lowpass
         if self.Causal_filter: 
             eeg = eeg.filter(l_freq = self.l_freq_eeg, h_freq = self.h_freq_eeg, phase = 'minimum')
-            # eeg._data = np.real(sgn.hilbert(eeg._data))
             
         else: eeg = eeg.filter(l_freq = self.l_freq_eeg, h_freq = self.h_freq_eeg)
         
         if self.drop_bads: eeg.drop_channels(self.bads)
-        
-        if self.hilbert_eeg: eeg.apply_hilbert(envelope = True)
         
         # Paso a array
         eeg = eeg.to_data_frame()
@@ -202,7 +198,7 @@ class Trial_channel:
 
 class Sesion_class:
     def __init__(self, sesion=21, Band = 'All', sr=128, tmin = -0.53, tmax = -0.003, 
-                 valores_faltantes_pitch = 0, Causal_filter = True, Hilbert_eeg = False,
+                 valores_faltantes_pitch = 0, Causal_filter = True,
                  situacion = 'Escucha', Calculate_pitch = False, 
                  procesed_data_path = 'saves/Preprocesed_Data/', Save_procesed_data = False
                  ):
@@ -216,7 +212,6 @@ class Sesion_class:
         self.l_freq_eeg, self.h_freq_eeg = Processing.band_freq(Band)
         self.valores_faltantes_pitch = valores_faltantes_pitch        
         self.Causal_filter = Causal_filter
-        self.Hilbert_eeg = Hilbert_eeg
         self.situacion = situacion
         self.Calculate_pitch = Calculate_pitch
         self.procesed_data_path = procesed_data_path
@@ -241,11 +236,11 @@ class Sesion_class:
                 Trial_channel_1 = Trial_channel(s = self.sesion, trial = trial, channel = 1, 
                                                 Band = self.Band, sr = self.sr, tmin = self.tmin, tmax = self.tmax, 
                                                 valores_faltantes_pitch = self.valores_faltantes_pitch, 
-                                                Causal_filter = self.Causal_filter, Hilbert_eeg = self.Hilbert_eeg).load_trial()
+                                                Causal_filter = self.Causal_filter).load_trial()
                 Trial_channel_2 = Trial_channel(s = self.sesion, trial = trial, channel = 2, 
                                                 Band = self.Band, sr = self.sr, tmin = self.tmin, tmax = self.tmax, 
                                                 valores_faltantes_pitch = self.valores_faltantes_pitch, 
-                                                Causal_filter = self.Causal_filter, Hilbert_eeg = self.Hilbert_eeg).load_trial()
+                                                Causal_filter = self.Causal_filter).load_trial()
                 
                 ###### Cargo data ######        
                 eeg_trial_sujeto_1, envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1, pitch_der_trial_para_sujeto_1 = Trial_channel_1['eeg'], Trial_channel_2['envelope'], Trial_channel_2['pitch'], Trial_channel_2['pitch_der']
@@ -289,37 +284,35 @@ class Sesion_class:
         #Convierto a array
         eeg_sujeto_1, envelope_para_sujeto_1, pitch_para_sujeto_1, pitch_der_para_sujeto_1,eeg_sujeto_2, envelope_para_sujeto_2, pitch_para_sujeto_2, pitch_der_para_sujeto_2 = Processing.make_array(eeg_sujeto_1, envelope_para_sujeto_1, pitch_para_sujeto_1, pitch_der_para_sujeto_1,eeg_sujeto_2, envelope_para_sujeto_2, pitch_para_sujeto_2, pitch_der_para_sujeto_2)
         
-        if self.Save_procesed_data:
-            EEG_path = self.procesed_data_path + 'EEG/'
-            if self.Causal_filter: EEG_path += 'Causal_'
-            if self.Hilbert_eeg: EEG_path += 'Hilbert_'
-            EEG_path += 'Sit_{}_Band_{}(tmin{}_tmax{})/'.format(self.situacion, self.Band, self.tmin, self.tmax)
-            Envelope_path = self.procesed_data_path + 'Envelope/Sit_{}(tmin{}_tmax{})/'.format(self.situacion, self.tmin, self.tmax)
-            Pitch_path = self.procesed_data_path + 'Pitch/Sit_{}_Faltantes_0(tmin{}_tmax{})/'.format(self.situacion, self.tmin, self.tmax)
-            Pitch_der_path = self.procesed_data_path + 'Pitch_der/Sit_{}_Faltantes_0(tmin{}_tmax{})/'.format(self.situacion, self.tmin, self.tmax)
-            for path in [EEG_path, Envelope_path, Pitch_path, Pitch_der_path]:
-                try: os.makedirs(path)
-                except: pass
-            
-            f = open(EEG_path + 'Sesion{}.pkl'.format(self.sesion), 'wb')
-            pickle.dump([eeg_sujeto_1, eeg_sujeto_2], f)
-            f.close()
-            
-            f = open(Envelope_path + 'Sesion{}.pkl'.format(self.sesion), 'wb')
-            pickle.dump([envelope_para_sujeto_1, envelope_para_sujeto_2], f)
-            f.close()
-            
-            f = open(Pitch_path + 'Sesion{}.pkl'.format(self.sesion), 'wb')
-            pickle.dump([pitch_para_sujeto_1, pitch_para_sujeto_2], f)
-            f.close()
-            
-            f = open(Pitch_der_path + 'Sesion{}.pkl'.format(self.sesion), 'wb')
-            pickle.dump([pitch_der_para_sujeto_1, pitch_der_para_sujeto_2], f)
-            f.close()
-            
-            f = open(self.procesed_data_path + 'EEG/info.pkl', 'wb')
-            pickle.dump(info, f)
-            f.close()
+        EEG_path = self.procesed_data_path + 'EEG/'
+        if self.Causal_filter: EEG_path += 'Causal_'
+        EEG_path += 'Sit_{}_Band_{}/'.format(self.situacion, self.Band)
+        Envelope_path = self.procesed_data_path + 'Envelope/Sit_{}/'.format(self.situacion)
+        Pitch_path = self.procesed_data_path + 'Pitch/Sit_{}_Faltantes_0/'.format(self.situacion)
+        Pitch_der_path = self.procesed_data_path + 'Pitch_der/Sit_{}_Faltantes_0/'.format(self.situacion)
+        for path in [EEG_path, Envelope_path, Pitch_path, Pitch_der_path]:
+            try: os.makedirs(path)
+            except: pass
+        
+        f = open(EEG_path + 'Sesion{}.pkl'.format(self.sesion), 'wb')
+        pickle.dump([eeg_sujeto_1, eeg_sujeto_2], f)
+        f.close()
+        
+        f = open(Envelope_path + 'Sesion{}.pkl'.format(self.sesion), 'wb')
+        pickle.dump([envelope_para_sujeto_1, envelope_para_sujeto_2], f)
+        f.close()
+        
+        f = open(Pitch_path + 'Sesion{}.pkl'.format(self.sesion), 'wb')
+        pickle.dump([pitch_para_sujeto_1, pitch_para_sujeto_2], f)
+        f.close()
+        
+        f = open(Pitch_der_path + 'Sesion{}.pkl'.format(self.sesion), 'wb')
+        pickle.dump([pitch_der_para_sujeto_1, pitch_der_para_sujeto_2], f)
+        f.close()
+        
+        f = open(self.procesed_data_path + 'EEG/info.pkl', 'wb')
+        pickle.dump(info, f)
+        f.close()
                 
         Sujeto_1 = {'EEG':eeg_sujeto_1, 'Envelope': envelope_para_sujeto_2, 'Pitch': pitch_para_sujeto_2, 'Pitch_der': pitch_der_para_sujeto_2, 'info': info}
         Sujeto_2 = {'EEG':eeg_sujeto_2, 'Envelope': envelope_para_sujeto_1, 'Pitch': pitch_para_sujeto_1, 'Pitch_der': pitch_der_para_sujeto_1, 'info': info}
@@ -332,23 +325,22 @@ class Sesion_class:
         eeg_path = self.procesed_data_path + 'EEG/'
         
         if self.Causal_filter: eeg_path += 'Causal_'  
-        if self.Hilbert_eeg: eeg_path += 'Hilbert_'
-        eeg_path += 'Sit_{}_Band_{}(tmin{}_tmax{})/'.format(self.situacion, self.Band, self.tmin, self.tmax) + 'Sesion{}.pkl'.format(self.sesion)
+        eeg_path += 'Sit_{}_Band_{}/'.format(self.situacion, self.Band) + 'Sesion{}.pkl'.format(self.sesion)
 
         
         f = open(eeg_path, 'rb')
         eeg_sujeto_1, eeg_sujeto_2 = pickle.load(f)
         f.close()
         
-        f = open(self.procesed_data_path + 'Envelope/Sit_{}(tmin{}_tmax{})/'.format(self.situacion, self.tmin, self.tmax) + 'Sesion{}.pkl'.format(self.sesion), 'rb')
+        f = open(self.procesed_data_path + 'Envelope/Sit_{}/'.format(self.situacion) + 'Sesion{}.pkl'.format(self.sesion), 'rb')
         envelope_para_sujeto_1, envelope_para_sujeto_2 = pickle.load(f)
         f.close()
         
-        f = open(self.procesed_data_path + 'Pitch/Sit_{}_Faltantes_0(tmin{}_tmax{})/'.format(self.situacion, self.tmin, self.tmax) + 'Sesion{}.pkl'.format(self.sesion), 'rb')
+        f = open(self.procesed_data_path + 'Pitch/Sit_{}_Faltantes_0/'.format(self.situacion) + 'Sesion{}.pkl'.format(self.sesion), 'rb')
         pitch_para_sujeto_1, pitch_para_sujeto_2 = pickle.load(f)
         f.close()
         
-        f = open(self.procesed_data_path + 'Pitch_der/Sit_{}_Faltantes_0(tmin{}_tmax{})/'.format(self.situacion, self.tmin, self.tmax) + 'Sesion{}.pkl'.format(self.sesion), 'rb')
+        f = open(self.procesed_data_path + 'Pitch_der/Sit_{}_Faltantes_0/'.format(self.situacion) + 'Sesion{}.pkl'.format(self.sesion), 'rb')
         pitch_der_para_sujeto_1, pitch_der_para_sujeto_2 = pickle.load(f)
         f.close()
         
@@ -370,31 +362,22 @@ class Sesion_class:
         return  Sesion
 
 
-def Load_Data(sesion, Band, sr, tmin, tmax, valores_faltantes_pitch, Causal_filter, Hilbert_eeg, situacion, Calculate_pitch, procesed_data_path, Save_procesed_data, Load_procesed_data, sujeto_total):
+def Load_Data(sesion, Band, sr, tmin, tmax, situacion, procesed_data_path, sujeto_total, Causal_filter = True, valores_faltantes_pitch = 0, Calculate_pitch = False):
+    
     Sesion_obj = Sesion_class(sesion = sesion, Band = Band, sr = sr, tmin = tmin, tmax = tmax, 
                         valores_faltantes_pitch = valores_faltantes_pitch, Causal_filter = Causal_filter, 
-                        Hilbert_eeg = Hilbert_eeg, situacion = situacion, Calculate_pitch = Calculate_pitch, 
-                        procesed_data_path = procesed_data_path, Save_procesed_data = Save_procesed_data)
-    if Load_procesed_data:
-        # Intento cargar preprocesados
-        try:
-            Sesion = Sesion_obj.load_procesed()
-            Sujeto_1, Sujeto_2 = Sesion['Sujeto_1'], Sesion['Sujeto_2']
-        
-        # Si falla cargo de raw y guardo en Auto_save    
-        except: 
-            if not sujeto_total: procesed_data_path += 'Auto_save/'
-            Save_procesed_data = True
-            Sesion_obj = Sesion_class(sesion, Band, sr, tmin, tmax, valores_faltantes_pitch, Causal_filter, Hilbert_eeg, situacion, Calculate_pitch, procesed_data_path, Save_procesed_data)
+                        situacion = situacion, Calculate_pitch = Calculate_pitch, 
+                        procesed_data_path = procesed_data_path)
     
-            Sesion = Sesion_obj.load_from_raw() 
-            Sujeto_1, Sujeto_2  = Sesion['Sujeto_1'], Sesion['Sujeto_2']
-
-    # Cargo directo de raw
-    else: 
+    # Intento cargar de preprocesados si existen
+    try:
+        Sesion = Sesion_obj.load_procesed()    
+    # Si falla cargo de raw y guardo   
+    except: 
         Sesion = Sesion_obj.load_from_raw() 
-        Sujeto_1, Sujeto_2 = Sesion['Sujeto_1'], Sesion['Sujeto_2']
     
+    Sujeto_1, Sujeto_2  = Sesion['Sujeto_1'], Sesion['Sujeto_2']
+ 
     return Sujeto_1, Sujeto_2
 
 
@@ -415,16 +398,9 @@ def Estimulos(stim, Sujeto_1, Sujeto_2):
     return dstims_para_sujeto_1, dstims_para_sujeto_2, info
 
 
-def rename_paths(Estandarizar, Normalizar, stim, valores_faltantes_pitch, Band, tmin, tmax, Causal_filter, Hilbert_eeg, *paths):  
+def rename_paths(Stims_preprocess, EEG_preprocess, stim, Band, tmin, tmax, *paths):  
     returns = []
     for path in paths:
-        if Estandarizar: path += '{}_std_'.format(Estandarizar)
-        if Normalizar: path += '{}_norm'.format(Normalizar)
-        path += '/Stim_{}'.format(stim)
-        if stim != 'Envelope': path += '_Faltantes_{}'.format(valores_faltantes_pitch)
-        if Causal_filter: path += '_EEG_Causal'
-        else: path += '_EEG'
-        if Hilbert_eeg: path += '_Hilbert_Band_{}(tmin{}_tmax{})/'.format(Band, tmin, tmax)
-        else: path += '_Band_{}(tmin{}_tmax{})/'.format(Band, tmin, tmax)
+        path += 'Stim_{}__EEG_Band_{}/'.format(stim, Band)
         returns.append(path) 
     return tuple(returns)
