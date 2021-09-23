@@ -6,7 +6,6 @@ Created on Wed Sep 22 20:23:54 2021
 """
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn import linear_model
 from sklearn.model_selection import KFold
 import os
 import pickle
@@ -123,52 +122,6 @@ for sesion in sesiones:
             Rmse = np.array(np.sqrt(np.power((predicted - eeg_test),2).mean(0)))
             Rmse_buenos_ronda_canal[fold] = Rmse
             
-            # Calculo psd de pred y señal
-            # fmin, fmax = 0, 40
-            # psds_test, freqs_mean = mne.time_frequency.psd_array_welch(eeg_test.transpose(), info['sfreq'], fmin, fmax)
-            # psds_pred, freqs_mean = mne.time_frequency.psd_array_welch(predicho.transpose(), info['sfreq'], fmin, fmax)
-            
-            # psds_channel_corr = np.array([np.corrcoef(psds_test[ii].ravel(), np.array(psds_pred[ii]).ravel())[0,1] for ii in range(len(psds_test))])
-            # psd_pred_correlations.append(np.mean(psds_channel_corr))
-            
-            # Ploteo PSD
-            # Plot.Plot_PSD(sesion, sujeto, fold, situacion, Display_PSD, Save_PSD, 'Prediccion', info, predicho.transpose())           
-            # Plot.Plot_PSD(sesion, sujeto, fold, situacion, Display_PSD, Save_PSD, 'Test', info, eeg_test.transpose())                
-            
-            # Matriz de Covarianza
-            # raw = mne.io.RawArray(predicho.transpose(), info)
-            # cov_mat = mne.compute_raw_covariance(raw)
-            # plt.ion()
-            # ax1, ax2 = cov_mat.plot(info)
-            # try: os.makedirs('gráficos/Covariance/Cov_prediccion')
-            # except: pass
-            # ax1.savefig('gráficos/Covariance/Cov_prediccion/Sesion{} - Sujeto{} - {}'.format(sesion,sujeto,situacion))
-    
-            # raw = mne.io.RawArray(eeg_test.transpose(), info)
-            # cov_mat = mne.compute_raw_covariance(raw)
-            # plt.ion()
-            # ax1, ax2 = cov_mat.plot(info)
-            # try: os.makedirs('gráficos/Covariance/Cov_test')
-            # except: pass
-            # ax1.savefig('gráficos/Covariance/Cov_test/Sesion{} - Sujeto{} - {}'.format(sesion,sujeto,situacion))
-            
-            
-            ##### SINGAL AND PREDICTION PLOT #####
-            # plt.ion()
-            # fig = plt.figure()
-            # fig.suptitle('Pearson Correlation = {}'.format(Rcorr[0]))
-            # plt.plot(eeg_test[:,0], label = 'Signal')
-            # plt.plot(predicho[:,0], label = 'Prediction')
-            # plt.title('Original Signals - alpha: {}'.format(alpha))
-            # plt.xlim([2000,3000])
-            # plt.xlabel('Samples')
-            # plt.ylabel('Amplitude')
-            # plt.grid()
-            # plt.legend()
-            # plt.savefig('gráficos/Ridge/Alpha/Signals_alpha{}.png'.format(alpha))
-            # plt.tight_layout()
-            # break
-
             if Simulate_random_data: 
                 ###### SIMULACIONES PERMUTADAS PARA COMPARAR ######
                 toy_iterations = 10
