@@ -14,42 +14,44 @@ import Processing
 import Plot
 import Load, Simulation, Models
 
-###### Defino parametros ######
-Save_Pesos_Predicciones_Corr_Rmse_buenas = False
-Simulate_random_data = False
-Statistical_test = False
-
-# FIGURAS IND
-Display_Ind_Figures = False
-Save_Ind_Figures = False
-# FIGURAS TODOS
-Display_Total_Figures = True
-Save_Total_Figures = False
-
+###### DEFINe PARAMETERS ######
+# Stimuli and EEG
 Stims_Order = ['Envelope', 'Pitch', 'Pitch_der', 'Spectrogram', 'Phonemes']
-###### DEFINO PARAMETROS CORRIDA######
 stim = 'Envelope'
 Band = 'Theta'
 situacion = 'Escucha'
-###### Defino estandarizacion
+# Standarization
 Stims_preprocess = 'Normalize'
 EEG_preprocess = 'Standarize'
-# Defino tiempos
+# Times
 sr = 128
-n_canales = 128
 tmin, tmax = -0.53, 0.1
 delays = - np.arange(np.floor(tmin*sr), np.ceil(tmax*sr), dtype=int)
 times = np.linspace(delays[0]*np.sign(tmin)*1/sr, np.abs(delays[-1])*np.sign(tmax)*1/sr, len(delays))
+# Model
+# Model = 'Ridge'
 alpha = 100
-###### Paths ######
+# Random permutations
+Simulate_random_data = False
+Statistical_test = False
+# Display
+Display_Ind_Figures = False
+Display_Total_Figures = True
+# Save
+Save_Ind_Figures = False
+Save_Total_Figures = False
+# Paths
 procesed_data_path = 'saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin,tmax)
 Run_graficos_path = 'gráficos/Ridge/Stims_{}_EEG_{}/Alpha_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(Stims_preprocess,EEG_preprocess,alpha,tmin,tmax, stim, Band)
 Path_it = 'saves/Ridge/Fake_it/Stims_{}_EEG_{}/Alpha_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(Stims_preprocess, EEG_preprocess,alpha,tmin,tmax, stim, Band)
 Path_Pesos_Predicciones_Corr_Rmse = 'saves/Ridge/Corr_Rmse_Pesos_Predicciones/Stims_{}_EEG_{}/Alpha_{}/tmin{}_tmax{}/Stim_{}__EEG_Band_{}/'.format(Stims_preprocess, EEG_preprocess,alpha,tmin,tmax, stim, Band)
 
+# Save variables
+Variables = {}
 psd_pred_correlations = []
 psd_rand_correlations = []
-###### Empiezo corrida ######
+
+###### Start Run ######
 sesiones = np.arange(21, 26)
 sujeto_total = 0
 for sesion in sesiones:
@@ -74,19 +76,19 @@ for sesion in sesiones:
         iteraciones = 3000
           
         ###### Defino variables donde voy a guardar mil cosas ######
-        Pesos_ronda_canales = np.zeros((n_splits, n_canales, len(delays)*Cant_Estimulos))
+        Pesos_ronda_canales = np.zeros((n_splits, info['nchan'], len(delays)*Cant_Estimulos))
         
-        Prob_Corr_ronda_canales = np.ones((n_splits, n_canales))
-        Prob_Rmse_ronda_canales = np.ones((n_splits, n_canales))
+        Prob_Corr_ronda_canales = np.ones((n_splits, info['nchan']))
+        Prob_Rmse_ronda_canales = np.ones((n_splits, info['nchan']))
         
-        Correlaciones_fake = np.zeros((n_splits, iteraciones, n_canales))
-        Errores_fake = np.zeros((n_splits, iteraciones, n_canales))
+        Correlaciones_fake = np.zeros((n_splits, iteraciones, info['nchan']))
+        Errores_fake = np.zeros((n_splits, iteraciones, info['nchan']))
         
-        Corr_buenas_ronda_canal = np.zeros((n_splits, n_canales))
-        Rmse_buenos_ronda_canal = np.zeros((n_splits, n_canales))
+        Corr_buenas_ronda_canal = np.zeros((n_splits, info['nchan']))
+        Rmse_buenos_ronda_canal = np.zeros((n_splits, info['nchan']))
         
-        Canales_repetidos_corr_sujeto = np.zeros(n_canales)
-        Canales_repetidos_rmse_sujeto = np.zeros(n_canales)
+        Canales_repetidos_corr_sujeto = np.zeros(info['nchan'])
+        Canales_repetidos_rmse_sujeto = np.zeros(info['nchan'])
       
         ###### Empiezo el KFold de test ######
         kf_test = KFold(n_splits, shuffle = False)
@@ -194,24 +196,23 @@ for sesion in sesiones:
             Prob_Rmse_ronda_canales[fold][p_rmse < umbral] = p_rmse[p_rmse < umbral]
         
         ###### Guardo Correlaciones y Rmse buenas de todos las fold ######
-        if Save_Pesos_Predicciones_Corr_Rmse_buenas:
-            try: os.makedirs(Path_Pesos_Predicciones_Corr_Rmse)
-            except: pass
+        try: os.makedirs(Path_Pesos_Predicciones_Corr_Rmse)
+        except: pass
 
-            f = open(Path_Pesos_Predicciones_Corr_Rmse + 'Corr_Rmse_ronda_canal_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto), 'wb')
-            pickle.dump([Corr_buenas_ronda_canal, Rmse_buenos_ronda_canal], f)
-            f.close()
-            
-            f = open(Path_Pesos_Predicciones_Corr_Rmse + 'Pesos_Pred_ronda_canal_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto), 'wb')
-            pickle.dump([Pesos_ronda_canales, Predicciones], f)
-            f.close()
+        f = open(Path_Pesos_Predicciones_Corr_Rmse + 'Corr_Rmse_ronda_canal_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto), 'wb')
+        pickle.dump([Corr_buenas_ronda_canal, Rmse_buenos_ronda_canal], f)
+        f.close()
+        
+        f = open(Path_Pesos_Predicciones_Corr_Rmse + 'Pesos_Pred_ronda_canal_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto), 'wb')
+        pickle.dump([Pesos_ronda_canales, Predicciones], f)
+        f.close()
             
         ###### Guardo los canales que pasaron las pruebas en todos los folds y los p valores ######
         
-        Canales_Corr_prob = np.zeros(n_canales)
-        Canales_Corr_std = np.zeros(n_canales)
-        Canales_Rmse_prob = np.zeros(n_canales)
-        Canales_Rmse_std = np.zeros(n_canales)
+        Canales_Corr_prob = np.zeros(info['nchan'])
+        Canales_Corr_std = np.zeros(info['nchan'])
+        Canales_Rmse_prob = np.zeros(info['nchan'])
+        Canales_Rmse_std = np.zeros(info['nchan'])
         
         # Armo lista con canales que pasan el test        
         Canales_sobrevivientes_corr, = np.where(np.all((Prob_Corr_ronda_canales < 1), axis = 0))
@@ -230,10 +231,10 @@ for sesion in sesiones:
                
         ###### Grafico cabezas y canales ######       
         Plot.plot_cabezas_canales(info.ch_names, info, sr, sesion, sujeto, Canales_sobrevivientes_corr, 
-                                  Corr_promedio, Display_Ind_Figures, n_canales, 'Correlación', 
+                                  Corr_promedio, Display_Ind_Figures, info['nchan'], 'Correlación', 
                                   Save_Ind_Figures, Run_graficos_path)
         Plot.plot_cabezas_canales(info.ch_names, info, sr, sesion, sujeto, Canales_sobrevivientes_rmse, 
-                                  Rmse_promedio, Display_Ind_Figures, n_canales, 'Rmse', 
+                                  Rmse_promedio, Display_Ind_Figures, info['nchan'], 'Rmse', 
                                   Save_Ind_Figures, Run_graficos_path)
         
         ###### Grafico Pesos ######
