@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri Apr 23 14:38:57 2021
+Created on Wed Sep 22 20:23:54 2021
 
 @author: joaco
 """
@@ -12,7 +12,7 @@ import os
 import pickle
 import Processing
 import Plot
-import Load, Validation, Simulation
+import Load, Simulation, Models
 
 ###### Defino parametros ######
 Save_Pesos_Predicciones_Corr_Rmse_buenas = False
@@ -27,7 +27,6 @@ Display_Total_Figures = True
 Save_Total_Figures = False
 
 Stims_Order = ['Envelope', 'Pitch', 'Pitch_der', 'Spectrogram', 'Phonemes']
-
 ###### DEFINO PARAMETROS CORRIDA######
 stim = 'Envelope'
 Band = 'Theta'
@@ -47,7 +46,6 @@ procesed_data_path = 'saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin,tmax)
 Run_graficos_path = 'gráficos/Ridge/Stims_{}_EEG_{}/Alpha_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(Stims_preprocess,EEG_preprocess,alpha,tmin,tmax, stim, Band)
 Path_it = 'saves/Ridge/Fake_it/Stims_{}_EEG_{}/Alpha_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(Stims_preprocess, EEG_preprocess,alpha,tmin,tmax, stim, Band)
 Path_Pesos_Predicciones_Corr_Rmse = 'saves/Ridge/Corr_Rmse_Pesos_Predicciones/Stims_{}_EEG_{}/Alpha_{}/tmin{}_tmax{}/Stim_{}__EEG_Band_{}/'.format(Stims_preprocess, EEG_preprocess,alpha,tmin,tmax, stim, Band)
-# Path_it, Run_graficos_path, Path_Pesos_Predicciones_Corr_Rmse = Load.rename_paths(Stims_preprocess, EEG_preprocess, stim, Band, tmin, tmax, Path_it, Run_graficos_path, Path_Pesos_Predicciones_Corr_Rmse)
 
 psd_pred_correlations = []
 psd_rand_correlations = []
@@ -92,7 +90,7 @@ for sesion in sesiones:
       
         ###### Empiezo el KFold de test ######
         kf_test = KFold(n_splits, shuffle = False)
-        for test_round, (train_val_index, test_index) in enumerate(kf_test.split(eeg)):
+        for fold, (train_val_index, test_index) in enumerate(kf_test.split(eeg)):
             eeg_train_val, eeg_test = eeg[train_val_index], eeg[test_index]
             
             dstims_train_val = list()
@@ -106,31 +104,22 @@ for sesion in sesiones:
             porcent = 5
             eeg, dstims_train_val, dstims_test = Processing.standarize_normalize(eeg, dstims_train_val, dstims_test, Stims_preprocess, EEG_preprocess, axis = 0, porcent = 5)
 
-            ###### Entreno el modelo con el mejor alpha ######
-            mod = linear_model.Ridge(alpha = alpha, random_state=123)
-            mod.fit(dstims_train_val, eeg_train_val) ## entreno el modelo
-            ###### Guardo los pesos de esta ronda ######
-            Pesos_ronda_canales[test_round] = mod.coef_
+            ###### Ajusto el modelo y guardo ######
+            Model = Models.Ridge(alpha)
+            Model.fit(dstims_train_val, eeg_train_val)
+            Pesos_ronda_canales[fold] = Model.coefs
             
-            ###### Predigo en val set  ######
-            predicho = mod.predict(dstims_test)
-            Predicciones[test_round] = predicho
+            ###### Predigo en test set y guardo ######
+            predicted = Model.predict(dstims_test)
+            Predicciones[fold] = predicted
             
-            ###### Calculo Correlacion ######
-            Rcorr = np.array([np.corrcoef(eeg_test[:,ii].ravel(), np.array(predicho[:,ii]).ravel())[0,1] for ii in range(eeg_test.shape[1])])
-            mejor_canal_corr = Rcorr.argmax()
-            Corr_mejor_canal = Rcorr[mejor_canal_corr]
-            Correl_prom = np.mean(Rcorr)
-            ###### Guardo las correlaciones de esta ronda ######
-            Corr_buenas_ronda_canal[test_round] = Rcorr
+            ###### Calculo Correlacion y guardo ######
+            Rcorr = np.array([np.corrcoef(eeg_test[:,ii].ravel(), np.array(predicted[:,ii]).ravel())[0,1] for ii in range(eeg_test.shape[1])])
+            Corr_buenas_ronda_canal[fold] = Rcorr
             
-            ###### Calculo Error ######
-            Rmse = np.array(np.sqrt(np.power((predicho - eeg_test),2).mean(0)))
-            mejor_canal_rmse = Rmse.argmax()
-            Rmse_mejor_canal = Rmse[mejor_canal_rmse]
-            Rmse_prom = np.mean(Rmse)
-            ###### Guardo los errores de esta ronda ######
-            Rmse_buenos_ronda_canal[test_round] = Rmse
+            ###### Calculo Error y guardo ######
+            Rmse = np.array(np.sqrt(np.power((predicted - eeg_test),2).mean(0)))
+            Rmse_buenos_ronda_canal[fold] = Rmse
             
             # Calculo psd de pred y señal
             # fmin, fmax = 0, 40
@@ -141,8 +130,8 @@ for sesion in sesiones:
             # psd_pred_correlations.append(np.mean(psds_channel_corr))
             
             # Ploteo PSD
-            # Plot.Plot_PSD(sesion, sujeto, test_round, situacion, Display_PSD, Save_PSD, 'Prediccion', info, predicho.transpose())           
-            # Plot.Plot_PSD(sesion, sujeto, test_round, situacion, Display_PSD, Save_PSD, 'Test', info, eeg_test.transpose())                
+            # Plot.Plot_PSD(sesion, sujeto, fold, situacion, Display_PSD, Save_PSD, 'Prediccion', info, predicho.transpose())           
+            # Plot.Plot_PSD(sesion, sujeto, fold, situacion, Display_PSD, Save_PSD, 'Test', info, eeg_test.transpose())                
             
             # Matriz de Covarianza
             # raw = mne.io.RawArray(predicho.transpose(), info)
@@ -181,11 +170,11 @@ for sesion in sesiones:
             if Simulate_random_data: 
                 ###### SIMULACIONES PERMUTADAS PARA COMPARAR ######
                 toy_iterations = 10
-                psd_rand_correlation = Simulation.simular_iteraciones_Ridge_plot(info,sr, situacion, alpha, toy_iterations, sesion, sujeto, test_round, dstims_train_val, eeg_train_val, dstims_test, eeg_test)
+                psd_rand_correlation = Simulation.simular_iteraciones_Ridge_plot(info,sr, situacion, alpha, toy_iterations, sesion, sujeto, fold, dstims_train_val, eeg_train_val, dstims_test, eeg_test)
                 psd_rand_correlations.append(psd_rand_correlation)
             
             if Statistical_test:
-                Simulation.simular_iteraciones_Ridge(alpha, iteraciones, sesion, sujeto, test_round, dstims_train_val, eeg_train_val, dstims_test, eeg_test, Correlaciones_fake, Errores_fake, Path_it)
+                Simulation.simular_iteraciones_Ridge(alpha, iteraciones, sesion, sujeto, fold, dstims_train_val, eeg_train_val, dstims_test, eeg_test, Correlaciones_fake, Errores_fake, Path_it)
                 
             else: # Load data from iterations     
                 f = open(Path_it + 'Corr_Rmse_fake_ronda_it_canal_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto), 'rb')
@@ -193,18 +182,18 @@ for sesion in sesiones:
                 f.close() 
             
             ##### TEST ESTADISTICO #####
-            Rcorr_fake = Correlaciones_fake[test_round]
-            Rmse_fake = Errores_fake[test_round] 
+            Rcorr_fake = Correlaciones_fake[fold]
+            Rmse_fake = Errores_fake[fold] 
             
             p_corr = ((Rcorr_fake > Rcorr).sum(0)+1)/(iteraciones+1)
             p_rmse = ((Rmse_fake < Rmse).sum(0)+1)/(iteraciones+1)
             
             # Umbral de 5% y aplico Bonferroni (/128 Divido el umbral por el numero de intentos)
             umbral = 0.05/128 
-            Prob_Corr_ronda_canales[test_round][p_corr < umbral] = p_corr[p_corr < umbral]
-            Prob_Rmse_ronda_canales[test_round][p_rmse < umbral] = p_rmse[p_rmse < umbral]
+            Prob_Corr_ronda_canales[fold][p_corr < umbral] = p_corr[p_corr < umbral]
+            Prob_Rmse_ronda_canales[fold][p_rmse < umbral] = p_rmse[p_rmse < umbral]
         
-        ###### Guardo Correlaciones y Rmse buenas de todos las test_round ######
+        ###### Guardo Correlaciones y Rmse buenas de todos las fold ######
         if Save_Pesos_Predicciones_Corr_Rmse_buenas:
             try: os.makedirs(Path_Pesos_Predicciones_Corr_Rmse)
             except: pass
@@ -217,7 +206,7 @@ for sesion in sesiones:
             pickle.dump([Pesos_ronda_canales, Predicciones], f)
             f.close()
             
-        ###### Guardo los canales que pasaron las pruebas en todos los test_rounds y los p valores ######
+        ###### Guardo los canales que pasaron las pruebas en todos los folds y los p valores ######
         
         Canales_Corr_prob = np.zeros(n_canales)
         Canales_Corr_std = np.zeros(n_canales)
