@@ -401,6 +401,6 @@ def Estimulos(stim, Sujeto_1, Sujeto_2):
 def rename_paths(Stims_preprocess, EEG_preprocess, stim, Band, tmin, tmax, *paths):  
     returns = []
     for path in paths:
-        path += 'Stim_{}__EEG_Band_{}/'.format(stim, Band)
+        path += 'Stim_{}_EEG_Band_{}/'.format(stim, Band)
         returns.append(path) 
     return tuple(returns)

@@ -382,12 +382,11 @@ def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, Band, t
         axs[1].set(xlabel = 'Time (ms)', ylabel='Channel')
         # plt.setp(ax.get_xticklabels(), rotation=45)
         fig.colorbar(im, ax = axs[1], orientation = 'horizontal')
-        
-        # axs[0].plot(times*1000, curva_pesos_totales)
+
         evoked.plot(scalings = dict(eeg=1, grad=1, mag=1), zorder = 'std', time_unit = 'ms', 
                     show = False, spatial_colors=True, unit = False, units = 'w', axes = axs[0])
+        axs[0].plot(times*1000, curva_pesos_totales)
         axs[0].axis('off')
-        axes = axs[0].axes
         
         fig.tight_layout()
         
