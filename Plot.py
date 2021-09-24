@@ -236,6 +236,7 @@ def Cabezas_corr_promedio(Correlaciones_totales_sujetos, info, Display, Save, Ru
         try: os.makedirs(save_path_graficos)
         except: pass
         fig.savefig(save_path_graficos + '{}_promedio.svg'.format(title))
+        fig.savefig(save_path_graficos + '{}_promedio.png'.format(title))
 
     return Correlaciones_promedio.mean(), Correlaciones_promedio.std()
 
@@ -324,9 +325,79 @@ def regression_weights(Pesos_totales_sujetos_todos_canales, info, Band, times, s
             try: os.makedirs(save_path_graficos)
             except: pass
             fig.savefig(save_path_graficos + 'Regression_Weights_{}.svg'.format(Stims_Order[j] if Cant_Estimulos > 1 else stim)) 
+            fig.savefig(save_path_graficos + 'Regression_Weights_{}.png'.format(Stims_Order[j] if Cant_Estimulos > 1 else stim)) 
         
     return returns
 
+def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, Band, times, sr, Display, 
+                              Save, Run_graficos_path, Cant_Estimulos, Stims_Order, stim, Autocorrelation_value = 0.1):
+    
+    # Armo pesos promedio por canal de todos los sujetos que por lo menos tuvieron un buen canal
+    Pesos_totales_sujetos_todos_canales_copy = Pesos_totales_sujetos_todos_canales.swapaxes(0,2)
+    Pesos_totales_sujetos_todos_canales_copy = Pesos_totales_sujetos_todos_canales_copy.mean(0).transpose()
+    
+    # Ploteo pesos y cabezas
+    if Display: plt.ion() 
+    else: plt.ioff()
+    
+    returns = []
+    for j in range(Cant_Estimulos):
+        mean_coefs = Pesos_totales_sujetos_todos_canales_copy[:,j*len(times):(j+1)*len(times)]
+        curva_pesos_totales = mean_coefs.mean(0)
+        returns.append(curva_pesos_totales)
+        
+        if Autocorrelation_value and times[-1]>0:
+            weights_autocorr = Processing.correlacion(curva_pesos_totales, curva_pesos_totales)
+    
+            for i in range(len(weights_autocorr)):
+                if weights_autocorr[i] < Autocorrelation_value: break
+                
+                dif_paso = weights_autocorr[i-1] - weights_autocorr[i]
+                dif_01 = weights_autocorr[i-1] - Autocorrelation_value
+                dif_time = dif_01/sr/dif_paso
+                decorr_time = ((i-1)/sr + dif_time)*1000
+            
+            fig, ax = plt.subplots()
+            plt.plot(np.arange(len(weights_autocorr))*1000/sr, weights_autocorr)
+            plt.title('{} Decorrelation time: {:.2f} ms'.format(Stims_Order[j],decorr_time))
+            plt.hlines(Autocorrelation_value, ax.get_xlim()[0], decorr_time, linestyle = 'dashed', color = 'black')
+            plt.vlines(decorr_time, ax.get_ylim()[0], Autocorrelation_value, linestyle = 'dashed', color = 'black')
+            plt.grid()
+            plt.ylabel('Autocorrelation')
+            plt.xlabel('Time [ms]')
+            if Save: 
+                save_path_graficos = Run_graficos_path
+                try: os.makedirs(save_path_graficos)
+                except: pass
+                fig.savefig(save_path_graficos + 'Weights Autocorrelation_{}.png'.format(Stims_Order[j]if Cant_Estimulos > 1 else stim))       
+        
+        evoked = mne.EvokedArray(Pesos_totales_sujetos_todos_canales_copy[:,j*len(times):(j+1)*len(times)], info)
+        evoked.times = times
+        
+        fig, axs = plt.subplots(2, 1, sharex = True, figsize=(6, 8), gridspec_kw={'height_ratios': [1, 3]})
+        
+        
+        im = axs[1].pcolormesh(times*1000, np.arange(info['nchan']), mean_coefs, cmap='RdBu_r',
+                      vmin=-mean_coefs.max(), vmax=mean_coefs.max(), shading='gouraud')
+        axs[1].set(xlabel = 'Time (ms)', ylabel='Channel')
+        # plt.setp(ax.get_xticklabels(), rotation=45)
+        fig.colorbar(im, ax = axs[1], orientation = 'horizontal')
+        
+        # axs[0].plot(times*1000, curva_pesos_totales)
+        evoked.plot(scalings = dict(eeg=1, grad=1, mag=1), zorder = 'std', time_unit = 'ms', 
+                    show = False, spatial_colors=True, unit = False, units = 'w', axes = axs[0])
+        axs[0].axis('off')
+        axes = axs[0].axes
+        
+        fig.tight_layout()
+        
+        if Save: 
+            save_path_graficos = Run_graficos_path
+            try: os.makedirs(save_path_graficos)
+            except: pass
+            fig.savefig(save_path_graficos + 'Regression_Weights_matrix_{}.svg'.format(Stims_Order[j] if Cant_Estimulos > 1 else stim)) 
+            fig.savefig(save_path_graficos + 'Regression_Weights_marix_{}.png'.format(Stims_Order[j] if Cant_Estimulos > 1 else stim)) 
+        
 
 def pearsonr_pval(x,y):
     return stats.pearsonr(x,y)[1]

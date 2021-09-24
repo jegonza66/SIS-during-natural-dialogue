@@ -24,21 +24,24 @@ Stims_preprocess = 'Normalize'
 EEG_preprocess = 'Standarize'
 # Times
 sr = 128
-tmin, tmax = -0.53, 0.1
+tmin, tmax = -0.7, -0.003
 delays = - np.arange(np.floor(tmin*sr), np.ceil(tmax*sr), dtype=int)
 times = np.linspace(delays[0]*np.sign(tmin)*1/sr, np.abs(delays[-1])*np.sign(tmax)*1/sr, len(delays))
 # Model
 # Model = 'Ridge'
 alpha = 100
+
 # Random permutations
-Simulate_random_data = False
 Statistical_test = False
+Simulate_random_data = False
+
 # Display
 Display_Ind_Figures = False
 Display_Total_Figures = True
 # Save
 Save_Ind_Figures = False
 Save_Total_Figures = False
+
 # Paths
 procesed_data_path = 'saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin,tmax)
 Run_graficos_path = 'gráficos/Ridge/Stims_{}_EEG_{}/Alpha_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(Stims_preprocess,EEG_preprocess,alpha,tmin,tmax, stim, Band)
@@ -50,6 +53,7 @@ Variables = {}
 psd_pred_correlations = []
 psd_rand_correlations = []
 
+N_samples = []
 ###### Start Run ######
 sesiones = np.arange(21, 26)
 sujeto_total = 0
@@ -68,6 +72,7 @@ for sesion in sesiones:
     
     for sujeto, eeg, dstims in zip((1,2), (eeg_sujeto_1, eeg_sujeto_2), (dstims_para_sujeto_1, dstims_para_sujeto_2)):
     # for sujeto, eeg, dstims in zip([1], [eeg_sujeto_1], [dstims_para_sujeto_1]):    
+        N_samples.append(len(eeg))
         print('Sujeto {}'.format(sujeto))
         ###### Separo los datos en 5 y tomo test set de 20% de datos con kfold (5 iteraciones)######
         Predicciones = {}
@@ -161,7 +166,6 @@ for sesion in sesiones:
         f.close()
             
         ###### Guardo los canales que pasaron las pruebas en todos los folds y los p valores ######
-        
         Canales_Corr_prob = np.zeros(info['nchan'])
         Canales_Corr_std = np.zeros(info['nchan'])
         Canales_Rmse_prob = np.zeros(info['nchan'])
@@ -234,6 +238,7 @@ Plot.Cabezas_canales_rep(Canales_repetidos_rmse_sujetos.sum(0), info, Display_To
 
 ###### Instantes de interés ######
 curva_pesos_totales = Plot.regression_weights(Pesos_totales_sujetos_todos_canales, info, Band, times, sr, Display_Total_Figures, Save_Total_Figures, Run_graficos_path, Cant_Estimulos, Stims_Order, stim)
+curva_pesos_totales = Plot.regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, Band, times, sr, Display_Total_Figures, Save_Total_Figures, Run_graficos_path, Cant_Estimulos, Stims_Order, stim)
 
 # Matriz de Correlacion
 Plot. Matriz_corr_channel_wise(Pesos_totales_sujetos_todos_canales, Display_Total_Figures, Save_Total_Figures, Run_graficos_path)

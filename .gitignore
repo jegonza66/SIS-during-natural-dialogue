@@ -1,0 +1,21 @@
+betas vs alphas.py
+Buscar_alpha.py
+busqueda_alpha.py
+Cargar_Raw_data.py
+Comparar envelope - Comparar muestras.py
+Funciones.py
+mtrf.py
+Otras pruebas (2019).ipynb
+plot_receptive_field_mtrf_modified.py
+Plot_señal_envolvente.py
+PSD - Cov - Pitch.py
+Spectrogram.py
+Validation.py
+Extras.py
+
+.ipynb_checkpoints/
+.pylint.d/
+Datos/
+gráficos/
+saves/
+__pycache__/
