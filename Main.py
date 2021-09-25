@@ -4,7 +4,6 @@ Created on Wed Sep 22 20:23:54 2021
 
 @author: joaco
 """
-##
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.model_selection import KFold
@@ -38,10 +37,10 @@ Simulate_random_data = False
 
 # Display
 Display_Ind_Figures = False
-Display_Total_Figures = True
+Display_Total_Figures = False
 # Save
 Save_Ind_Figures = False
-Save_Total_Figures = False
+Save_Total_Figures = True
 
 # Paths
 procesed_data_path = 'saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin,tmax)
