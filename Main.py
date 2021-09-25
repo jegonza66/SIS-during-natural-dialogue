@@ -4,6 +4,7 @@ Created on Wed Sep 22 20:23:54 2021
 
 @author: joaco
 """
+##
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.model_selection import KFold
@@ -24,7 +25,7 @@ Stims_preprocess = 'Normalize'
 EEG_preprocess = 'Standarize'
 # Times
 sr = 128
-tmin, tmax = -0.7, -0.003
+tmin, tmax = -0.53, -0.003
 delays = - np.arange(np.floor(tmin*sr), np.ceil(tmax*sr), dtype=int)
 times = np.linspace(delays[0]*np.sign(tmin)*1/sr, np.abs(delays[-1])*np.sign(tmax)*1/sr, len(delays))
 # Model

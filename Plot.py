@@ -380,14 +380,14 @@ def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, Band, t
         im = axs[1].pcolormesh(times*1000, np.arange(info['nchan']), mean_coefs, cmap='RdBu_r',
                       vmin=-mean_coefs.max(), vmax=mean_coefs.max(), shading='gouraud')
         axs[1].set(xlabel = 'Time (ms)', ylabel='Channel')
-        # plt.setp(ax.get_xticklabels(), rotation=45)
         fig.colorbar(im, ax = axs[1], orientation = 'horizontal')
 
         evoked.plot(scalings = dict(eeg=1, grad=1, mag=1), zorder = 'std', time_unit = 'ms', 
                     show = False, spatial_colors=True, unit = False, units = 'w', axes = axs[0])
-        axs[0].plot(times*1000, curva_pesos_totales)
+        axs[0].plot(times*1000, curva_pesos_totales, "k--", label = "Mean", zorder = 130, linewidth = 2)
         axs[0].axis('off')
-        
+        axs[0].legend(loc = "lower left")
+
         fig.tight_layout()
         
         if Save: 
