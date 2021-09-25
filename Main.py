@@ -27,7 +27,7 @@ Stims_preprocess = 'Normalize'
 EEG_preprocess = 'Standarize'
 # Times
 sr = 128
-tmin, tmax = -0.53, -0.003
+tmin, tmax = -0.6, -0.003
 delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
 times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays))
 # Model
@@ -43,7 +43,7 @@ Display_Ind_Figures = False
 Display_Total_Figures = False
 # Save
 Save_Ind_Figures = False
-Save_Total_Figures = True
+Save_Total_Figures = False
 
 # Paths
 procesed_data_path = 'saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
@@ -53,8 +53,7 @@ Path_it = 'saves/Ridge/Fake_it/Stims_{}_EEG_{}/Alpha_{}/tmin{}_tmax{}/Stim_{}_EE
                                                                                                    EEG_preprocess,
                                                                                                    alpha, tmin, tmax,
                                                                                                    stim, Band)
-Path_Pesos_Predicciones_Corr_Rmse = 'saves/Ridge/Corr_Rmse_Pesos_Predicciones/Stims_{}_EEG_{}/Alpha_{}/tmin{}_tmax{\
-                                    }/Stim_{}__EEG_Band_{}/'.format(Stims_preprocess, EEG_preprocess, alpha, tmin,
+Path_Pesos_Predicciones_Corr_Rmse = 'saves/Ridge/Corr_Rmse_Pesos_Predicciones/Stims_{}_EEG_{}/Alpha_{}/tmin{}_tmax{}/Stim_{}__EEG_Band_{}/'.format(Stims_preprocess, EEG_preprocess, alpha, tmin,
                                                                     tmax, stim, Band)
 
 # Save variables
