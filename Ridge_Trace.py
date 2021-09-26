@@ -17,9 +17,9 @@ Display_figures_Trace = False
 Save_figures_Trace = True
 Display_figure_instantes, Save_figure_instantes = False, False
 
-Stims = ['Envelope', 'Pitch', 'Pitch_der', 'Envelope_Pitch_Pitch_der']
+Stims = ['Envelope', 'Pitch', 'Pitch_der']
 Stims_Order = ['Envelope', 'Pitch', 'Pitch_der', 'Spectrogram', 'Phonemes']
-Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All']
+Bands = ['Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All']
 
 ###### DEFINO PARAMETROS ######
 for Band in Bands:
