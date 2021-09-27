@@ -16,6 +16,17 @@ import Plot
 import Processing
 import Simulation
 
+# Random permutations
+Statistical_test = False
+Simulate_random_data = False
+
+# Display
+Display_Ind_Figures = False
+Display_Total_Figures = False
+# Save
+Save_Ind_Figures = True
+Save_Total_Figures = True
+
 Stims = ['Envelope', 'Pitch', 'Pitch_der', 'Envelope_Pitch_Pitch_der']
 ###### DEFINE PARAMETERS ######
 # Stimuli and EEG
@@ -35,17 +46,6 @@ for stim in Stims:
     # Model
     # Model = 'Ridge'
     alpha = 100
-
-    # Random permutations
-    Statistical_test = True
-    Simulate_random_data = False
-
-    # Display
-    Display_Ind_Figures = False
-    Display_Total_Figures = False
-    # Save
-    Save_Ind_Figures = True
-    Save_Total_Figures = True
 
     # Paths
     procesed_data_path = 'saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
