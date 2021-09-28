@@ -27,9 +27,9 @@ def simular_iteraciones_Ridge_plot(info, sr, situacion, best_alpha, iteraciones,
         dstims_train_random = copy.deepcopy(dstims_train_val)
         np.random.shuffle(dstims_train_random)
         
-        mod_fake.fit(dstims_train_random, eeg_train_val) ## entreno el modelo
+        mod_fake.fit(dstims_train_random, eeg_train_val) # entreno el modelo
         
-        ###### TESTEO EN TEST SET  ######
+        # TESTEO EN TEST SET
         # Predigo
         predicho_fake = mod_fake.predict(dstims_test)
         
@@ -118,9 +118,9 @@ def simular_iteraciones_Ridge(best_alpha, iteraciones, sesion, sujeto, test_roun
         dstims_train_random = copy.deepcopy(dstims_train_val)
         np.random.shuffle(dstims_train_random)
         
-        mod_fake.fit(dstims_train_random, eeg_train_val) ## entreno el modelo
+        mod_fake.fit(dstims_train_random, eeg_train_val) # entreno el modelo
         
-        ###### TESTEO EN TEST SET  ######
+        # TESTEO EN TEST SET
         # Predigo
         predicho_fake = mod_fake.predict(dstims_test)
         

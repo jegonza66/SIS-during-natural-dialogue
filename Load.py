@@ -84,7 +84,7 @@ class Trial_channel:
         wav1 = wavfile.read(self.wav_fname)[1]
         wav1 = wav1.astype("float")
 
-        ### envelope
+        # Envelope
         envelope = np.abs(sgn.hilbert(wav1))
         envelope = Processing.butter_filter(envelope, frecuencias=25, sampling_freq=self.audio_sr,
                                             btype='lowpass', order=3, axis=0, ftype='NonCausal')
@@ -231,7 +231,7 @@ class Sesion_class:
         self.Save_procesed_data = Save_procesed_data
 
     def load_from_raw(self):
-        ###### Armo estructura de datos de sujeto ######
+        # Armo estructura de datos de sujeto
         eeg_sujeto_1 = pd.DataFrame()
         envelope_para_sujeto_1 = pd.DataFrame()
         pitch_para_sujeto_1 = pd.DataFrame()
@@ -255,24 +255,26 @@ class Sesion_class:
                                                 valores_faltantes_pitch=self.valores_faltantes_pitch,
                                                 Causal_filter=self.Causal_filter).load_trial()
 
-                ###### Cargo data ######        
-                eeg_trial_sujeto_1, envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1, pitch_der_trial_para_sujeto_1 = \
-                Trial_channel_1['eeg'], Trial_channel_2['envelope'], Trial_channel_2['pitch'], Trial_channel_2[
-                    'pitch_der']
-                if self.Calculate_pitch: pitch_trial_para_sujeto_1, pitch_der_trial_para_sujeto_1 = Trial_channel_2.f_calculate_pitch()
+                # Cargo data
+                eeg_trial_sujeto_1, envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1, \
+                pitch_der_trial_para_sujeto_1 = Trial_channel_1['eeg'], Trial_channel_2['envelope'], \
+                                                Trial_channel_2['pitch'], Trial_channel_2['pitch_der']
+                if self.Calculate_pitch: pitch_trial_para_sujeto_1, pitch_der_trial_para_sujeto_1 = \
+                    Trial_channel_2.f_calculate_pitch()
                 momentos_sujeto_1_trial = Processing.labeling(self.sesion, trial, canal_hablante=2, sr=self.sr)
 
-                eeg_trial_sujeto_2, envelope_trial_para_sujeto_2, pitch_trial_para_sujeto_2, pitch_der_trial_para_sujeto_2 = \
-                Trial_channel_2['eeg'], Trial_channel_1['envelope'], Trial_channel_1['pitch'], Trial_channel_1[
-                    'pitch_der']
-                if self.Calculate_pitch: pitch_trial_para_sujeto_2, pitch_der_trial_para_sujeto_1 = Trial_channel_1.f_calculate_pitch()
+                eeg_trial_sujeto_2, envelope_trial_para_sujeto_2, pitch_trial_para_sujeto_2, \
+                pitch_der_trial_para_sujeto_2 = Trial_channel_2['eeg'], Trial_channel_1['envelope'], \
+                                                Trial_channel_1['pitch'], Trial_channel_1['pitch_der']
+                if self.Calculate_pitch: pitch_trial_para_sujeto_2, pitch_der_trial_para_sujeto_1 = \
+                    Trial_channel_1.f_calculate_pitch()
                 momentos_sujeto_2_trial = Processing.labeling(self.sesion, trial, canal_hablante=1, sr=self.sr)
 
             except:
                 run = False
 
             if run:
-                ###### Igualar largos ######
+                # Igualar largos
                 eeg_trial_sujeto_1, envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1, pitch_der_trial_para_sujeto_1, momentos_sujeto_1_trial = Processing.igualar_largos(
                     eeg_trial_sujeto_1, envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1,
                     pitch_der_trial_para_sujeto_1, momentos_sujeto_1_trial)
@@ -280,7 +282,7 @@ class Sesion_class:
                     eeg_trial_sujeto_2, envelope_trial_para_sujeto_2, pitch_trial_para_sujeto_2,
                     pitch_der_trial_para_sujeto_2, momentos_sujeto_2_trial)
 
-                ###### Preprocesamiento ######
+                # Preprocesamiento
                 eeg_trial_sujeto_1, envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1, pitch_der_trial_para_sujeto_1 = Processing.preproc(
                     momentos_sujeto_1_trial, self.delays, self.situacion, eeg_trial_sujeto_1,
                     envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1, pitch_der_trial_para_sujeto_1)
@@ -294,7 +296,7 @@ class Sesion_class:
                     pitch_der_trial_para_sujeto_1, eeg_trial_sujeto_2, envelope_trial_para_sujeto_2,
                     pitch_trial_para_sujeto_2, pitch_der_trial_para_sujeto_2)
 
-                ###### Adjunto a datos de sujeto ######
+                # Adjunto a datos de sujeto
                 if len(eeg_trial_sujeto_1):
                     eeg_sujeto_1 = eeg_sujeto_1.append(eeg_trial_sujeto_1)
                     envelope_para_sujeto_1 = envelope_para_sujeto_1.append(envelope_trial_para_sujeto_1)
@@ -439,12 +441,12 @@ def Estimulos(stim, Sujeto_1, Sujeto_2):
         dstims_para_sujeto_1, dstims_para_sujeto_2 = (pitch_der_para_sujeto_1,), (pitch_der_para_sujeto_2,)
     elif stim == 'Envelope_Pitch':
         dstims_para_sujeto_1, dstims_para_sujeto_2 = (envelope_para_sujeto_1, pitch_para_sujeto_1), (
-        envelope_para_sujeto_2, pitch_para_sujeto_2)
+            envelope_para_sujeto_2, pitch_para_sujeto_2)
     elif stim == 'Envelope_Pitch_Pitch_der':
         dstims_para_sujeto_1, dstims_para_sujeto_2 = (envelope_para_sujeto_1, pitch_para_sujeto_1,
                                                       pitch_der_para_sujeto_1), (
-                                                     envelope_para_sujeto_2, pitch_para_sujeto_2,
-                                                     pitch_der_para_sujeto_2)
+                                                         envelope_para_sujeto_2, pitch_para_sujeto_2,
+                                                         pitch_der_para_sujeto_2)
     else:
         print('Invalid sitmulus: {}'.format(stim))
 

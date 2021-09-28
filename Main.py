@@ -27,8 +27,8 @@ Display_Total_Figures = False
 Save_Ind_Figures = True
 Save_Total_Figures = True
 
-Stims = ['Envelope', 'Pitch', 'Pitch_der', 'Envelope_Pitch_Pitch_der']
-###### DEFINE PARAMETERS ######
+Stims = ['Pitch']#, 'Pitch_der', 'Envelope_Pitch_Pitch_der']
+# DEFINE PARAMETERS
 # Stimuli and EEG
 Stims_Order = ['Envelope', 'Pitch', 'Pitch_der', 'Spectrogram', 'Phonemes']
 for stim in Stims:
@@ -62,19 +62,19 @@ for stim in Stims:
     psd_rand_correlations = []
 
     N_samples = []
-    ###### Start Run ######
+    # Start Run
     sesiones = np.arange(21, 26)
     sujeto_total = 0
     for sesion in sesiones:
         print('Sesion {}'.format(sesion))
 
-        ##### LOAD DATA BY SUBJECT #####
+        # LOAD DATA BY SUBJECT
         Sujeto_1, Sujeto_2 = Load.Load_Data(sesion, Band, sr, tmin, tmax, situacion, procesed_data_path, sujeto_total)
 
-        ##### LOAD EEG BY SUBJECT #####
+        # LOAD EEG BY SUBJECT
         eeg_sujeto_1, eeg_sujeto_2 = Sujeto_1['EEG'], Sujeto_2['EEG']
 
-        ##### LOAD STIMULUS BY SUBJECT #####
+        # LOAD STIMULUS BY SUBJECT
         dstims_para_sujeto_1, dstims_para_sujeto_2, info = Load.Estimulos(stim, Sujeto_1, Sujeto_2)
         Cant_Estimulos = len(dstims_para_sujeto_1)
 
@@ -82,12 +82,12 @@ for stim in Stims:
             # for sujeto, eeg, dstims in zip([1], [eeg_sujeto_1], [dstims_para_sujeto_1]):
             N_samples.append(len(eeg))
             print('Sujeto {}'.format(sujeto))
-            ###### Separo los datos en 5 y tomo test set de 20% de datos con kfold (5 iteraciones)######
+            # Separo los datos en 5 y tomo test set de 20% de datos con kfold (5 iteraciones)
             Predicciones = {}
             n_splits = 5
             iteraciones = 3000
 
-            ###### Defino variables donde voy a guardar mil cosas ######
+            # Defino variables donde voy a guardar mil cosas
             Pesos_ronda_canales = np.zeros((n_splits, info['nchan'], len(delays) * Cant_Estimulos))
 
             Prob_Corr_ronda_canales = np.ones((n_splits, info['nchan']))
@@ -102,7 +102,7 @@ for stim in Stims:
             Canales_repetidos_corr_sujeto = np.zeros(info['nchan'])
             Canales_repetidos_rmse_sujeto = np.zeros(info['nchan'])
 
-            ###### Empiezo el KFold de test ######
+            # Empiezo el KFold de test
             kf_test = KFold(n_splits, shuffle=False)
             for fold, (train_val_index, test_index) in enumerate(kf_test.split(eeg)):
                 eeg_train_val, eeg_test = eeg[train_val_index], eeg[test_index]
@@ -120,26 +120,26 @@ for stim in Stims:
                                                                                      Stims_preprocess, EEG_preprocess,
                                                                                      axis=0, porcent=5)
 
-                ###### Ajusto el modelo y guardo ######
+                # Ajusto el modelo y guardo
                 Model = Models.Ridge(alpha)
                 Model.fit(dstims_train_val, eeg_train_val)
                 Pesos_ronda_canales[fold] = Model.coefs
 
-                ###### Predigo en test set y guardo ######
+                # Predigo en test set y guardo
                 predicted = Model.predict(dstims_test)
                 Predicciones[fold] = predicted
 
-                ###### Calculo Correlacion y guardo ######
+                # Calculo Correlacion y guardo
                 Rcorr = np.array([np.corrcoef(eeg_test[:, ii].ravel(), np.array(predicted[:, ii]).ravel())[0, 1] for ii in
                                   range(eeg_test.shape[1])])
                 Corr_buenas_ronda_canal[fold] = Rcorr
 
-                ###### Calculo Error y guardo ######
+                # Calculo Error y guardo
                 Rmse = np.array(np.sqrt(np.power((predicted - eeg_test), 2).mean(0)))
                 Rmse_buenos_ronda_canal[fold] = Rmse
 
                 if Simulate_random_data:
-                    ###### SIMULACIONES PERMUTADAS PARA COMPARAR ######
+                    # SIMULACIONES PERMUTADAS PARA COMPARAR
                     toy_iterations = 10
                     psd_rand_correlation = Simulation.simular_iteraciones_Ridge_plot(info, sr, situacion, alpha,
                                                                                      toy_iterations, sesion, sujeto, fold,
@@ -157,7 +157,7 @@ for stim in Stims:
                     Correlaciones_fake, Errores_fake = pickle.load(f)
                     f.close()
 
-                    ##### TEST ESTADISTICO #####
+                    # TEST ESTADISTICO
                 Rcorr_fake = Correlaciones_fake[fold]
                 Rmse_fake = Errores_fake[fold]
 
@@ -169,7 +169,7 @@ for stim in Stims:
                 Prob_Corr_ronda_canales[fold][p_corr < umbral] = p_corr[p_corr < umbral]
                 Prob_Rmse_ronda_canales[fold][p_rmse < umbral] = p_rmse[p_rmse < umbral]
 
-            ###### Guardo los canales que pasaron las pruebas en todos los folds y los p valores ######
+            # Guardo los canales que pasaron las pruebas en todos los folds y los p valores
             Canales_Corr_prob = np.zeros(info['nchan'])
             Canales_Corr_std = np.zeros(info['nchan'])
             Canales_Rmse_prob = np.zeros(info['nchan'])
@@ -183,14 +183,14 @@ for stim in Stims:
             Canales_repetidos_corr_sujeto[Canales_sobrevivientes_corr] += 1
             Canales_repetidos_rmse_sujeto[Canales_sobrevivientes_rmse] += 1
 
-            ###### Tomo promedio de pesos entre los folds para todos los canales ######
+            # Tomo promedio de pesos entre los folds para todos los canales
             Pesos_promedio = Pesos_ronda_canales.mean(0)
 
-            ###### Tomo promedio de Corr y Rmse entre las rondas de test para todos los canales (para no desvirtuar las cabezas) ######
+            # Tomo promedio de Corr y Rmse entre las rondas de test para todos los canales (para no desvirtuar las cabezas)
             Corr_promedio = Corr_buenas_ronda_canal.mean(0)
             Rmse_promedio = Rmse_buenos_ronda_canal.mean(0)
 
-            ###### Grafico cabezas y canales ######
+            # Grafico cabezas y canales
             Plot.plot_cabezas_canales(info.ch_names, info, sr, sesion, sujeto, Canales_sobrevivientes_corr,
                                       Corr_promedio, Display_Ind_Figures, info['nchan'], 'Correlación',
                                       Save_Ind_Figures, Run_graficos_path)
@@ -198,12 +198,12 @@ for stim in Stims:
                                       Rmse_promedio, Display_Ind_Figures, info['nchan'], 'Rmse',
                                       Save_Ind_Figures, Run_graficos_path)
 
-            ###### Grafico Pesos ######
+            # Grafico Pesos
             Plot.plot_grafico_pesos(Display_Ind_Figures, sesion, sujeto, alpha, Pesos_promedio,
                                     info, times, sr, Corr_promedio, Rmse_promedio, Save_Ind_Figures,
                                     Run_graficos_path, Cant_Estimulos, Stims_Order)
 
-            ###### Grafico Shadows ######
+            # Grafico Shadows
             Plot.plot_grafico_shadows(Display_Ind_Figures, sesion, sujeto, alpha,
                                       Canales_sobrevivientes_corr, info, sr,
                                       Corr_promedio, Save_Ind_Figures, Run_graficos_path,
@@ -226,19 +226,19 @@ for stim in Stims:
                 Canales_repetidos_rmse_sujetos = np.vstack((Canales_repetidos_rmse_sujetos, Canales_repetidos_rmse_sujeto))
             sujeto_total += 1
 
-        ###### Armo cabecita con correlaciones promedio entre sujetos######
+        # Armo cabecita con correlaciones promedio entre sujetos
     Plot.Cabezas_corr_promedio(Correlaciones_totales_sujetos, info, Display_Total_Figures, Save_Total_Figures,
                                Run_graficos_path, title='Correlation')
     Plot.Cabezas_corr_promedio(Rmse_totales_sujetos, info, Display_Total_Figures, Save_Total_Figures, Run_graficos_path,
                                title='Rmse')
 
-    ###### Armo cabecita con canales repetidos ######
+    # Armo cabecita con canales repetidos
     Plot.Cabezas_canales_rep(Canales_repetidos_corr_sujetos.sum(0), info, Display_Total_Figures, Save_Total_Figures,
                              Run_graficos_path, title='Correlation')
     Plot.Cabezas_canales_rep(Canales_repetidos_rmse_sujetos.sum(0), info, Display_Total_Figures, Save_Total_Figures,
                              Run_graficos_path, title='Rmse')
 
-    ###### Instantes de interés ######
+    # Grafico Pesos
     curva_pesos_totales = Plot.regression_weights(Pesos_totales_sujetos_todos_canales, info, Band, times, sr,
                                                   Display_Total_Figures, Save_Total_Figures, Run_graficos_path,
                                                   Cant_Estimulos, Stims_Order, stim)
@@ -258,7 +258,7 @@ for stim in Stims:
     Plot.PSD_boxplot(psd_pred_correlations, psd_rand_correlations, Display_Total_Figures, Save_Total_Figures,
                      Run_graficos_path)
 
-    ##### SAVE FINAL CORRELATION #####
+    # SAVE FINAL CORRELATION
     save_path = 'saves/Ridge/Final_Correlation/Alpha_{}/tmin{}_tmax{}/'.format(alpha, tmin, tmax)
     try:
         os.makedirs(save_path)

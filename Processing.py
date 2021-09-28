@@ -30,7 +30,7 @@ def matriz_shifteada(features,delays):
     dstims = []
     for di,d in enumerate(delays):
         dstim = np.zeros((nt, ndim))
-        if d<0: ## negative delay
+        if d<0: # negative delay
             dstim[:d,:] = features[-d:,:] # The last d elements until the end
         elif d>0:
             dstim[d:,:] = features[:-d,:] # All but the last d elements
@@ -46,33 +46,33 @@ def matriz_shifteada(features,delays):
 def labeling(s,trial,canal_hablante, sr):
     ubi= "Datos/phrases/S"+str(s)+"/s"+str(s)+".objects."+ "{:02d}".format(trial)+".channel"+str(canal_hablante)+".phrases"
     h1t = pd.read_table(ubi,header=None,sep="\t")
-    ## paso los numerales a vacío. Cambio texto por 1 y silencio por 0
+    # paso los numerales a vacío. Cambio texto por 1 y silencio por 0
     h1t.iloc[:,2] =(h1t.iloc[:,2].replace("#","").apply(len)>0).apply(int)
-    ## tomo la diferencia entre el tiempo en el que empieza a hablar y el tiempo que termina de hablar
-    ## lo multiplico por el sampling rate (128) y lo redondeo. Me va a quedar muy parecido al largo del envelope
-    ## pero con una pequeña diferencia de una o dos samples
+    # tomo la diferencia entre el tiempo en el que empieza a hablar y el tiempo que termina de hablar
+    # lo multiplico por el sampling rate (128) y lo redondeo. Me va a quedar muy parecido al largo del envelope
+    # pero con una pequeña diferencia de una o dos samples
     veces=np.round((h1t[1] - h1t[0])*sr).astype("int")
     hablante = np.repeat(h1t.iloc[:,2],veces) 
     hablante = hablante.ravel()
 
-    ## hago lo mismo con el oyente
+    # hago lo mismo con el oyente
     oyente = (canal_hablante - 3)*-1
     ubi= "Datos/phrases/S"+str(s)+"/s"+str(s)+".objects."+"{:02d}".format(trial)+".channel"+str(oyente)+".phrases"
     h2t = pd.read_table(ubi,header=None,sep="\t")
-    ## paso los numerales a vacío. Cambio texto por 1 y silencio por 0
+    # paso los numerales a vacío. Cambio texto por 1 y silencio por 0
     h2t.iloc[:,2] =(h2t.iloc[:,2].replace("#","").apply(len)>0).apply(int)
     veces=np.round((h2t[1] - h2t[0])*sr).astype("int")
     oyente = np.repeat(h2t.iloc[:,2],veces) 
     oyente = oyente.ravel()
     
-    ## hay diferencias de largos entre los hablantes? corrijo con 0-padding
+    # hay diferencias de largos entre los hablantes? corrijo con 0-padding
     diferencia = len(hablante) - len(oyente)
     if diferencia > 0:
         oyente = np.concatenate([oyente,np.repeat(0,diferencia)])
     elif diferencia <0 : 
         hablante = np.concatenate([hablante,np.repeat(0,np.abs(diferencia))])
     
-    ## sumo ambos, así tengo un vectorcito de 3(hablan ambos), 2 (solo habla oyente), 
+    # sumo ambos, así tengo un vectorcito de 3(hablan ambos), 2 (solo habla oyente),
     #1 (solo habla interlocutor) y 0 (silencio).
     hablantes = hablante + oyente*2
     
@@ -163,28 +163,6 @@ def preproc(momentos_escucha, delays, situacion, *args):
         returns.append(var)
 
     return tuple(returns)
-    
-def preproc_viejo(eeg, envelope, pitch, pitch_der, momentos_escucha, delays, situacion):
-
-    momentos_escucha_matriz = matriz_shifteada(momentos_escucha, delays).astype(float)
-
-    if situacion == 'Todo':
-        return eeg, envelope, pitch
-    
-    elif situacion == 'Silencio': situacion = 0    
-    elif situacion == 'Escucha': situacion = 1
-    elif situacion == 'Habla': situacion = 2
-    elif situacion == 'Ambos': situacion = 3
-    
-    momentos_escucha_matriz[momentos_escucha_matriz == situacion] = float("nan")
-    
-    keep_indexes = pd.isnull(momentos_escucha_matriz).all(1).nonzero()[0]
-    eeg = eeg[keep_indexes,:]
-    envelope = envelope[keep_indexes,:]
-    pitch = pitch[keep_indexes,:]
-
-    return eeg, envelope, pitch
-
 
 class estandarizar():
 
@@ -335,42 +313,3 @@ def correlacion (a, b):
         for i in range(int(len(a)/2)):
             corr.append(np.corrcoef(a[:-i-1], b[i+1:])[0,1])
     return np.array(corr)
-
-# def normalizar_stims(dstims, axis):
-#     returns = []
-#     for stim in [dstims]:
-#         stim -= np.min(stim, axis = axis) 
-#         stim /= np.max(stim, axis = axis)
-#         returns.append(stim)   
-#     dstims = np.hstack([returns[i] for i in range(len(returns))])       
-#     return dstims
-
-# def normalizacion(eeg_train_val, eeg_test, dstims_train_val, dstims_test, Normalizar, axis = 0, porcent = 5):
-    
-#     norm = normalizar(axis, porcent)
-#     if Normalizar == 'EEG':    
-#         norm.fit_normalize_percent(eeg_train_val)
-#         norm.fit_normalize_percent(eeg_test)
-#     elif Normalizar == 'Stims':
-#         for stim in [dstims]:
-#             norm.normalize_stims(dstims_train_val)
-#             norm.normalize_stims(dstims_test)
-#     elif Normalizar == 'All':   
-#         norm.fit_normalize_percent(eeg_train_val)
-#         norm.fit_normalize_percent(eeg_test)
-#         norm.normalize_stims(dstims_train_val)
-#         norm.normalize_stims(dstims_test)
-
-# def estandarizacion(eeg_train_val, eeg_test, dstims_train_val, dstims_test, Estandarizar, axis = 0):        
-    
-#     if Estandarizar == 'EEG':
-#         eeg_train_val = estandarizar(eeg_train_val, axis)
-#         eeg_test = estandarizar(eeg_test, axis)         
-#     elif Estandarizar == 'Stims':
-#         dstims_train_val = estandarizar(dstims_train_val, axis)
-#         dstims_test = estandarizar(dstims_test, axis)   
-#     elif Estandarizar == 'All':
-#         eeg_train_val = estandarizar(eeg_train_val, axis)
-#         eeg_test = estandarizar(eeg_test, axis)
-#         dstims_train_val = estandarizar(dstims_train_val, axis)
-#         dstims_test = estandarizar(dstims_test, axis)
