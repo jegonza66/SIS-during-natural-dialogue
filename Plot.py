@@ -652,16 +652,17 @@ def Matriz_std_channel_wise(Pesos_totales_sujetos_todos_canales, Display, Save, 
 
 
 def PSD_boxplot(psd_pred_correlations, psd_rand_correlations, Display, Save, Run_graficos_path):
-    # psd_pred_correlations = Processing.flatten_list(psd_pred_correlations)
     psd_rand_correlations = Processing.flatten_list(psd_rand_correlations)
 
+    data = {'Prediction': psd_pred_correlations, 'Random': psd_rand_correlations}
     if Display:
         plt.ion()
     else:
         plt.ioff()
 
     fig = plt.figure()
-    plt.boxplot([psd_pred_correlations, psd_rand_correlations], labels=['Prediction', 'Random'])
+    sn.violinplot(data=[psd_pred_correlations, psd_rand_correlations])
+    # plt.boxplot([psd_pred_correlations, psd_rand_correlations], labels=['Prediction', 'Random'])
     plt.ylabel('Correlation')
 
     if Save:
