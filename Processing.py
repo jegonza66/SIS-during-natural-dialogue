@@ -42,7 +42,6 @@ def matriz_shifteada(features,delays):
     (%d) x # delays (%d))"%(dstims.shape[0], dstims.shape[1], features.shape[1], len(delays)))   
     return dstims
 
-
 def labeling(s,trial,canal_hablante, sr):
     ubi= "Datos/phrases/S"+str(s)+"/s"+str(s)+".objects."+ "{:02d}".format(trial)+".channel"+str(canal_hablante)+".phrases"
     h1t = pd.read_table(ubi,header=None,sep="\t")
@@ -104,7 +103,6 @@ def subsamplear(x,cada_cuanto):
     tomar = np.arange(0,len(x),int(cada_cuanto))
     return x[tomar]  
 
-
 def band_freq(band):
     if band == 'Delta':
         l_freq = 1
@@ -123,10 +121,15 @@ def band_freq(band):
         h_freq = 25
     elif band == 'All':
         l_freq = None
-        h_freq = 40  
+        h_freq = 40
+    elif band == 'Delta_Theta':
+        l_freq = 1
+        h_freq = 8
+    elif band == 'Delta_Theta_Alpha':
+        l_freq = 1
+        h_freq = 13
         
     return l_freq, h_freq
-
 
 def igualar_largos(*args):
      
@@ -139,7 +142,6 @@ def igualar_largos(*args):
         returns.append(var)
     
     return tuple(returns)
- 
 
 def preproc(momentos_escucha, delays, situacion, *args):
 
@@ -184,7 +186,6 @@ class estandarizar():
         data -= np.mean(data, axis = self.axis)
         data /= np.std(data, axis = self.axis)
 
-
 class normalizar():
     
     def __init__(self, axis = 0, porcent = 5):
@@ -222,7 +223,6 @@ class normalizar():
         # Los estimulos los normalizo todos entre 0 y 1 estricto, la envolvente no tiene picos
         matrix -= np.min(matrix, axis = self.axis)   
         matrix /= np.max(matrix, axis = self.axis) 
-
 
 def normalizacion(eeg, dstims_train_val, dstims_test, Normalizar, axis = 0, porcent = 5):  
       

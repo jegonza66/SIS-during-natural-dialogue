@@ -209,7 +209,8 @@ def plot_grafico_shadows(Display, sesion, sujeto, best_alpha,
         fig.savefig(save_path_graficos + 'Sesion{}_Sujeto{}.png'.format(sesion, sujeto))
 
 
-def Plot_PSD(sesion, sujeto, test_round, situacion, Display, Save, save_path, info, data, fmin=4, fmax=40):
+def Plot_PSD(sesion, sujeto, test_round, Band, situacion, Display, Save, save_path, info, data, fmin=4, fmax=40):
+
     psds_welch_mean, freqs_mean = mne.time_frequency.psd_array_welch(data, info['sfreq'], fmin, fmax)
 
     if Display:
@@ -218,7 +219,7 @@ def Plot_PSD(sesion, sujeto, test_round, situacion, Display, Save, save_path, in
         plt.ioff()
 
     fig, ax = plt.subplots()
-    fig.suptitle('Sesion {} - Sujeto {} - Situacion {}'.format(sesion, sujeto, situacion))
+    fig.suptitle('Sesion {} - Sujeto {} - Situacion {} - Band {}'.format(sesion, sujeto, situacion, Band))
 
     evoked = mne.EvokedArray(psds_welch_mean, info)
     evoked.times = freqs_mean
@@ -228,11 +229,12 @@ def Plot_PSD(sesion, sujeto, test_round, situacion, Display, Save, save_path, in
     ax.grid()
 
     if Save:
+        save_path_graficos = 'gráficos/PSD/{}/'.format(save_path)
         try:
-            os.makedirs('gráficos/PSD/{}/'.format(save_path))
+            os.makedirs(save_path_graficos)
         except:
             pass
-        plt.savefig('gráficos/PSD/PSD Prediccion/Sesion{} - Sujeto{} - Fold {}'.format(sesion, sujeto, test_round + 1))
+        plt.savefig(save_path_graficos + 'Sesion{} - Sujeto{} - Band {} - Fold {}'.format(sesion, sujeto, Band, test_round + 1))
 
 
 def Cabezas_corr_promedio(Correlaciones_totales_sujetos, info, Display, Save, Run_graficos_path, title):
