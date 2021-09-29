@@ -73,7 +73,7 @@ def plot_cabezas_canales(channel_names, info, sr, sesion, sujeto, Canales_sobrev
     surviving_channels_names = [channel_names[j] for j in Canales_sobrevivientes]
     mask = []
     for j in range(len(channel_names)):
-        if channel_names[j] in (surviving_channels_names):
+        if channel_names[j] in surviving_channels_names:
             mask.append(True)
         else:
             mask.append(False)

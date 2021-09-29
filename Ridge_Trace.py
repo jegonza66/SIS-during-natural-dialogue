@@ -170,20 +170,17 @@ for Band in Bands:
         axs[0].set_ylabel('Standarized Coefficents')
         axs[0].plot(alphas, Standarized_Betas[:, :20], 'o--')
         axs[0].plot(alphas, Standarized_Betas[:, -20:], 'o--')
-        # axs[0].vlines(1e2, Standarized_Betas.min(), Standarized_Betas.max(), color='black', linestyle='dashed', linewidth=1.5)
         axs[0].grid()
 
         axs[1].set_ylabel('Mean Correlation')
         axs[1].plot(alphas, Correlaciones, 'o--')
         axs[1].errorbar(alphas, Correlaciones, yerr=np.std(Correlaciones), fmt='none', ecolor='black', elinewidth=0.5,
                         capsize=0.5)
-        # axs[1].vlines(1e2, axs[1].get_ylim()[0], axs[1].get_ylim()[1], color='black', linestyle='dashed', linewidth=1.5)
         axs[1].grid()
 
         axs[2].set_ylabel('Mean Error')
         axs[2].plot(alphas, Errores, 'o--')
         axs[2].errorbar(alphas, Errores, yerr=np.std(Errores), fmt='none', ecolor='black', elinewidth=0.5, capsize=0.5)
-        # axs[2].vlines(1e2, axs[2].get_ylim()[0], axs[2].get_ylim()[1], color='black', linestyle='dashed', linewidth=1.5)
         axs[2].grid()
 
         fig.tight_layout()
