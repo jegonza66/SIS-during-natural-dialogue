@@ -12,7 +12,7 @@ from scipy import stats
 import scipy.signal as sgn
 import os
 import seaborn as sn
-import Processing
+import Funciones
 
 
 def plot_alphas(alphas, correlaciones, best_alpha_overall, lista_Rmse, linea, fino):
@@ -309,7 +309,7 @@ def regression_weights(Pesos_totales_sujetos_todos_canales, info, Band, times, s
         returns.append(curva_pesos_totales)
 
         if Autocorrelation_value and times[-1] > 0:
-            weights_autocorr = Processing.correlacion(curva_pesos_totales, curva_pesos_totales)
+            weights_autocorr = Funciones.correlacion(curva_pesos_totales, curva_pesos_totales)
 
             for i in range(len(weights_autocorr)):
                 if weights_autocorr[i] < Autocorrelation_value: break
@@ -389,7 +389,7 @@ def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, Band, t
         returns.append(curva_pesos_totales)
 
         if Autocorrelation_value and times[-1] > 0:
-            weights_autocorr = Processing.correlacion(curva_pesos_totales, curva_pesos_totales)
+            weights_autocorr = Funciones.correlacion(curva_pesos_totales, curva_pesos_totales)
 
             for i in range(len(weights_autocorr)):
                 if weights_autocorr[i] < Autocorrelation_value: break
@@ -652,7 +652,7 @@ def Matriz_std_channel_wise(Pesos_totales_sujetos_todos_canales, Display, Save, 
 
 
 def PSD_boxplot(psd_pred_correlations, psd_rand_correlations, Display, Save, Run_graficos_path):
-    psd_rand_correlations = Processing.flatten_list(psd_rand_correlations)
+    psd_rand_correlations = Funciones.flatten_list(psd_rand_correlations)
 
     data = {'Prediction': psd_pred_correlations, 'Random': psd_rand_correlations}
     if Display:
@@ -695,7 +695,7 @@ def Plot_instantes_interes(Pesos_totales_sujetos_todos_canales, info, Band, time
         returns.append(curva_pesos_totales)
 
         if Autocorrelation_value and times[-1] > 0:
-            weights_autocorr = Processing.correlacion(curva_pesos_totales, curva_pesos_totales)
+            weights_autocorr = Funciones.correlacion(curva_pesos_totales, curva_pesos_totales)
 
             for i in range(len(weights_autocorr)):
                 if weights_autocorr[i] < Autocorrelation_value: break

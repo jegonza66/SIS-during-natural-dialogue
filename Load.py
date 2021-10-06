@@ -13,6 +13,7 @@ import scipy.io.wavfile as wavfile
 from scipy import signal as sgn
 from praatio import pitch_and_intensity
 import Processing
+import Funciones
 
 
 class Trial_channel:
@@ -274,10 +275,10 @@ class Sesion_class:
 
             if run:
                 # Igualar largos
-                eeg_trial_sujeto_1, envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1, pitch_der_trial_para_sujeto_1, momentos_sujeto_1_trial = Processing.igualar_largos(
+                eeg_trial_sujeto_1, envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1, pitch_der_trial_para_sujeto_1, momentos_sujeto_1_trial = Funciones.igualar_largos(
                     eeg_trial_sujeto_1, envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1,
                     pitch_der_trial_para_sujeto_1, momentos_sujeto_1_trial)
-                eeg_trial_sujeto_2, envelope_trial_para_sujeto_2, pitch_trial_para_sujeto_2, pitch_der_trial_para_sujeto_2, momentos_sujeto_2_trial = Processing.igualar_largos(
+                eeg_trial_sujeto_2, envelope_trial_para_sujeto_2, pitch_trial_para_sujeto_2, pitch_der_trial_para_sujeto_2, momentos_sujeto_2_trial = Funciones.igualar_largos(
                     eeg_trial_sujeto_2, envelope_trial_para_sujeto_2, pitch_trial_para_sujeto_2,
                     pitch_der_trial_para_sujeto_2, momentos_sujeto_2_trial)
 
@@ -290,7 +291,7 @@ class Sesion_class:
                     envelope_trial_para_sujeto_2, pitch_trial_para_sujeto_2, pitch_der_trial_para_sujeto_2)
 
                 # Convierto a DF
-                eeg_trial_sujeto_1, envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1, pitch_der_trial_para_sujeto_1, eeg_trial_sujeto_2, envelope_trial_para_sujeto_2, pitch_trial_para_sujeto_2, pitch_der_trial_para_sujeto_2 = Processing.make_df(
+                eeg_trial_sujeto_1, envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1, pitch_der_trial_para_sujeto_1, eeg_trial_sujeto_2, envelope_trial_para_sujeto_2, pitch_trial_para_sujeto_2, pitch_der_trial_para_sujeto_2 = Funciones.make_df(
                     eeg_trial_sujeto_1, envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1,
                     pitch_der_trial_para_sujeto_1, eeg_trial_sujeto_2, envelope_trial_para_sujeto_2,
                     pitch_trial_para_sujeto_2, pitch_der_trial_para_sujeto_2)
@@ -315,6 +316,7 @@ class Sesion_class:
             eeg_sujeto_1, envelope_para_sujeto_1, pitch_para_sujeto_1, pitch_der_para_sujeto_1, eeg_sujeto_2,
             envelope_para_sujeto_2, pitch_para_sujeto_2, pitch_der_para_sujeto_2)
 
+        # Save_Preprocesed
         EEG_path = self.procesed_data_path + 'EEG/'
         if self.Causal_filter: EEG_path += 'Causal_'
         EEG_path += 'Sit_{}_Band_{}/'.format(self.situacion, self.Band)

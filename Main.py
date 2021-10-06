@@ -7,7 +7,6 @@ Created on Wed Sep 22 20:23:54 2021
 import os
 import pickle
 import numpy as np
-import mne
 from sklearn.model_selection import KFold
 
 import Load
