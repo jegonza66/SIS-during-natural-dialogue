@@ -19,10 +19,10 @@ import Simulation
 Statistical_test = False
 
 # Figures
-Display_Ind_Figures = False
+Display_Ind_Figures = True
 Display_Total_Figures = False
 Save_Ind_Figures = False
-Save_Total_Figures = True
+Save_Total_Figures = False
 
 # Define Parameters
 
@@ -40,7 +40,7 @@ Stims = ['Envelope', 'Pitch', 'Pitch_der', 'Envelope_Pitch_Pitch_der']
 Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All']
 
 stim = 'Envelope'
-Band = 'All'
+Band = 'Theta'
 situacion = 'Escucha'
 tmin, tmax = -0.6, -0.003
 sr = 128
@@ -58,7 +58,6 @@ Path_it = 'saves/Ridge/Fake_it/Stims_{}_EEG_{}/Alpha_{}/tmin{}_tmax{}/Stim_{}_EE
                                                                                                    stim, Band)
 
 # Save variables
-
 
 N_samples = []
 # Start Run
@@ -78,7 +77,7 @@ for sesion in sesiones:
     Cant_Estimulos = len(dstims_para_sujeto_1)
 
     for sujeto, eeg, dstims in zip((1, 2), (eeg_sujeto_1, eeg_sujeto_2), (dstims_para_sujeto_1, dstims_para_sujeto_2)):
-    # for sujeto, eeg, dstims in zip([1], [eeg_sujeto_1], [dstims_para_sujeto_1]):
+    # for sujeto, eeg, dstims in zip([2], [eeg_sujeto_2], [dstims_para_sujeto_2]):
         N_samples.append(len(eeg))
         print('Sujeto {}'.format(sujeto))
         # Separo los datos en 5 y tomo test set de 20% de datos con kfold (5 iteraciones)

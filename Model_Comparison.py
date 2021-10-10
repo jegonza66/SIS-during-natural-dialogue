@@ -118,7 +118,7 @@ for Band in Bands:
         plt.savefig(save_path_graficos + '{}.png'.format(Band))
         plt.savefig(save_path_graficos + '{}.svg'.format(Band))
 
-## Violin Plot
+## Violin Plot Bandas
 
 alpha = 100
 tmin, tmax = -0.6, -0.003
@@ -200,8 +200,8 @@ for Band in Bands:
     plt.ion()
     plt.figure()
     plt.title(Band)
+    plt.plot([plt.xlim()[0], 0.55], [plt.xlim()[0], 0.55], 'k--')
     for i in range(len(Corr_Envelope)):
         plt.plot(Corr_Envelope[i], Corr_Pitch[i], '.', label='Subject {}'.format(i + 1))
     plt.legend()
     plt.grid()
-    plt.plot([plt.xlim()[0], 0.55], [plt.xlim()[0], 0.55], 'k--')

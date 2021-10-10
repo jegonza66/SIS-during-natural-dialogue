@@ -20,14 +20,28 @@ Save_figures_Trace = True
 Stims_Order = ['Envelope', 'Pitch', 'Pitch_der', 'Spectrogram', 'Phonemes']
 Stims = ['Envelope', 'Pitch', 'Pitch_der', 'Envelope_Pitch_Pitch_der']
 Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All']
-Stims = ['Envelope']
-Bands = ['Delta']
+# Stims = ['Envelope']
+# Bands = ['Beta_2', 'All']
 
-Alphas = {}
+Trace_interval = 2
+min_trace_derivate = 0
+Corr_limit = 0.025
+
+alphas_fname = 'saves/Alphas/Alphas_Trace{}_Corr{}.pkl'.format(Trace_interval, Corr_limit)
+failed_fname = 'saves/Alphas/Failed_Trace{}_Corr{}.pkl'.format(Trace_interval, Corr_limit)
+
+try:
+    f = open(alphas_fname, 'rb')
+    Alphas = pickle.load(f)
+    f.close()
+except:
+    Alphas = {}
+
+failed_subjects = []
 
 # DEFINO PARAMETROS
 for Band in Bands:
-    print(Band + '\n')
+    print('\n' + Band + '\n')
     Alphas_Band = {}
     # stim = 'Envelope'
     # Defino banda de eeg
@@ -76,14 +90,16 @@ for Band in Bands:
             dstims_para_sujeto_1, dstims_para_sujeto_2, info = Load.Estimulos(stim, Sujeto_1, Sujeto_2)
             Cant_Estimulos = len(dstims_para_sujeto_1)
 
-            for sujeto, eeg, dstims in zip((1, 2), (eeg_sujeto_1, eeg_sujeto_2), (dstims_para_sujeto_1, dstims_para_sujeto_2)):
-            # for sujeto, eeg, dstims in zip([2], [eeg_sujeto_2], [dstims_para_sujeto_2]):
+            for sujeto, eeg, dstims in zip((1, 2), (eeg_sujeto_1, eeg_sujeto_2),
+                                           (dstims_para_sujeto_1, dstims_para_sujeto_2)):
+                # for sujeto, eeg, dstims in zip([2], [eeg_sujeto_2], [dstims_para_sujeto_2]):
                 print('Sujeto {}'.format(sujeto))
                 # Separo los datos en 5 y tomo test set de 20% de datos con kfold (5 iteraciones)
                 n_splits = 5
 
                 Standarized_Betas = np.zeros(len(alphas_swept))
                 Correlaciones = np.zeros(len(alphas_swept))
+                Std_Corr = np.zeros(len(alphas_swept))
                 Errores = np.zeros(len(alphas_swept))
 
                 for alpha_num, alpha in enumerate(alphas_swept):
@@ -133,72 +149,57 @@ for Band in Bands:
                         Rmse_buenos_ronda_canal[fold] = Rmse
 
                     Correlaciones[alpha_num] = Corr_buenas_ronda_canal.mean()
-                    Errores[alpha_num] = Rmse_buenos_ronda_canal.mean()
+                    Std_Corr[alpha_num] = Corr_buenas_ronda_canal.std()
                     Standarized_Betas[alpha_num] = np.sum(abs(Pesos_ronda_canales).mean(0).mean(0))
                     Trace_derivate = np.diff(Standarized_Betas) / alpha_step
+                    Trace_derivate_2 = np.diff(Trace_derivate) / alpha_step
 
                 # Individual Ridge Trace
-                # if np.mean(Correlaciones[:3]) > np.mean(Correlaciones[-3:]):
-                # print('CASO 1')
-                Corr_range = np.where(Correlaciones.max() - Correlaciones < Correlaciones.max() * 0.005)[0]
-                Rmse_range = np.where(Errores - Errores.min() < Errores.min() * 0.005)[0]
-                small_derivate = np.where(abs(Trace_derivate) < abs(Trace_derivate).max() * 0.025)[0]
-                # Take first consecutive interval of trace range
-                first_interval = np.split(small_derivate, np.where(np.diff(small_derivate) != 1)[0]+1)[0]
-                # append next value because derivate is calculated as difference to following value
-                Trace_range = np.append(first_interval, first_interval[-1]+1)
+                Trace_range = np.where(Trace_derivate_2 < min_trace_derivate)[0] + 1  # +1 because 2nd derivate is defined in intervales
+                Corr_range = np.where(Correlaciones.max() - Correlaciones < Correlaciones.max() * Corr_limit)[0]
 
-                # If overlap non empty
-                Overlap = list(set(Trace_range).intersection(set(Corr_range)))
-                if Overlap:
-                    print('HAY OVERLAP')
-                    Alpha_Sujeto = alphas_swept[Overlap[-1]]
-                    # Corr_Overlap = np.array([Correlaciones[i] for i in Overlap])
-                    # Alpha_Sujeto = alphas_swept[Overlap[Corr_Overlap.argmax()]]
+                Overlap = sorted(set(Trace_range).intersection(set(Corr_range)), key=list(Trace_range).index)
+                Trace_range_med = None
+                try:
+                    Trace_range_med = int(len(Trace_range) / Trace_interval + Trace_range[0])
+                except:
+                    pass
 
-                else:
-                    intervals_1 = [[Corr_range.min(), Corr_range.max()], [Trace_range.min(), Trace_range.max()]]
-                    intervals_2 = [[Corr_range.min(), Corr_range.max()], [Rmse_range.min(), Rmse_range.max()]]
-                    intervals_3 = [[Rmse_range.min(), Rmse_range.max()], [Trace_range.min(), Trace_range.max()]]
-                    # intervals = [intervals_1, intervals_2, intervals_3]
-                    intervals = intervals_1
-                    gaps = list(map(Funciones.findFreeinterval, intervals))
-                    values = set([item for sublist in gaps for subsublist in sublist for item in subsublist])
+                try:
+                    if Overlap and Trace_range_med in Corr_range:
+                        Alpha_Sujeto = alphas_swept[Trace_range_med]
 
-                    # Interpolo (alphas vs indice)
-                    alpha_index = np.mean(list(values))
-                    decimal_part = alpha_index % 1
-                    alpha_extra = decimal_part * alpha_step
-                    Alpha_Sujeto = alphas_swept[int(alpha_index)] + alpha_extra
+                    else:
+                        intervals = [[Corr_range.min(), Corr_range.max()], [Trace_range_med, Trace_range_med]]
+                        gap = Funciones.findFreeinterval(intervals)
+                        values = set(gap[0])
 
-                # elif np.mean(abs(Trace_derivate[:3])) > np.mean(abs(Trace_derivate[-3:])):
-                #     print('CASO 2')
-                #     Trace_range = np.where(
-                #         abs(Trace_derivate).max() - abs(Trace_derivate) < abs(Trace_derivate).max() * 0.05)
-                #     Alpha_Sujeto = np.max(Trace_range)
-                #
-                # elif np.mean(abs(Trace_derivate[:3])) < np.mean(abs(Trace_derivate[-3:])):
-                #     print('CASO 3')
-                #     Trace_range = np.where(
-                #         abs(Trace_derivate).max() - abs(Trace_derivate) < abs(Trace_derivate).max() * 0.05)
-                #     Alpha_Sujeto = np.max(Trace_range)
+                        # Interpolo (alphas vs indice)
+                        alpha_index = np.mean(list(values))
+                        decimal_part = alpha_index % 1
+                        alpha_extra = decimal_part * alpha_step
+                        Alpha_Sujeto = alphas_swept[int(alpha_index)] + alpha_extra
+
+                except:
+                    Alpha_Sujeto = 'FAILED'
+                    failed_subjects.append('{}_{}'.format(sesion, sujeto))
 
                 if Display_figures_Trace:
                     plt.ion()
                 else:
                     plt.ioff()
 
-                fig, axs = plt.subplots(3, 1, sharex=True, figsize=(10, 13))
+                fig, axs = plt.subplots(2, 1, sharex=True, figsize=(10, 13))
                 fig.suptitle('Ridge Trace - {} - {}'.format(Band, stim))
                 plt.xlabel('Ridge Parameter')
                 plt.xscale('log')
 
                 axs[0].set_ylabel('Standarized Coefficents')
                 axs[0].plot(alphas_swept, Standarized_Betas, 'o--')
-                axs[0].vlines(Alpha_Sujeto, axs[0].get_ylim()[0], axs[0].get_ylim()[1], linestyle='dashed',
+                if Alpha_Sujeto != 'FAILED': axs[0].vlines(Alpha_Sujeto, axs[0].get_ylim()[0], axs[0].get_ylim()[1], linestyle='dashed',
                               color='black', linewidth=1.5)
-                axs[0].axvspan(alphas_swept[Trace_range[0]], alphas_swept[Trace_range[-1]], alpha=0.4, color='grey',
-                               label='Trace_range')
+                if Trace_range.size: axs[0].axvspan(alphas_swept[Trace_range[0]], alphas_swept[Trace_range[-1]], alpha=0.4, color='grey',
+                               label='Trace range')
                 if Overlap:
                     axs[0].axvspan(alphas_swept[Overlap[0]], alphas_swept[Overlap[-1]], alpha=0.4, color='green',
                                    label='Overlap')
@@ -207,29 +208,17 @@ for Band in Bands:
 
                 axs[1].set_ylabel('Mean Correlation')
                 axs[1].plot(alphas_swept, Correlaciones, 'o--')
-                axs[1].errorbar(alphas_swept, Correlaciones, yerr=np.std(Correlaciones), fmt='none', ecolor='black',
-                                elinewidth=0.5,
-                                capsize=0.5)
-                axs[1].vlines(Alpha_Sujeto, axs[1].get_ylim()[0], axs[1].get_ylim()[1], linestyle='dashed',
+                axs[1].errorbar(alphas_swept, Correlaciones, yerr=Std_Corr, fmt='none', ecolor='black',
+                                elinewidth=0.5, capsize=0.5)
+                if Alpha_Sujeto != 'FAILED': axs[1].vlines(Alpha_Sujeto, axs[1].get_ylim()[0], axs[1].get_ylim()[1], linestyle='dashed',
                               color='black', linewidth=1.5)
-                axs[1].axvspan(alphas_swept[Corr_range[0]], alphas_swept[Corr_range[-1]], alpha=0.4, color='grey',
-                               label='Corr_range')
+                if Corr_range.size: axs[1].axvspan(alphas_swept[Corr_range[0]], alphas_swept[Corr_range[-1]], alpha=0.4, color='grey',
+                               label='Corr range')
                 if Overlap:
                     axs[1].axvspan(alphas_swept[Overlap[0]], alphas_swept[Overlap[-1]], alpha=0.4, color='green',
                                    label='Overlap')
                 axs[1].grid()
                 axs[1].legend()
-
-                axs[2].set_ylabel('Mean Error')
-                axs[2].plot(alphas_swept, Errores, 'o--')
-                axs[2].errorbar(alphas_swept, Errores, yerr=np.std(Errores), fmt='none', ecolor='black',
-                                elinewidth=0.5,
-                                capsize=0.5)
-                axs[2].vlines(Alpha_Sujeto, axs[2].get_ylim()[0], axs[2].get_ylim()[1], linestyle='dashed',
-                              color='black', linewidth=1.5)
-                axs[2].axvspan(alphas_swept[Rmse_range[0]], alphas_swept[Rmse_range[-1]], alpha=0.4, color='grey',
-                               label='Rmse_range')
-                axs[2].grid()
 
                 fig.tight_layout()
 
@@ -247,6 +236,10 @@ for Band in Bands:
     Alphas[Band] = Alphas_Band
 
 # Save Alphas
-f = open('saves/Alphas.pkl', 'wb')
+f = open(alphas_fname, 'wb')
 pickle.dump(Alphas, f)
+f.close()
+
+f = open(failed_fname, 'wb')
+pickle.dump(failed_subjects, f)
 f.close()

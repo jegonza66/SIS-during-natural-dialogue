@@ -663,6 +663,7 @@ def PSD_boxplot(psd_pred_correlations, psd_rand_correlations, Display, Save, Run
     fig = plt.figure()
     sn.violinplot(data=[psd_pred_correlations, psd_rand_correlations])
     # plt.boxplot([psd_pred_correlations, psd_rand_correlations], labels=['Prediction', 'Random'])
+    plt.ylim([0,1])
     plt.ylabel('Correlation')
 
     if Save:
