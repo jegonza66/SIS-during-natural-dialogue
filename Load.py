@@ -172,7 +172,7 @@ class Trial_channel:
         for i in range(len(pitch) - 1):
             try:
                 diff = pitch[i + 1] - pitch[i]
-                pitch_der.append(diff if np.abs(diff) < 20 else None)
+                pitch_der.append(diff)
             except:
                 pitch_der.append(None)
         pitch_der.append(None)
