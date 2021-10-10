@@ -189,7 +189,7 @@ def plot_grafico_shadows(Display, sesion, sujeto, best_alpha,
                     label='Correlation distribution (Random data)')
     ax.set_xlim([-1, 129])
     ax.set_xlabel('Channels', fontsize=15)
-    ax.set_ylabel('|Correlation|', fontsize=15)
+    ax.set_ylabel('Correlation', fontsize=15)
     ax.legend(fontsize=13, loc="lower right")
     ax.grid()
 
