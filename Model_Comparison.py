@@ -119,6 +119,11 @@ for Band in Bands:
         plt.savefig(save_path_graficos + '{}.svg'.format(Band))
 
 ## Violin Plot Bandas
+import pickle
+import matplotlib.pyplot as plt
+import os
+import seaborn as sn
+
 
 alpha = 100
 tmin, tmax = -0.6, -0.003

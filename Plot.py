@@ -345,7 +345,7 @@ def regression_weights(Pesos_totales_sujetos_todos_canales, info, Band, times, s
                     show=False, spatial_colors=True, unit=False, units='w', axes=ax)
 
         ax.plot(times * 1000, evoked._data.mean(0), 'k--', label='Mean', zorder=130, linewidth=2)
-        ax.axvspan(0, ax.get_xlim()[1], alpha=0.4, color='grey', label='Unheard stimuli')
+        if times[-1] > 0: ax.axvspan(0, ax.get_xlim()[1], alpha=0.4, color='grey', label='Unheard stimuli')
         if Autocorrelation_value and times[-1] > 0: ax.vlines(decorr_time, ax.get_ylim()[0], ax.get_ylim()[1],
                                                               linestyle='dashed', color='red',
                                                               label='Decorrelation time')

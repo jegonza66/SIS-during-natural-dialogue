@@ -408,7 +408,7 @@ class Sesion_class:
         return Sesion
 
 
-def Load_Data(sesion, Band, sr, tmin, tmax, situacion, procesed_data_path, sujeto_total, Causal_filter=True,
+def Load_Data(sesion, Band, sr, tmin, tmax, situacion, procesed_data_path, Causal_filter=True,
               valores_faltantes_pitch=0, Calculate_pitch=False):
     Sesion_obj = Sesion_class(sesion=sesion, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
                               valores_faltantes_pitch=valores_faltantes_pitch, Causal_filter=Causal_filter,

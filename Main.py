@@ -67,7 +67,7 @@ for sesion in sesiones:
     print('Sesion {}'.format(sesion))
 
     # LOAD DATA BY SUBJECT
-    Sujeto_1, Sujeto_2 = Load.Load_Data(sesion, Band, sr, tmin, tmax, situacion, procesed_data_path, sujeto_total)
+    Sujeto_1, Sujeto_2 = Load.Load_Data(sesion, Band, sr, tmin, tmax, situacion, procesed_data_path)
 
     # LOAD EEG BY SUBJECT
     eeg_sujeto_1, eeg_sujeto_2 = Sujeto_1['EEG'], Sujeto_2['EEG']
