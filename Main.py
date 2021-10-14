@@ -168,10 +168,8 @@ for sesion in sesiones:
         Canales_repetidos_corr_sujeto[Canales_sobrevivientes_corr] += 1
         Canales_repetidos_rmse_sujeto[Canales_sobrevivientes_rmse] += 1
 
-        # Tomo promedio de pesos entre los folds para todos los canales
+        # Tomo promedio de pesos Corr y Rmse entre los folds para todos los canales
         Pesos_promedio = Pesos_ronda_canales.mean(0)
-
-        # Tomo promedio de Corr y Rmse entre las rondas de test para todos los canales
         Corr_promedio = Corr_buenas_ronda_canal.mean(0)
         Rmse_promedio = Rmse_buenos_ronda_canal.mean(0)
 
