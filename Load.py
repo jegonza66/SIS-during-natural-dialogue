@@ -312,7 +312,7 @@ class Sesion_class:
         info = Trial_channel_1['info']
 
         # Convierto a array
-        eeg_sujeto_1, envelope_para_sujeto_1, pitch_para_sujeto_1, pitch_der_para_sujeto_1, eeg_sujeto_2, envelope_para_sujeto_2, pitch_para_sujeto_2, pitch_der_para_sujeto_2 = Processing.make_array(
+        eeg_sujeto_1, envelope_para_sujeto_1, pitch_para_sujeto_1, pitch_der_para_sujeto_1, eeg_sujeto_2, envelope_para_sujeto_2, pitch_para_sujeto_2, pitch_der_para_sujeto_2 = Funciones.make_array(
             eeg_sujeto_1, envelope_para_sujeto_1, pitch_para_sujeto_1, pitch_der_para_sujeto_1, eeg_sujeto_2,
             envelope_para_sujeto_2, pitch_para_sujeto_2, pitch_der_para_sujeto_2)
 

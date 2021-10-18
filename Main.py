@@ -57,9 +57,6 @@ Path_it = 'saves/Ridge/Fake_it/Stims_{}_EEG_{}/Alpha_{}/tmin{}_tmax{}/Stim_{}_EE
                                                                                                    tmax,
                                                                                                    stim, Band)
 
-# Save variables
-
-N_samples = []
 # Start Run
 sesiones = np.arange(21, 26)
 sujeto_total = 0
@@ -78,7 +75,6 @@ for sesion in sesiones:
 
     for sujeto, eeg, dstims in zip((1, 2), (eeg_sujeto_1, eeg_sujeto_2), (dstims_para_sujeto_1, dstims_para_sujeto_2)):
     # for sujeto, eeg, dstims in zip([2], [eeg_sujeto_2], [dstims_para_sujeto_2]):
-        N_samples.append(len(eeg))
         print('Sujeto {}'.format(sujeto))
         # Separo los datos en 5 y tomo test set de 20% de datos con kfold (5 iteraciones)
         Predicciones = {}
@@ -225,10 +221,9 @@ Plot.Cabezas_canales_rep(Canales_repetidos_rmse_sujetos.sum(0), info, Display_To
                          Run_graficos_path, title='Rmse')
 
 # Grafico Pesos
-curva_pesos_totales = Plot.regression_weights(Pesos_totales_sujetos_todos_canales, info, Band, times, sr,
-                                              Display_Total_Figures, Save_Total_Figures, Run_graficos_path,
-                                              Cant_Estimulos, Stims_Order, stim)
-curva_pesos_totales = Plot.regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, Band, times, sr,
+curva_pesos_totales = Plot.regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display_Total_Figures,
+                                              Save_Total_Figures, Run_graficos_path, Cant_Estimulos, Stims_Order, stim)
+curva_pesos_totales = Plot.regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times,
                                                      Display_Total_Figures, Save_Total_Figures, Run_graficos_path,
                                                      Cant_Estimulos, Stims_Order, stim)
 

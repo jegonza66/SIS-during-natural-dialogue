@@ -1,14 +1,21 @@
 import numpy as np
 import pandas as pd
 
+
+def trunc(values, decs=0):
+    return np.trunc(values * 10 ** decs) / (10 ** decs)
+
+
 def flatten_list(t):
     return [item for sublist in t for item in sublist]
+
 
 def make_array(*args):
     returns = []
     for var in args:
         returns.append(np.array(var))
     return tuple(returns)
+
 
 def make_df(*args):
     returns = []
@@ -29,15 +36,37 @@ def igualar_largos(*args):
     return tuple(returns)
 
 
-def correlacion (a, b):
-    corr=[1.]
-    if (len(a)!= len(b)):
-        print('Error: Vectores de diferente tamaño: {} y {}.'.format(len(a), len(b)))
+def correlacion(x, y, axis=0):
+    if (len(x) != len(y)):
+        print('Error: Vectores de diferente tamaño: {} y {}.'.format(len(x), len(y)))
     else:
-        for i in range(int(len(a)/2)):
-            corr.append(np.corrcoef(a[:-i-1], b[i+1:])[0,1])
-    return np.array(corr)
+        Correlaciones = []
+        for j in range(x.shape[axis]):
+            a, b = x[j], y[j]
+            corr = [1.]
+            for i in range(int(len(a) / 2)):
+                corr.append(np.corrcoef(a[:-i - 1], b[i + 1:])[0, 1])
+            Correlaciones.append(corr)
+            print("\rProgress: {}%".format(int((j + 1) * 100 / x.shape[axis])), end='')
+    return np.array(Correlaciones)
 
+
+def decorrelation_time(Estimulos, sr, Autocorrelation_value = 0.1):
+    Autocorrelations = correlacion(Estimulos, Estimulos)
+    decorrelation_times = []
+
+    for Autocorr in Autocorrelations:
+        for i in range(len(Autocorr)):
+            if Autocorr[i] < Autocorrelation_value: break
+        dif_paso = Autocorr[i - 1] - Autocorr[i]
+        dif_01 = Autocorr[i - 1] - Autocorrelation_value
+        dif_time = dif_01 / sr / dif_paso
+        decorr_time = ((i - 1) / sr + dif_time) * 1000
+
+        if decorr_time > 0 and decorr_time < len(Autocorr)/sr*1000:
+            decorrelation_times.append(decorr_time)
+
+    return decorrelation_times
 
 def findFreeinterval(arr):
     # If there are no set of interval
