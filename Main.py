@@ -30,10 +30,6 @@ Save_Total_Figures = False
 Stims_preprocess = 'Normalize'
 EEG_preprocess = 'Standarize'
 
-# Model
-# Model = Ridge
-alpha = 100
-
 # Stimuli and EEG
 Stims_Order = ['Envelope', 'Pitch', 'Pitch_der', 'Spectrogram', 'Phonemes']
 Stims = ['Envelope', 'Pitch', 'Pitch_der', 'Envelope_Pitch_Pitch_der']
@@ -50,12 +46,22 @@ times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.
 # Paths
 procesed_data_path = 'saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
 Run_graficos_path = 'gráficos/Ridge/Stims_{}_EEG_{}/Alpha_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
-    Stims_preprocess, EEG_preprocess, alpha, tmin, tmax, stim, Band)
+    Stims_preprocess, EEG_preprocess, 'Individual', tmin, tmax, stim, Band)
 Path_it = 'saves/Ridge/Fake_it/Stims_{}_EEG_{}/Alpha_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(Stims_preprocess,
                                                                                                    EEG_preprocess,
-                                                                                                   alpha, tmin,
+                                                                                                   100, tmin,
                                                                                                    tmax,
                                                                                                    stim, Band)
+alphas_fname = 'saves/Alphas/Alphas_Trace2_Corr0.025.pkl'
+
+# Model
+# Model = Ridge
+try:
+    f = open(alphas_fname, 'rb')
+    Alphas = pickle.load(f)
+    f.close()
+except:
+    print('\n\nAlphas file not found.\n\n')
 
 # Start Run
 sesiones = np.arange(21, 26)
@@ -113,7 +119,7 @@ for sesion in sesiones:
             eeg, dstims_train_val, dstims_test = Processing.standarize_normalize(eeg, dstims_train_val, dstims_test,
                                                                                  Stims_preprocess, EEG_preprocess,
                                                                                  axis, porcent)
-
+            alpha = Alphas[Band][stim][sesion][sujeto]
             # Ajusto el modelo y guardo
             Model = Models.Ridge(alpha)
             Model.fit(dstims_train_val, eeg_train_val)
