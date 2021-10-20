@@ -79,7 +79,7 @@ class Trial_channel:
         # Envelope
         envelope = np.abs(sgn.hilbert(wav1))
         envelope = Processing.butter_filter(envelope, frecuencias=25, sampling_freq=self.audio_sr,
-                                            btype='lowpass', order=3, axis=0, ftype='Causal')
+                                            btype='lowpass', order=3, axis=0, ftype='NonCausal')
         window_size = 125
         stride = 125
         envelope = np.array([np.mean(envelope[i:i + window_size]) for i in range(0, len(envelope), stride) if
@@ -280,12 +280,9 @@ class Sesion_class:
 
         # Save_Preprocesed
         EEG_path = self.procesed_data_path + 'EEG/'
-        Envelope_path = self.procesed_data_path + 'Envelope/'
-        if self.Causal_filter:
-            EEG_path += 'Causal_'
-            Envelope_path += 'Causal_'
+        if self.Causal_filter: EEG_path += 'Causal_'
         EEG_path += 'Sit_{}_Band_{}/'.format(self.situacion, self.Band)
-        Envelope_path += 'Sit_{}/'.format(self.situacion)
+        Envelope_path = self.procesed_data_path + 'Envelope/Sit_{}/'.format(self.situacion)
         Pitch_path = self.procesed_data_path + 'Pitch/Sit_{}_Faltantes_0/'.format(self.situacion)
         Pitch_der_path = self.procesed_data_path + 'Pitch_der/Sit_{}_Faltantes_0/'.format(self.situacion)
         for path in [EEG_path, Envelope_path, Pitch_path, Pitch_der_path]:
@@ -324,22 +321,18 @@ class Sesion_class:
 
     def load_procesed(self):
 
-        EEG_path = self.procesed_data_path + 'EEG/'
-        Envelope_path = self.procesed_data_path + 'Envelope/'
-        if self.Causal_filter:
-            EEG_path += 'Causal_'
-            Envelope_path += 'Causal_'
+        eeg_path = self.procesed_data_path + 'EEG/'
 
-        EEG_path += 'Sit_{}_Band_{}/'.format(self.situacion, self.Band) + 'Sesion{}.pkl'.format(self.sesion)
-        Envelope_path += 'Sit_{}/'.format(self.situacion) + 'Sesion{}.pkl'.format(self.sesion)
+        if self.Causal_filter: eeg_path += 'Causal_'
+        eeg_path += 'Sit_{}_Band_{}/'.format(self.situacion, self.Band) + 'Sesion{}.pkl'.format(self.sesion)
 
-        # LOAD EEG
-        f = open(EEG_path, 'rb')
+        f = open(eeg_path, 'rb')
         eeg_sujeto_1, eeg_sujeto_2 = pickle.load(f)
         f.close()
 
-        # LOAD ENVELOPE
-        f = open(Envelope_path, 'rb')
+        f = open(
+            self.procesed_data_path + 'Envelope/Sit_{}/'.format(self.situacion) + 'Sesion{}.pkl'.format(self.sesion),
+            'rb')
         envelope_para_sujeto_1, envelope_para_sujeto_2 = pickle.load(f)
         f.close()
 
