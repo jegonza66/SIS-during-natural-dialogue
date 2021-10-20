@@ -96,30 +96,36 @@ def subsamplear(x, cada_cuanto):
 
 
 def band_freq(band):
-    if band == 'Delta':
-        l_freq = 1
-        h_freq = 4
-    elif band == 'Theta':
-        l_freq = 4
-        h_freq = 8
-    elif band == 'Alpha':
-        l_freq = 8
-        h_freq = 13
-    elif band == 'Beta_1':
-        l_freq = 13
-        h_freq = 19
-    elif band == 'Beta_2':
-        l_freq = 19
-        h_freq = 25
-    elif band == 'All':
-        l_freq = None
-        h_freq = 40
-    elif band == 'Delta_Theta':
-        l_freq = 1
-        h_freq = 8
-    elif band == 'Delta_Theta_Alpha':
-        l_freq = 1
-        h_freq = 13
+    if type(band) == str:
+
+        if band == 'Delta':
+            l_freq = 1
+            h_freq = 4
+        elif band == 'Theta':
+            l_freq = 4
+            h_freq = 8
+        elif band == 'Alpha':
+            l_freq = 8
+            h_freq = 13
+        elif band == 'Beta_1':
+            l_freq = 13
+            h_freq = 19
+        elif band == 'Beta_2':
+            l_freq = 19
+            h_freq = 25
+        elif band == 'All':
+            l_freq = None
+            h_freq = 40
+        elif band == 'Delta_Theta':
+            l_freq = 1
+            h_freq = 8
+        elif band == 'Delta_Theta_Alpha':
+            l_freq = 1
+            h_freq = 13
+
+    elif type(band) == tuple:
+        l_freq = band[0]
+        h_freq = band[1]
 
     return l_freq, h_freq
 
