@@ -10,10 +10,6 @@ from scipy import signal
 import copy
 
 
-def flatten_list(t):
-    return [item for sublist in t for item in sublist]
-
-
 def matriz_shifteada(features, delays):
     features = np.array(features).reshape(len(features), 1)
     nt, ndim = features.shape

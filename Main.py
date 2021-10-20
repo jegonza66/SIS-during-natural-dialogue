@@ -19,10 +19,10 @@ import Simulation
 Statistical_test = False
 
 # Figures
-Display_Ind_Figures = True
+Display_Ind_Figures = False
 Display_Total_Figures = False
-Save_Ind_Figures = False
-Save_Total_Figures = False
+Save_Ind_Figures = True
+Save_Total_Figures = True
 
 # Define Parameters
 
@@ -47,11 +47,8 @@ times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.
 procesed_data_path = 'saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
 Run_graficos_path = 'gráficos/Ridge/Stims_{}_EEG_{}/Alpha_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
     Stims_preprocess, EEG_preprocess, 'Individual', tmin, tmax, stim, Band)
-Path_it = 'saves/Ridge/Fake_it/Stims_{}_EEG_{}/Alpha_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(Stims_preprocess,
-                                                                                                   EEG_preprocess,
-                                                                                                   100, tmin,
-                                                                                                   tmax,
-                                                                                                   stim, Band)
+Path_it = 'saves/Ridge/Fake_it/Stims_{}_EEG_{}/Alpha_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
+    Stims_preprocess, EEG_preprocess, 100, tmin, tmax, stim, Band)
 alphas_fname = 'saves/Alphas/Alphas_Trace2_Corr0.025.pkl'
 
 # Model
@@ -120,6 +117,9 @@ for sesion in sesiones:
                                                                                  Stims_preprocess, EEG_preprocess,
                                                                                  axis, porcent)
             alpha = Alphas[Band][stim][sesion][sujeto]
+            if alpha == 'FAILED':
+                alpha = np.mean([value for sesion_dict in Alphas[Band][stim].keys() for value in list(Alphas[Band][stim][sesion_dict].values()) if type(value) != 'FAILED'])
+
             # Ajusto el modelo y guardo
             Model = Models.Ridge(alpha)
             Model.fit(dstims_train_val, eeg_train_val)

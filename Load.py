@@ -14,14 +14,15 @@ from scipy import signal as sgn
 from praatio import pitch_and_intensity
 import Processing
 import Funciones
+import platform
 
 
 class Trial_channel:
 
     def __init__(
             self, s=21, trial=1, channel=1, Band='All',
-            sr=128, tmin=-0.53, tmax=-0.003, valores_faltantes_pitch=0,
-            Causal_filter=True, drop_bads=False
+            sr=128, tmin=-0.6, tmax=-0.003, valores_faltantes_pitch=0,
+            Causal_filter=True
     ):
 
         sex_list = ['M', 'M', 'M', 'F', 'F', 'F', 'F', 'M', 'M', 'M', 'F', 'F', 'F', 'F', 'M', 'M', 'M', 'F', 'F', 'M']
@@ -36,9 +37,6 @@ class Trial_channel:
         self.valores_faltantes_pitch = valores_faltantes_pitch
         self.sex = sex_list[(s - 21) * 2 + channel - 1]
         self.Causal_filter = Causal_filter
-        self.drop_bads = drop_bads
-        self.bads = ['C7', 'B27', 'B26', 'B25', 'B14', 'B15', 'B10', 'B11', 'B9', 'B8', 'A26', 'A27', 'A25', 'A24',
-                     'A13', 'A14', 'A12', 'A11', 'D32', 'D31', 'D24', 'D25', 'D23', 'D22', 'D8', 'D7', 'C30', 'C29']
 
         self.eeg_fname = "Datos/EEG/S" + str(s) + "/s" + str(s) + "-" + str(channel) + "-Trial" + str(
             trial) + "-Deci-Filter-Trim-ICA-Pruned.set"
@@ -54,11 +52,8 @@ class Trial_channel:
         # Hago un lowpass
         if self.Causal_filter:
             eeg = eeg.filter(l_freq=self.l_freq_eeg, h_freq=self.h_freq_eeg, phase='minimum')
-
         else:
             eeg = eeg.filter(l_freq=self.l_freq_eeg, h_freq=self.h_freq_eeg)
-
-        if self.drop_bads: eeg.drop_channels(self.bads)
 
         # Paso a array
         eeg = eeg.to_data_frame()
@@ -75,9 +70,6 @@ class Trial_channel:
         channel_names = montage.ch_names
         info = mne.create_info(ch_names=channel_names[:], sfreq=self.sr, ch_types='eeg').set_montage(montage)
 
-        if self.drop_bads:
-            info['bads'] = self.bads
-
         return info
 
     def f_envelope(self):
@@ -87,25 +79,28 @@ class Trial_channel:
         # Envelope
         envelope = np.abs(sgn.hilbert(wav1))
         envelope = Processing.butter_filter(envelope, frecuencias=25, sampling_freq=self.audio_sr,
-                                            btype='lowpass', order=3, axis=0, ftype='NonCausal')
+                                            btype='lowpass', order=3, axis=0, ftype='Causal')
         window_size = 125
         stride = 125
         envelope = np.array([np.mean(envelope[i:i + window_size]) for i in range(0, len(envelope), stride) if
                              i + window_size <= len(envelope)])
         envelope = envelope.ravel().flatten()
-
         envelope = Processing.matriz_shifteada(envelope, self.delays)  # armo la matriz shifteada
 
         return np.array(envelope)
 
     def f_calculate_pitch(self):
-        praatEXE = r"C:\Program Files\Praat\Praat.exe"
-        output_folder = "C:/Users/joaco/Desktop/Joac/Facultad/Tesis/Código/Datos/Pitch"
-
+        if platform.system() == 'Linux':
+            praatEXE = 'Praat/praat'
+            output_folder = 'Datos/Pitch'
+        else:
+            praatEXE = r"C:\Program Files\Praat\Praat.exe"
+            output_folder = "C:/Users/joaco/Desktop/Joac/Facultad/Tesis/Código/Datos/Pitch"
         try:
             os.makedirs(output_folder)
         except:
             pass
+
         output_path = self.pitch_fname
         if self.sex == 'M':
             minPitch = 50
@@ -114,49 +109,8 @@ class Trial_channel:
             minPitch = 75
             maxPitch = 500
         silenceThreshold = 0.01
-
         pitch_and_intensity.extractPI(os.path.abspath(self.wav_fname), os.path.abspath(output_path), praatEXE, minPitch,
                                       maxPitch, self.sampleStep, silenceThreshold)
-        read_file = pd.read_csv(output_path)
-
-        time = np.array(read_file['time'])
-        pitch = np.array(read_file['pitch'])
-        intensity = np.array(read_file['intensity'])
-
-        pitch[pitch == '--undefined--'] = np.nan
-        pitch = np.array(pitch, dtype=float)
-
-        pitch_der = []
-        for i in range(len(pitch) - 1):
-            try:
-                diff = pitch[i + 1] - pitch[i]
-                pitch_der.append(diff)
-            except:
-                pitch_der.append(None)
-        pitch_der.append(None)
-        pitch_der = np.array(pitch_der, dtype=float)
-
-        if not self.valores_faltantes_pitch:
-            pitch[np.isnan(pitch)] = self.valores_faltantes_pitch
-            pitch_der[np.isnan(pitch_der)] = self.valores_faltantes_pitch
-        elif not np.isfinite(self.valores_faltantes_pitch):
-            pitch[np.isnan(pitch)] = float(self.valores_faltantes_pitch)
-            pitch_der[np.isnan(pitch_der)] = float(self.valores_faltantes_pitch)
-        elif np.isfinite(self.valores_faltantes_pitch):
-            pitch[np.isnan(pitch)] = np.float(self.valores_faltantes_pitch)
-            pitch_der[np.isnan(pitch_der)] = np.float(self.valores_faltantes_pitch)
-        else:
-            print('Invalid missing value for pitch {}'.format(self.valores_faltantes_pitch) + '\nMust be finite.')
-
-        pitch = np.array(np.repeat(pitch, self.audio_sr * self.sampleStep), dtype=float)
-        pitch = Processing.subsamplear(pitch, 125)
-        pitch = Processing.matriz_shifteada(pitch, self.delays)
-
-        pitch_der = np.array(np.repeat(pitch_der, self.audio_sr * self.sampleStep), dtype=float)
-        pitch_der = Processing.subsamplear(pitch_der, 125)
-        pitch_der = Processing.matriz_shifteada(pitch_der, self.delays)
-
-        return pitch, pitch_der
 
     def load_pitch(self):
         read_file = pd.read_csv(self.pitch_fname)
@@ -246,6 +200,17 @@ class Sesion_class:
         trial = 1
         while run:
             try:
+                if self.Calculate_pitch:
+                    Trial_channel(s=self.sesion, trial=trial, channel=1,
+                                  Band=self.Band, sr=self.sr, tmin=self.tmin, tmax=self.tmax,
+                                  valores_faltantes_pitch=self.valores_faltantes_pitch,
+                                  Causal_filter=self.Causal_filter).f_calculate_pitch()
+                    Trial_channel(s=self.sesion, trial=trial, channel=2,
+                                  Band=self.Band, sr=self.sr, tmin=self.tmin, tmax=self.tmax,
+                                  valores_faltantes_pitch=self.valores_faltantes_pitch,
+                                  Causal_filter=self.Causal_filter).f_calculate_pitch()
+
+
                 Trial_channel_1 = Trial_channel(s=self.sesion, trial=trial, channel=1,
                                                 Band=self.Band, sr=self.sr, tmin=self.tmin, tmax=self.tmax,
                                                 valores_faltantes_pitch=self.valores_faltantes_pitch,
@@ -259,15 +224,12 @@ class Sesion_class:
                 eeg_trial_sujeto_1, envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1, \
                 pitch_der_trial_para_sujeto_1 = Trial_channel_1['eeg'], Trial_channel_2['envelope'], \
                                                 Trial_channel_2['pitch'], Trial_channel_2['pitch_der']
-                if self.Calculate_pitch: pitch_trial_para_sujeto_1, pitch_der_trial_para_sujeto_1 = \
-                    Trial_channel_2.f_calculate_pitch()
-                momentos_sujeto_1_trial = Processing.labeling(self.sesion, trial, canal_hablante=2, sr=self.sr)
 
                 eeg_trial_sujeto_2, envelope_trial_para_sujeto_2, pitch_trial_para_sujeto_2, \
                 pitch_der_trial_para_sujeto_2 = Trial_channel_2['eeg'], Trial_channel_1['envelope'], \
                                                 Trial_channel_1['pitch'], Trial_channel_1['pitch_der']
-                if self.Calculate_pitch: pitch_trial_para_sujeto_2, pitch_der_trial_para_sujeto_1 = \
-                    Trial_channel_1.f_calculate_pitch()
+
+                momentos_sujeto_1_trial = Processing.labeling(self.sesion, trial, canal_hablante=2, sr=self.sr)
                 momentos_sujeto_2_trial = Processing.labeling(self.sesion, trial, canal_hablante=1, sr=self.sr)
 
             except:
@@ -318,9 +280,12 @@ class Sesion_class:
 
         # Save_Preprocesed
         EEG_path = self.procesed_data_path + 'EEG/'
-        if self.Causal_filter: EEG_path += 'Causal_'
+        Envelope_path = self.procesed_data_path + 'Envelope/'
+        if self.Causal_filter:
+            EEG_path += 'Causal_'
+            Envelope_path += 'Causal_'
         EEG_path += 'Sit_{}_Band_{}/'.format(self.situacion, self.Band)
-        Envelope_path = self.procesed_data_path + 'Envelope/Sit_{}/'.format(self.situacion)
+        Envelope_path += 'Sit_{}/'.format(self.situacion)
         Pitch_path = self.procesed_data_path + 'Pitch/Sit_{}_Faltantes_0/'.format(self.situacion)
         Pitch_der_path = self.procesed_data_path + 'Pitch_der/Sit_{}_Faltantes_0/'.format(self.situacion)
         for path in [EEG_path, Envelope_path, Pitch_path, Pitch_der_path]:
@@ -359,18 +324,22 @@ class Sesion_class:
 
     def load_procesed(self):
 
-        eeg_path = self.procesed_data_path + 'EEG/'
+        EEG_path = self.procesed_data_path + 'EEG/'
+        Envelope_path = self.procesed_data_path + 'Envelope/'
+        if self.Causal_filter:
+            EEG_path += 'Causal_'
+            Envelope_path += 'Causal_'
 
-        if self.Causal_filter: eeg_path += 'Causal_'
-        eeg_path += 'Sit_{}_Band_{}/'.format(self.situacion, self.Band) + 'Sesion{}.pkl'.format(self.sesion)
+        EEG_path += 'Sit_{}_Band_{}/'.format(self.situacion, self.Band) + 'Sesion{}.pkl'.format(self.sesion)
+        Envelope_path += 'Sit_{}/'.format(self.situacion) + 'Sesion{}.pkl'.format(self.sesion)
 
-        f = open(eeg_path, 'rb')
+        # LOAD EEG
+        f = open(EEG_path, 'rb')
         eeg_sujeto_1, eeg_sujeto_2 = pickle.load(f)
         f.close()
 
-        f = open(
-            self.procesed_data_path + 'Envelope/Sit_{}/'.format(self.situacion) + 'Sesion{}.pkl'.format(self.sesion),
-            'rb')
+        # LOAD ENVELOPE
+        f = open(Envelope_path, 'rb')
         envelope_para_sujeto_1, envelope_para_sujeto_2 = pickle.load(f)
         f.close()
 
