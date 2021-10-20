@@ -7,7 +7,7 @@ import pickle
 Alphas = [10,100,500,1000]
 Alphas = [100]
 
-Bands_low = np.arange(0.1, 10, 0.5)
+Bands_low = np.arange(0.1, 15)
 Bands_range = np.flip(np.arange(3, 7, 1))
 
 Correlations = np.zeros((len(Bands_low), len(Bands_range)))
