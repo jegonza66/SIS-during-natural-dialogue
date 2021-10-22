@@ -1,6 +1,12 @@
 import numpy as np
 import pandas as pd
 
+def rename_paths(Stims_preprocess, EEG_preprocess, stim, Band, tmin, tmax, *paths):
+    returns = []
+    for path in paths:
+        path += 'Stim_{}_EEG_Band_{}/'.format(stim, Band)
+        returns.append(path)
+    return tuple(returns)
 
 def trunc(values, decs=0):
     return np.trunc(values * 10 ** decs) / (10 ** decs)
