@@ -52,9 +52,10 @@ class Trial_channel:
         eeg.load_data()
         # Hago un lowpass
         if self.Causal_filter_EEG:
-            eeg = eeg.filter(l_freq=self.l_freq_eeg, h_freq=self.h_freq_eeg, phase='minimum')
+            eeg = eeg.filter(l_freq=self.l_freq_eeg, h_freq=self.h_freq_eeg, l_trans_bandwidth=1, h_trans_bandwidth=1,
+                             phase='minimum')
         else:
-            eeg = eeg.filter(l_freq=self.l_freq_eeg, h_freq=self.h_freq_eeg)
+            eeg = eeg.filter(l_freq=self.l_freq_eeg, h_freq=self.h_freq_eeg, l_trans_bandwidth=1, h_trans_bandwidth=1)
 
         # Paso a array
         eeg = eeg.to_data_frame()
@@ -211,13 +212,12 @@ class Sesion_class:
                                   Band=self.Band, sr=self.sr, tmin=self.tmin, tmax=self.tmax,
                                   valores_faltantes_pitch=self.valores_faltantes_pitch,
                                   Causal_filter_EEG=self.Causal_filter_EEG,
-                                  Causal_filter_Env = self.Causal_filter_Env).f_calculate_pitch()
+                                  Causal_filter_Env=self.Causal_filter_Env).f_calculate_pitch()
                     Trial_channel(s=self.sesion, trial=trial, channel=2,
                                   Band=self.Band, sr=self.sr, tmin=self.tmin, tmax=self.tmax,
                                   valores_faltantes_pitch=self.valores_faltantes_pitch,
                                   Causal_filter_EEG=self.Causal_filter_EEG,
                                   Causal_filter_Env=self.Causal_filter_Env).f_calculate_pitch()
-
 
                 Trial_channel_1 = Trial_channel(s=self.sesion, trial=trial, channel=1,
                                                 Band=self.Band, sr=self.sr, tmin=self.tmin, tmax=self.tmax,
@@ -382,7 +382,8 @@ class Sesion_class:
         return Sesion
 
 
-def Load_Data(sesion, Band, sr, tmin, tmax, situacion, procesed_data_path, Causal_filter_EEG=True, Causal_filter_Env = False,
+def Load_Data(sesion, Band, sr, tmin, tmax, situacion, procesed_data_path, Causal_filter_EEG=True,
+              Causal_filter_Env=False,
               valores_faltantes_pitch=0, Calculate_pitch=False):
     Sesion_obj = Sesion_class(sesion=sesion, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
                               valores_faltantes_pitch=valores_faltantes_pitch, Causal_filter_EEG=Causal_filter_EEG,
@@ -426,6 +427,3 @@ def Estimulos(stim, Sujeto_1, Sujeto_2):
         print('Invalid sitmulus: {}'.format(stim))
 
     return dstims_para_sujeto_1, dstims_para_sujeto_2, info
-
-
-
