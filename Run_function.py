@@ -18,7 +18,7 @@ def run_pipeline(Stims_preprocess='Normalize', EEG_preprocess='Standarize', stim
     sesiones = np.arange(21, 26)
     sujeto_total = 0
     for sesion in sesiones:
-        print('Sesion {}'.format(sesion))
+        # print('Sesion {}'.format(sesion))
 
         # LOAD DATA BY SUBJECT
         Sujeto_1, Sujeto_2 = Load.Load_Data(sesion, Band, sr, tmin, tmax, situacion, procesed_data_path)
@@ -33,7 +33,7 @@ def run_pipeline(Stims_preprocess='Normalize', EEG_preprocess='Standarize', stim
         for sujeto, eeg, dstims in zip((1, 2), (eeg_sujeto_1, eeg_sujeto_2),
                                        (dstims_para_sujeto_1, dstims_para_sujeto_2)):
             # for sujeto, eeg, dstims in zip([2], [eeg_sujeto_2], [dstims_para_sujeto_2]):
-            print('Sujeto {}'.format(sujeto))
+            # print('Sujeto {}'.format(sujeto))
             # Separo los datos en 5 y tomo test set de 20% de datos con kfold (5 iteraciones)
             n_splits = 5
 

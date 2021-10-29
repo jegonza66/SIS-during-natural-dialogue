@@ -17,12 +17,13 @@ import Simulation
 
 # Random permutations
 Statistical_test = False
+Run_permutations = False
 
 # Figures
 Display_Ind_Figures = False
-Display_Total_Figures = False
-Save_Ind_Figures = True
-Save_Total_Figures = True
+Display_Total_Figures = True
+Save_Ind_Figures = False
+Save_Total_Figures = False
 
 # Define Parameters
 
@@ -36,7 +37,7 @@ Stims = ['Envelope', 'Pitch', 'Pitch_der', 'Envelope_Pitch_Pitch_der']
 Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All']
 
 stim = 'Envelope'
-Band = 'Theta'
+Band = (1,15)
 situacion = 'Escucha'
 tmin, tmax = -0.6, -0.003
 sr = 128
@@ -140,35 +141,43 @@ for sesion in sesiones:
             Rmse_buenos_ronda_canal[fold] = Rmse
 
             if Statistical_test:
-                Simulation.simular_iteraciones_Ridge(alpha, iteraciones, sesion, sujeto, fold, dstims_train_val,
-                                                     eeg_train_val, dstims_test, eeg_test, Correlaciones_fake,
-                                                     Errores_fake, Path_it)
+                if Run_permutations:
+                    Simulation.simular_iteraciones_Ridge(alpha, iteraciones, sesion, sujeto, fold, dstims_train_val,
+                                                         eeg_train_val, dstims_test, eeg_test, Correlaciones_fake,
+                                                         Errores_fake, Path_it)
 
-            else:  # Load data from iterations
-                f = open(Path_it + 'Corr_Rmse_fake_ronda_it_canal_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto),
-                         'rb')
-                Correlaciones_fake, Errores_fake = pickle.load(f)
-                f.close()
+                else:  # Load data from iterations
+                    f = open(Path_it + 'Corr_Rmse_fake_ronda_it_canal_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto),
+                             'rb')
+                    Correlaciones_fake, Errores_fake = pickle.load(f)
+                    f.close()
 
-            # TEST ESTADISTICO
-            Rcorr_fake = Correlaciones_fake[fold]
-            Rmse_fake = Errores_fake[fold]
+                # TEST ESTADISTICO
+                Rcorr_fake = Correlaciones_fake[fold]
+                Rmse_fake = Errores_fake[fold]
 
-            p_corr = ((Rcorr_fake > Rcorr).sum(0) + 1) / (iteraciones + 1)
-            p_rmse = ((Rmse_fake < Rmse).sum(0) + 1) / (iteraciones + 1)
+                p_corr = ((Rcorr_fake > Rcorr).sum(0) + 1) / (iteraciones + 1)
+                p_rmse = ((Rmse_fake < Rmse).sum(0) + 1) / (iteraciones + 1)
 
-            # Umbral de 5% y aplico Bonferroni (/128 Divido el umbral por el numero de intentos)
-            umbral = 0.05 / 128
-            Prob_Corr_ronda_canales[fold][p_corr < umbral] = p_corr[p_corr < umbral]
-            Prob_Rmse_ronda_canales[fold][p_rmse < umbral] = p_rmse[p_rmse < umbral]
+                # Umbral de 5% y aplico Bonferroni (/128 Divido el umbral por el numero de intentos)
+                umbral = 0.05 / 128
+                Prob_Corr_ronda_canales[fold][p_corr < umbral] = p_corr[p_corr < umbral]
+                Prob_Rmse_ronda_canales[fold][p_rmse < umbral] = p_rmse[p_rmse < umbral]
 
-        # Armo lista con canales que pasan el test
-        Canales_sobrevivientes_corr, = np.where(np.all((Prob_Corr_ronda_canales < 1), axis=0))
-        Canales_sobrevivientes_rmse, = np.where(np.all((Prob_Rmse_ronda_canales < 1), axis=0))
+        if Statistical_test:
+            # Armo lista con canales que pasan el test
+            Canales_sobrevivientes_corr, = np.where(np.all((Prob_Corr_ronda_canales < 1), axis=0))
+            Canales_sobrevivientes_rmse, = np.where(np.all((Prob_Rmse_ronda_canales < 1), axis=0))
 
-        # Guardo los canales sobrevivientes de cada sujeto
-        Canales_repetidos_corr_sujeto[Canales_sobrevivientes_corr] += 1
-        Canales_repetidos_rmse_sujeto[Canales_sobrevivientes_rmse] += 1
+            # Guardo los canales sobrevivientes de cada sujeto
+            Canales_repetidos_corr_sujeto[Canales_sobrevivientes_corr] += 1
+            Canales_repetidos_rmse_sujeto[Canales_sobrevivientes_rmse] += 1
+
+            # Grafico Shadows
+            Plot.plot_grafico_shadows(Display_Ind_Figures, sesion, sujeto, alpha,
+                                      Canales_sobrevivientes_corr, info, sr,
+                                      Corr_promedio, Save_Ind_Figures, Run_graficos_path,
+                                      Corr_buenas_ronda_canal, Correlaciones_fake)
 
         # Tomo promedio de pesos Corr y Rmse entre los folds para todos los canales
         Pesos_promedio = Pesos_ronda_canales.mean(0)
@@ -178,21 +187,15 @@ for sesion in sesiones:
         # Grafico cabezas y canales
         Plot.plot_cabezas_canales(info.ch_names, info, sr, sesion, sujeto, Canales_sobrevivientes_corr,
                                   Corr_promedio, Display_Ind_Figures, info['nchan'], 'Correlación',
-                                  Save_Ind_Figures, Run_graficos_path)
+                                  Save_Ind_Figures, Run_graficos_path, Statistical_test)
         Plot.plot_cabezas_canales(info.ch_names, info, sr, sesion, sujeto, Canales_sobrevivientes_rmse,
                                   Rmse_promedio, Display_Ind_Figures, info['nchan'], 'Rmse',
-                                  Save_Ind_Figures, Run_graficos_path)
+                                  Save_Ind_Figures, Run_graficos_path, Statistical_test)
 
         # Grafico Pesos
         Plot.plot_grafico_pesos(Display_Ind_Figures, sesion, sujeto, alpha, Pesos_promedio,
                                 info, times, sr, Corr_promedio, Rmse_promedio, Save_Ind_Figures,
                                 Run_graficos_path, Cant_Estimulos, Stims_Order)
-
-        # Grafico Shadows
-        Plot.plot_grafico_shadows(Display_Ind_Figures, sesion, sujeto, alpha,
-                                  Canales_sobrevivientes_corr, info, sr,
-                                  Corr_promedio, Save_Ind_Figures, Run_graficos_path,
-                                  Corr_buenas_ronda_canal, Correlaciones_fake)
 
         # Guardo las correlaciones y los pesos promediados entre folds de cada canal del sujeto y lo adjunto a lista
         # para promediar entre canales de sujetos
@@ -221,10 +224,11 @@ Plot.Cabezas_corr_promedio(Rmse_totales_sujetos, info, Display_Total_Figures, Sa
                            title='Rmse')
 
 # Armo cabecita con canales repetidos
-Plot.Cabezas_canales_rep(Canales_repetidos_corr_sujetos.sum(0), info, Display_Total_Figures, Save_Total_Figures,
-                         Run_graficos_path, title='Correlation')
-Plot.Cabezas_canales_rep(Canales_repetidos_rmse_sujetos.sum(0), info, Display_Total_Figures, Save_Total_Figures,
-                         Run_graficos_path, title='Rmse')
+if Statistical_test:
+    Plot.Cabezas_canales_rep(Canales_repetidos_corr_sujetos.sum(0), info, Display_Total_Figures, Save_Total_Figures,
+                             Run_graficos_path, title='Correlation')
+    Plot.Cabezas_canales_rep(Canales_repetidos_rmse_sujetos.sum(0), info, Display_Total_Figures, Save_Total_Figures,
+                             Run_graficos_path, title='Rmse')
 
 # Grafico Pesos
 curva_pesos_totales = Plot.regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display_Total_Figures,

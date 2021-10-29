@@ -52,10 +52,9 @@ class Trial_channel:
         eeg.load_data()
         # Hago un lowpass
         if self.Causal_filter_EEG:
-            eeg = eeg.filter(l_freq=self.l_freq_eeg, h_freq=self.h_freq_eeg, l_trans_bandwidth=1, h_trans_bandwidth=1,
-                             phase='minimum')
+            eeg = eeg.filter(l_freq=self.l_freq_eeg, h_freq=self.h_freq_eeg, phase='minimum')
         else:
-            eeg = eeg.filter(l_freq=self.l_freq_eeg, h_freq=self.h_freq_eeg, l_trans_bandwidth=1, h_trans_bandwidth=1)
+            eeg = eeg.filter(l_freq=self.l_freq_eeg, h_freq=self.h_freq_eeg)
 
         # Paso a array
         eeg = eeg.to_data_frame()
@@ -80,10 +79,10 @@ class Trial_channel:
 
         # Envelope
         envelope = np.abs(sgn.hilbert(wav1))
-        if self.Causal_filter_Env:
+        if self.Causal_filter_Env == 'Causal':
             envelope = Processing.butter_filter(envelope, frecuencias=25, sampling_freq=self.audio_sr,
                                                 btype='lowpass', order=3, axis=0, ftype='Causal')
-        else:
+        elif self.Causal_filter_Env == 'NonCausal':
             envelope = Processing.butter_filter(envelope, frecuencias=25, sampling_freq=self.audio_sr,
                                                 btype='lowpass', order=3, axis=0, ftype='NonCausal')
         window_size = 125

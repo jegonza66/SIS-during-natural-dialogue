@@ -14,6 +14,11 @@ import os
 import seaborn as sn
 import Funciones
 
+def highlight_cell(x,y, ax=None, **kwargs):
+    rect = plt.Rectangle((x-.5, y-.5), 1, 1, **kwargs)
+    ax = ax or plt.gca()
+    ax.add_patch(rect)
+    return rect
 
 def plot_alphas(alphas, correlaciones, best_alpha_overall, lista_Rmse, linea, fino):
     # Plot correlations vs. alpha regularization value
@@ -69,7 +74,7 @@ def plot_alphas(alphas, correlaciones, best_alpha_overall, lista_Rmse, linea, fi
 
 
 def plot_cabezas_canales(channel_names, info, sr, sesion, sujeto, Canales_sobrevivientes, Valores_promedio_abs, Display,
-                         n_canales, name, Save, Run_graficos_path):
+                         n_canales, name, Save, Run_graficos_path, Statistical_test = False):
     surviving_channels_names = [channel_names[j] for j in Canales_sobrevivientes]
     mask = []
     for j in range(len(channel_names)):
@@ -89,16 +94,15 @@ def plot_cabezas_canales(channel_names, info, sr, sesion, sujeto, Canales_sobrev
     im = mne.viz.plot_topomap(Valores_promedio_abs, info, axes=axs[0], show=False, sphere=0.07,
                               cmap='Greys',
                               vmin=Valores_promedio_abs.min(), vmax=Valores_promedio_abs.max())
-    im2 = mne.viz.plot_topomap(np.zeros(n_canales), info, axes=axs[1], show=False, sphere=0.07,
-                               mask=np.array(mask), mask_params=dict(marker='o', markerfacecolor='g',
-                                                                     markeredgecolor='k', linewidth=0,
-                                                                     markersize=4))
-    # fig.tight_layout()
+    if Statistical_test:
+        im2 = mne.viz.plot_topomap(np.zeros(n_canales), info, axes=axs[1], show=False, sphere=0.07,
+                                   mask=np.array(mask), mask_params=dict(marker='o', markerfacecolor='g',
+                                                                         markeredgecolor='k', linewidth=0,
+                                                                         markersize=4))
+
     plt.colorbar(im[0], ax=[axs[0], axs[1]], shrink=0.85, label=name, orientation='horizontal',
-                 boundaries=np.linspace(Valores_promedio_abs.min().round(decimals=3),
-                                        Valores_promedio_abs.max().round(decimals=3), 100),
-                 ticks=[np.linspace(Valores_promedio_abs.min(),
-                                    Valores_promedio_abs.max(), 9).round(decimals=3)])
+                 boundaries=np.linspace(Valores_promedio_abs.min().round(decimals=3), Valores_promedio_abs.max().round(decimals=3), 100),
+                 ticks=[np.linspace(Valores_promedio_abs.min(), Valores_promedio_abs.max(), 9).round(decimals=3)])
 
     if Save:
         save_path_cabezas = Run_graficos_path + 'Cabezas_canales/'

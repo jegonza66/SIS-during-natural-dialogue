@@ -19,9 +19,7 @@ Save_figures_Trace = True
 
 Stims_Order = ['Envelope', 'Pitch', 'Pitch_der', 'Spectrogram', 'Phonemes']
 Stims = ['Envelope', 'Pitch', 'Pitch_der', 'Envelope_Pitch_Pitch_der']
-Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All']
-# Stims = ['Envelope']
-# Bands = ['Beta_2', 'All']
+Bands = [(1,15)]
 
 Trace_interval = 2
 min_trace_derivate = 0
@@ -41,14 +39,11 @@ failed_subjects = []
 
 # DEFINO PARAMETROS
 for Band in Bands:
-    print('\n' + Band + '\n')
+    print('\n{}\n'.format(Band))
     Alphas_Band = {}
-    # stim = 'Envelope'
-    # Defino banda de eeg
     for stim in Stims:
         print(stim + '\n')
         Alphas_Stim = {}
-        # Band = 'Theta'
         # Defino situacion de interes
         situacion = 'Escucha'
         # Defino estandarizacion
@@ -93,7 +88,7 @@ for Band in Bands:
             for sujeto, eeg, dstims in zip((1, 2), (eeg_sujeto_1, eeg_sujeto_2),
                                            (dstims_para_sujeto_1, dstims_para_sujeto_2)):
                 # for sujeto, eeg, dstims in zip([2], [eeg_sujeto_2], [dstims_para_sujeto_2]):
-                print('Sujeto {}'.format(sujeto))
+                print('\nSujeto {}'.format(sujeto))
                 # Separo los datos en 5 y tomo test set de 20% de datos con kfold (5 iteraciones)
                 n_splits = 5
 
@@ -154,6 +149,7 @@ for Band in Bands:
                     Trace_derivate = np.diff(Standarized_Betas) / alpha_step
                     Trace_derivate_2 = np.diff(Trace_derivate) / alpha_step
 
+                    print("\rProgress: {}%".format(int((alpha_num + 1)*100/pasos)), end='')
                 # Individual Ridge Trace
                 Trace_range = np.where(Trace_derivate_2 < min_trace_derivate)[0] + 1  # +1 because 2nd derivate is defined in intervales
                 Corr_range = np.where(Correlaciones.max() - Correlaciones < Correlaciones.max() * Corr_limit)[0]
@@ -182,7 +178,6 @@ for Band in Bands:
 
                 except:
                     Alpha_Sujeto = 'FAILED'
-                    failed_subjects.append('{}_{}'.format(sesion, sujeto))
 
                 if Display_figures_Trace:
                     plt.ion()
@@ -240,6 +235,3 @@ f = open(alphas_fname, 'wb')
 pickle.dump(Alphas, f)
 f.close()
 
-f = open(failed_fname, 'wb')
-pickle.dump(failed_subjects, f)
-f.close()
