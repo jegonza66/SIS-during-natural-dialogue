@@ -14,11 +14,13 @@ import os
 import seaborn as sn
 import Funciones
 
-def highlight_cell(x,y, ax=None, **kwargs):
-    rect = plt.Rectangle((x-.5, y-.5), 1, 1, **kwargs)
+
+def highlight_cell(x, y, ax=None, **kwargs):
+    rect = plt.Rectangle((x - .5, y - .5), 1, 1, **kwargs)
     ax = ax or plt.gca()
     ax.add_patch(rect)
     return rect
+
 
 def plot_alphas(alphas, correlaciones, best_alpha_overall, lista_Rmse, linea, fino):
     # Plot correlations vs. alpha regularization value
@@ -73,16 +75,8 @@ def plot_alphas(alphas, correlaciones, best_alpha_overall, lista_Rmse, linea, fi
     plt.suptitle(titulo, fontsize=18)
 
 
-def plot_cabezas_canales(channel_names, info, sr, sesion, sujeto, Canales_sobrevivientes, Valores_promedio_abs, Display,
-                         n_canales, name, Save, Run_graficos_path, Statistical_test = False):
-    surviving_channels_names = [channel_names[j] for j in Canales_sobrevivientes]
-    mask = []
-    for j in range(len(channel_names)):
-        if channel_names[j] in surviving_channels_names:
-            mask.append(True)
-        else:
-            mask.append(False)
-
+def plot_cabezas_canales(channel_names, info, sr, sesion, sujeto, Valores_promedio_abs, Display,
+                         n_canales, name, Save, Run_graficos_path, Canales_sobrevivientes):
     if Display:
         plt.ion()
     else:
@@ -94,14 +88,23 @@ def plot_cabezas_canales(channel_names, info, sr, sesion, sujeto, Canales_sobrev
     im = mne.viz.plot_topomap(Valores_promedio_abs, info, axes=axs[0], show=False, sphere=0.07,
                               cmap='Greys',
                               vmin=Valores_promedio_abs.min(), vmax=Valores_promedio_abs.max())
-    if Statistical_test:
+    if Canales_sobrevivientes:
+        surviving_channels_names = [channel_names[j] for j in Canales_sobrevivientes]
+        mask = []
+        for j in range(len(channel_names)):
+            if channel_names[j] in surviving_channels_names:
+                mask.append(True)
+            else:
+                mask.append(False)
+
         im2 = mne.viz.plot_topomap(np.zeros(n_canales), info, axes=axs[1], show=False, sphere=0.07,
                                    mask=np.array(mask), mask_params=dict(marker='o', markerfacecolor='g',
                                                                          markeredgecolor='k', linewidth=0,
                                                                          markersize=4))
 
     plt.colorbar(im[0], ax=[axs[0], axs[1]], shrink=0.85, label=name, orientation='horizontal',
-                 boundaries=np.linspace(Valores_promedio_abs.min().round(decimals=3), Valores_promedio_abs.max().round(decimals=3), 100),
+                 boundaries=np.linspace(Valores_promedio_abs.min().round(decimals=3),
+                                        Valores_promedio_abs.max().round(decimals=3), 100),
                  ticks=[np.linspace(Valores_promedio_abs.min(), Valores_promedio_abs.max(), 9).round(decimals=3)])
 
     if Save:
@@ -214,7 +217,6 @@ def plot_grafico_shadows(Display, sesion, sujeto, best_alpha,
 
 
 def Plot_PSD(sesion, sujeto, test_round, Band, situacion, Display, Save, save_path, info, data, fmin=4, fmax=40):
-
     psds_welch_mean, freqs_mean = mne.time_frequency.psd_array_welch(data, info['sfreq'], fmin, fmax)
 
     if Display:
@@ -238,7 +240,8 @@ def Plot_PSD(sesion, sujeto, test_round, Band, situacion, Display, Save, save_pa
             os.makedirs(save_path_graficos)
         except:
             pass
-        plt.savefig(save_path_graficos + 'Sesion{} - Sujeto{} - Band {} - Fold {}'.format(sesion, sujeto, Band, test_round + 1))
+        plt.savefig(
+            save_path_graficos + 'Sesion{} - Sujeto{} - Band {} - Fold {}'.format(sesion, sujeto, Band, test_round + 1))
 
 
 def Cabezas_corr_promedio(Correlaciones_totales_sujetos, info, Display, Save, Run_graficos_path, title):
@@ -251,7 +254,8 @@ def Cabezas_corr_promedio(Correlaciones_totales_sujetos, info, Display, Save, Ru
 
     fig = plt.figure()
     plt.suptitle("Mean {} per channel among subjects".format(title), fontsize=19)
-    plt.title('{} = {:.3f} +/- {:.3f}'.format(title, Correlaciones_promedio.mean(), Correlaciones_promedio.std()), fontsize=19)
+    plt.title('{} = {:.3f} +/- {:.3f}'.format(title, Correlaciones_promedio.mean(), Correlaciones_promedio.std()),
+              fontsize=19)
     im = mne.viz.plot_topomap(Correlaciones_promedio, info, cmap='Greys',
                               vmin=Correlaciones_promedio.min(), vmax=Correlaciones_promedio.max(),
                               show=False, sphere=0.07)
@@ -279,7 +283,8 @@ def Cabezas_canales_rep(Canales_repetidos_sujetos, info, Display, Save, Run_graf
 
     fig = plt.figure()
     plt.suptitle("Channels passing 5 test per subject - {}".format(title), fontsize=19)
-    plt.title('Mean: {:.3f} +/- {:.3f}'.format(Canales_repetidos_sujetos.mean(), Canales_repetidos_sujetos.std()), fontsize=19)
+    plt.title('Mean: {:.3f} +/- {:.3f}'.format(Canales_repetidos_sujetos.mean(), Canales_repetidos_sujetos.std()),
+              fontsize=19)
     im = mne.viz.plot_topomap(Canales_repetidos_sujetos, info, cmap='Greys',
                               vmin=1, vmax=10,
                               show=False, sphere=0.07)
@@ -298,8 +303,7 @@ def Cabezas_canales_rep(Canales_repetidos_sujetos, info, Display, Save, Run_graf
 
 
 def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display,
-                       Save, Run_graficos_path, Cant_Estimulos, Stims_Order, stim, decorrelation_times = None):
-
+                       Save, Run_graficos_path, Cant_Estimulos, Stims_Order, stim, decorrelation_times=None):
     # Armo pesos promedio por canal de todos los sujetos que por lo menos tuvieron un buen canal
     Pesos_totales_sujetos_todos_canales_copy = Pesos_totales_sujetos_todos_canales.swapaxes(0, 2)
     Pesos_totales_sujetos_todos_canales_copy = Pesos_totales_sujetos_todos_canales_copy.mean(0).transpose()
@@ -327,9 +331,9 @@ def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display
         if times[-1] > 0: ax.axvspan(0, ax.get_xlim()[1], alpha=0.4, color='grey', label='Unheard stimuli')
         if decorrelation_times and times[-1] > 0:
             ax.vlines(np.mean(decorrelation_times), ax.get_ylim()[0], ax.get_ylim()[1], linestyle='dashed', color='red',
-                                                              label='Decorrelation time')
-            ax.axvspan(np.mean(decorrelation_times) - np.std(decorrelation_times)/2,
-                       np.mean(decorrelation_times) + np.std(decorrelation_times)/2,
+                      label='Decorrelation time')
+            ax.axvspan(np.mean(decorrelation_times) - np.std(decorrelation_times) / 2,
+                       np.mean(decorrelation_times) + np.std(decorrelation_times) / 2,
                        alpha=0.4, color='red', label='Decorrelation time std.')
 
         ax.xaxis.label.set_size(23)
@@ -356,7 +360,6 @@ def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display
 
 def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, Display,
                               Save, Run_graficos_path, Cant_Estimulos, Stims_Order, stim):
-
     # Armo pesos promedio por canal de todos los sujetos que por lo menos tuvieron un buen canal
     Pesos_totales_sujetos_todos_canales_copy = Pesos_totales_sujetos_todos_canales.swapaxes(0, 2)
     Pesos_totales_sujetos_todos_canales_copy = Pesos_totales_sujetos_todos_canales_copy.mean(0).transpose()
@@ -379,7 +382,8 @@ def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, 
         fig, axs = plt.subplots(2, 1, sharex=True, figsize=(6, 8), gridspec_kw={'height_ratios': [1, 3]})
 
         im = axs[1].pcolormesh(times * 1000, np.arange(info['nchan']), mean_coefs - mean_coefs.mean(0), cmap='RdBu_r',
-                               vmin=-(mean_coefs - mean_coefs.mean(0)).max(), vmax=(mean_coefs - mean_coefs.mean(0)).max(), shading='gouraud')
+                               vmin=-(mean_coefs - mean_coefs.mean(0)).max(),
+                               vmax=(mean_coefs - mean_coefs.mean(0)).max(), shading='gouraud')
         axs[1].set(xlabel='Time (ms)', ylabel='Channel')
         fig.colorbar(im, ax=axs[1], orientation='horizontal')
 
@@ -405,6 +409,7 @@ def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, 
 
 def pearsonr_pval(x, y):
     return stats.pearsonr(x, y)[1]
+
 
 def Matriz_corr(Pesos_totales_sujetos_promedio, Pesos_totales_sujetos_todos_canales, sujeto_total, Display, Save,
                 Run_graficos_path):
@@ -619,7 +624,7 @@ def PSD_boxplot(psd_pred_correlations, psd_rand_correlations, Display, Save, Run
     fig = plt.figure()
     sn.violinplot(data=[psd_pred_correlations, psd_rand_correlations])
     # plt.boxplot([psd_pred_correlations, psd_rand_correlations], labels=['Prediction', 'Random'])
-    plt.ylim([0,1])
+    plt.ylim([0, 1])
     plt.ylabel('Correlation')
 
     if Save:

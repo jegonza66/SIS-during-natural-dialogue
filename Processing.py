@@ -24,8 +24,8 @@ def matriz_shifteada(features, delays):
             dstim = features.copy()
         dstims.append(dstim)
     dstims = np.hstack(dstims)
-    print("Stimulus matrix is now %d time points by %d features (should be # original features \
-    (%d) x # delays (%d))" % (dstims.shape[0], dstims.shape[1], features.shape[1], len(delays)))
+    # print("Stimulus matrix is now %d time points by %d features (should be # original features \
+    # (%d) x # delays (%d))" % (dstims.shape[0], dstims.shape[1], features.shape[1], len(delays)))
     return dstims
 
 

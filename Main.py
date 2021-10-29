@@ -23,6 +23,7 @@ Run_permutations = False
 Display_Ind_Figures = False
 Display_Total_Figures = True
 Save_Ind_Figures = False
+
 Save_Total_Figures = False
 
 # Define Parameters
@@ -164,6 +165,8 @@ for sesion in sesiones:
                 Prob_Corr_ronda_canales[fold][p_corr < umbral] = p_corr[p_corr < umbral]
                 Prob_Rmse_ronda_canales[fold][p_rmse < umbral] = p_rmse[p_rmse < umbral]
 
+        Canales_sobrevivientes_corr = []
+        Canales_sobrevivientes_rmse = []
         if Statistical_test:
             # Armo lista con canales que pasan el test
             Canales_sobrevivientes_corr, = np.where(np.all((Prob_Corr_ronda_canales < 1), axis=0))
@@ -185,12 +188,10 @@ for sesion in sesiones:
         Rmse_promedio = Rmse_buenos_ronda_canal.mean(0)
 
         # Grafico cabezas y canales
-        Plot.plot_cabezas_canales(info.ch_names, info, sr, sesion, sujeto, Canales_sobrevivientes_corr,
-                                  Corr_promedio, Display_Ind_Figures, info['nchan'], 'Correlación',
-                                  Save_Ind_Figures, Run_graficos_path, Statistical_test)
-        Plot.plot_cabezas_canales(info.ch_names, info, sr, sesion, sujeto, Canales_sobrevivientes_rmse,
-                                  Rmse_promedio, Display_Ind_Figures, info['nchan'], 'Rmse',
-                                  Save_Ind_Figures, Run_graficos_path, Statistical_test)
+        Plot.plot_cabezas_canales(info.ch_names, info, sr, sesion, sujeto, Corr_promedio, Display_Ind_Figures,
+                                  info['nchan'], 'Correlación', Save_Ind_Figures, Run_graficos_path, Canales_sobrevivientes_corr)
+        Plot.plot_cabezas_canales(info.ch_names, info, sr, sesion, sujeto, Rmse_promedio, Display_Ind_Figures,
+                                  info['nchan'], 'Rmse', Save_Ind_Figures, Run_graficos_path, Canales_sobrevivientes_rmse)
 
         # Grafico Pesos
         Plot.plot_grafico_pesos(Display_Ind_Figures, sesion, sujeto, alpha, Pesos_promedio,
