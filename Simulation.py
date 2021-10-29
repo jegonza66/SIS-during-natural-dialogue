@@ -1,9 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Sat Jul 10 03:36:32 2021
 
-@author: joaco
-"""
 import numpy as np
 import mne
 from mne.decoding import ReceptiveField

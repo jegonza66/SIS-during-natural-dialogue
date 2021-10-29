@@ -9,7 +9,6 @@ import pandas as pd
 from scipy import signal
 import copy
 
-
 def matriz_shifteada(features, delays):
     features = np.array(features).reshape(len(features), 1)
     nt, ndim = features.shape

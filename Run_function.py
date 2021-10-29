@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Sep 22 20:23:54 2021
-
-@author: joaco
-"""
 import numpy as np
 from sklearn.model_selection import KFold
 
