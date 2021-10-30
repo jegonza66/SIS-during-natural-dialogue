@@ -36,14 +36,11 @@ for sesion in sesiones:
     EEG = EEG.append(eeg_sujeto_2)
 
 N_samples = len(EEG)
-EEG = Funciones.make_array(EEG)[0].reshape((N_samples, info["nchan"]))
+EEG = Funciones.make_array(EEG)[0].reshape((info["nchan"], N_samples))
 AEP = np.zeros((info["nchan"], len(delays)))
-
 for channel in range(info["nchan"]):
-    EEG_delays = np.zeros((len(EEG), len(delays)))
-    for i in range(len(EEG)):
-        EEG_delays = Processing.matriz_shifteada(EEG[i], -delays)
-    AEP[channel] = EEG_delays.mean(0)
+    EEG_delays = Processing.matriz_shifteada(EEG[channel], -delays)
+    AEP[channel] = EEG_delays.mean(0) - EEG_delays.mean()
     print("\rProgress: {}%".format(int((channel + 1) * 100 / info["nchan"])), end='')
 
 ##

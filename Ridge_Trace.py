@@ -13,9 +13,9 @@ Save_figures_Trace = True
 
 Stims_Order = ['Envelope', 'Pitch', 'Pitch_der', 'Spectrogram', 'Phonemes']
 Stims = ['Envelope', 'Pitch', 'Pitch_der', 'Envelope_Pitch_Pitch_der']
-Bands = [(1,15)]
+Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2', (1,15), 'All']
 
-Trace_interval = 2
+Trace_interval = 2/3
 min_trace_derivate = 0
 Corr_limit = 0.025
 
@@ -151,7 +151,7 @@ for Band in Bands:
                 Overlap = sorted(set(Trace_range).intersection(set(Corr_range)), key=list(Trace_range).index)
                 Trace_range_med = None
                 try:
-                    Trace_range_med = int(len(Trace_range) / Trace_interval + Trace_range[0])
+                    Trace_range_med = int(len(Trace_range) * Trace_interval + Trace_range[0])
                 except:
                     pass
 
