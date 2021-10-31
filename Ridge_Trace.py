@@ -69,7 +69,7 @@ for Band in Bands:
             Alphas_Sesion = {}
             # LOAD DATA BY SUBJECT
             Sujeto_1, Sujeto_2 = Load.Load_Data(sesion=sesion, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
-                                                procesed_data_path=procesed_data_path, Env_Filter="NonCausal")
+                                                procesed_data_path=procesed_data_path)
 
             # LOAD EEG BY SUBJECT
             eeg_sujeto_1, eeg_sujeto_2 = Sujeto_1['EEG'], Sujeto_2['EEG']
@@ -232,7 +232,7 @@ for Band in Bands:
     Alphas[Band] = Alphas_Band
 
 # Save Alphas
-f = open(alphas_fname+"Envelope_NonCausal", 'wb')
+f = open(alphas_fname+"Envelope_NoFilt", 'wb')
 pickle.dump(Alphas, f)
 f.close()
 

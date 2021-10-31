@@ -30,9 +30,8 @@ Stims = ['Pitch']
 Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All']
 Bands = ['Theta']
 
-alphas_fname = 'saves/Alphas/Alphas_Trace{:.1f}_Corr0.025.pkl'.format(2 / 3)
-# Model
-# Model = Ridge
+# Model parameters
+alphas_fname = 'saves/Alphas/Alphas_Trace{:.1f}_Corr0.025.pkl'.format(2/3)
 try:
     f = open(alphas_fname, 'rb')
     Alphas = pickle.load(f)
