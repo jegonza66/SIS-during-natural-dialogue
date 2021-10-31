@@ -10,14 +10,14 @@ import Processing
 import Simulation
 
 # Random permutations
-Statistical_test = True
-Run_permutations = True
+Statistical_test = False
+Run_permutations = False
 
 # Figures
 Display_Ind_Figures = False
-Display_Total_Figures = False
-Save_Ind_Figures = True
-Save_Total_Figures = True
+Display_Total_Figures = True
+Save_Ind_Figures = False
+Save_Total_Figures = False
 
 # Define Parameters
 # Standarization
@@ -26,8 +26,20 @@ EEG_preprocess = 'Standarize'
 
 # Stimuli and EEG
 Stims_Order = ['Envelope', 'Pitch', 'Pitch_der', 'Spectrogram', 'Phonemes']
-Stims = ['Envelope']
+Stims = ['Pitch']
 Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All']
+Bands = ['Theta']
+
+alphas_fname = 'saves/Alphas/Alphas_Trace{:.1f}_Corr0.025.pkl'.format(2 / 3)
+# Model
+# Model = Ridge
+try:
+    f = open(alphas_fname, 'rb')
+    Alphas = pickle.load(f)
+    f.close()
+except:
+    print('\n\nAlphas file not found.\n\n')
+
 
 for Band in Bands:
     for stim in Stims:
@@ -42,16 +54,6 @@ for Band in Bands:
             Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
         Path_it = 'saves/Ridge/Fake_it/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
             Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
-        alphas_fname = 'saves/Alphas/Alphas_Trace{:.1f}_Corr0.025.pkl'.format(1/2)
-
-        # Model
-        # Model = Ridge
-        try:
-            f = open(alphas_fname, 'rb')
-            Alphas = pickle.load(f)
-            f.close()
-        except:
-            print('\n\nAlphas file not found.\n\n')
 
         # Start Run
         sesiones = np.arange(21, 26)
@@ -61,7 +63,7 @@ for Band in Bands:
 
             # LOAD DATA BY SUBJECT
             Sujeto_1, Sujeto_2 = Load.Load_Data(sesion=sesion, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
-                                                procesed_data_path=procesed_data_path, Env_Filter='NonCausal')
+                                                procesed_data_path=procesed_data_path)
 
             # LOAD EEG BY SUBJECT
             eeg_sujeto_1, eeg_sujeto_2 = Sujeto_1['EEG'], Sujeto_2['EEG']

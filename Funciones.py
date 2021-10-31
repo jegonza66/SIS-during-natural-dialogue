@@ -1,6 +1,9 @@
 import numpy as np
 import pandas as pd
 
+def consecutive(data, stepsize=1):
+    return np.split(data, np.where(np.diff(data) > stepsize)[0]+1)
+
 def rename_paths(Stims_preprocess, EEG_preprocess, stim, Band, tmin, tmax, *paths):
     returns = []
     for path in paths:
