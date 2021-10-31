@@ -1,4 +1,3 @@
-
 import numpy as np
 import pandas as pd
 import os
@@ -167,7 +166,7 @@ class Sesion_class:
     def __init__(self, sesion=21, Band='All', sr=128, tmin=-0.53, tmax=-0.003,
                  valores_faltantes_pitch=0, Causal_filter_EEG=True, Env_Filter=False,
                  situacion='Escucha', Calculate_pitch=False,
-                 procesed_data_path='saves/Preprocesed_Data/', Save_procesed_data=False
+                 procesed_data_path='saves/Preprocesed_Data/'
                  ):
 
         self.sesion = sesion
@@ -183,7 +182,6 @@ class Sesion_class:
         self.situacion = situacion
         self.Calculate_pitch = Calculate_pitch
         self.procesed_data_path = procesed_data_path
-        self.Save_procesed_data = Save_procesed_data
 
     def load_from_raw(self):
         # Armo estructura de datos de sujeto
@@ -326,7 +324,6 @@ class Sesion_class:
         return Sesion
 
     def load_procesed(self):
-
         EEG_path = self.procesed_data_path + 'EEG/'
         Envelope_path = self.procesed_data_path + 'Envelope/'
         if self.Causal_filter_EEG: EEG_path += 'Causal_'
@@ -376,9 +373,8 @@ class Sesion_class:
         return Sesion
 
 
-def Load_Data(sesion, Band, sr, tmin, tmax, situacion, procesed_data_path, Causal_filter_EEG=True,
-              Env_Filter=False,
-              valores_faltantes_pitch=0, Calculate_pitch=False):
+def Load_Data(sesion, Band, sr, tmin, tmax, procesed_data_path, situacion='Escucha', Causal_filter_EEG=True,
+              Env_Filter=False, valores_faltantes_pitch=0, Calculate_pitch=False):
     Sesion_obj = Sesion_class(sesion=sesion, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
                               valores_faltantes_pitch=valores_faltantes_pitch, Causal_filter_EEG=Causal_filter_EEG,
                               Env_Filter=Env_Filter, situacion=situacion, Calculate_pitch=Calculate_pitch,

@@ -1,9 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Aug 30 19:20:42 2021
 
-@author: joaco
-"""
 import pickle
 import matplotlib.pyplot as plt
 import numpy as np
@@ -16,7 +11,7 @@ from scipy.spatial import ConvexHull
 alpha = 100
 tmin, tmax = -0.6, -0.003
 
-Run_graficos_path = 'gráficos/Model_Comparison/Alpha_{}/tmin{}_tmax{}/'.format(alpha, tmin, tmax)
+Run_graficos_path = 'gráficos/Model_Comparison/tmin{}_tmax{}/'.format(tmin, tmax)
 Save_fig = True
 
 Stims_Order = ['Envelope', 'Pitch', 'Pitch_der', 'Spectrogram', 'Phonemes']
@@ -24,26 +19,21 @@ Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All']
 Bands = ['Theta']
 for Band in Bands:
 
-    f = open('saves/Ridge/Final_Correlation/Alpha_{}/tmin{}_tmax{}/Envelope_EEG_{}.pkl'.format(alpha, tmin, tmax, Band),
-             'rb')
+    f = open('saves/Ridge/Final_Correlation/tmin{}_tmax{}/Envelope_EEG_{}.pkl'.format(tmin, tmax, Band),'rb')
     Corr_Envelope, Pass_Envelope = pickle.load(f)
     f.close()
 
-    f = open('saves/Ridge/Final_Correlation/Alpha_{}/tmin{}_tmax{}/Pitch_EEG_{}.pkl'.format(alpha, tmin, tmax, Band),
-             'rb')
+    f = open('saves/Ridge/Final_Correlation/tmin{}_tmax{}/Pitch_EEG_{}.pkl'.format(tmin, tmax, Band), 'rb')
     Corr_Pitch, Pass_Pitch = pickle.load(f)
     f.close()
 
     f = open(
-        'saves/Ridge/Final_Correlation/Alpha_{}/tmin{}_tmax{}/Envelope_Pitch_Pitch_der_EEG_{}.pkl'.format(alpha, tmin,
-                                                                                                          tmax, Band),
-        'rb')
+        'saves/Ridge/Final_Correlation/tmin{}_tmax{}/Envelope_Pitch_Pitch_der_EEG_{}.pkl'.format(tmin, tmax, Band), 'rb')
     Corr_Envelope_Pitch_Pitch_der, Pass_Envelope_Pitch_Pitch_der = pickle.load(f)
     f.close()
 
     f = open(
-        'saves/Ridge/Final_Correlation/Alpha_{}/tmin{}_tmax{}/Pitch_der_EEG_{}.pkl'.format(alpha, tmin, tmax, Band),
-        'rb')
+        'saves/Ridge/Final_Correlation/tmin{}_tmax{}/Pitch_der_EEG_{}.pkl'.format(tmin, tmax, Band), 'rb')
     Corr_Pitch_der, Pass_Pitch_der = pickle.load(f)
     f.close()
 
@@ -128,7 +118,7 @@ import seaborn as sn
 alpha = 100
 tmin, tmax = -0.6, -0.003
 
-Run_graficos_path = 'gráficos/Model_Comparison/Alpha_{}/tmin{}_tmax{}/'.format(alpha, tmin, tmax)
+Run_graficos_path = 'gráficos/Model_Comparison/tmin{}_tmax{}/'.format(tmin, tmax)
 Save_fig = True
 Correlaciones = {}
 
@@ -136,8 +126,7 @@ stim = 'Envelope'
 
 Bands = ['All', 'Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2']
 for Band in Bands:
-    f = open('saves/Ridge/Final_Correlation/Alpha_{}/tmin{}_tmax{}/{}_EEG_{}.pkl'.format(alpha, tmin, tmax, stim, Band),
-             'rb')
+    f = open('saves/Ridge/Final_Correlation/tmin{}_tmax{}/{}_EEG_{}.pkl'.format(tmin, tmax, stim, Band), 'rb')
     Corr, Pass = pickle.load(f)
     f.close()
 
@@ -172,33 +161,28 @@ info = mne.create_info(ch_names=channel_names[:], sfreq=128, ch_types='eeg').set
 alpha = 100
 tmin, tmax = -0.6, -0.003
 
-Run_graficos_path = 'gráficos/Model_Comparison/Alpha_{}/tmin{}_tmax{}/'.format(alpha, tmin, tmax)
+Run_graficos_path = 'gráficos/Model_Comparison/tmin{}_tmax{}/'.format(tmin, tmax)
 Save_fig = False
 
 Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All']
 Bands = ['Theta']
 for Band in Bands:
 
-    f = open('saves/Ridge/Final_Correlation/Alpha_{}/tmin{}_tmax{}/Envelope_EEG_{}.pkl'.format(alpha, tmin, tmax, Band),
-             'rb')
+    f = open('saves/Ridge/Final_Correlation/tmin{}_tmax{}/Envelope_EEG_{}.pkl'.format(tmin, tmax, Band), 'rb')
     Corr_Envelope, Pass_Envelope = pickle.load(f)
     f.close()
 
-    f = open('saves/Ridge/Final_Correlation/Alpha_{}/tmin{}_tmax{}/Pitch_EEG_{}.pkl'.format(alpha, tmin, tmax, Band),
-             'rb')
+    f = open('saves/Ridge/Final_Correlation/tmin{}_tmax{}/Pitch_EEG_{}.pkl'.format(tmin, tmax, Band), 'rb')
     Corr_Pitch, Pass_Pitch = pickle.load(f)
     f.close()
 
     f = open(
-        'saves/Ridge/Final_Correlation/Alpha_{}/tmin{}_tmax{}/Envelope_Pitch_Pitch_der_EEG_{}.pkl'.format(alpha, tmin,
-                                                                                                          tmax, Band),
-        'rb')
+        'saves/Ridge/Final_Correlation/tmin{}_tmax{}/Envelope_Pitch_Pitch_der_EEG_{}.pkl'.format(tmin, tmax, Band), 'rb')
     Corr_Envelope_Pitch_Pitch_der, Pass_Envelope_Pitch_Pitch_der = pickle.load(f)
     f.close()
 
     f = open(
-        'saves/Ridge/Final_Correlation/Alpha_{}/tmin{}_tmax{}/Pitch_der_EEG_{}.pkl'.format(alpha, tmin, tmax, Band),
-        'rb')
+        'saves/Ridge/Final_Correlation/tmin{}_tmax{}/Pitch_der_EEG_{}.pkl'.format(tmin, tmax, Band), 'rb')
     Corr_Pitch_der, Pass_Pitch_der = pickle.load(f)
     f.close()
 

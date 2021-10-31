@@ -15,11 +15,11 @@ Stims_Order = ['Envelope', 'Pitch', 'Pitch_der', 'Spectrogram', 'Phonemes']
 Stims = ['Envelope', 'Pitch', 'Pitch_der', 'Envelope_Pitch_Pitch_der']
 Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2', (1,15), 'All']
 
-Trace_interval = 2/3
+Trace_interval = 1/2
 min_trace_derivate = 0
 Corr_limit = 0.025
 
-alphas_fname = 'saves/Alphas/Alphas_Trace{}_Corr{}.pkl'.format(Trace_interval, Corr_limit)
+alphas_fname = 'saves/Alphas/Alphas_Trace{:.1f}_Corr{}.pkl'.format(Trace_interval, Corr_limit)
 failed_fname = 'saves/Alphas/Failed_Trace{}_Corr{}.pkl'.format(Trace_interval, Corr_limit)
 
 try:
@@ -53,7 +53,7 @@ for Band in Bands:
 
         # Paths
         procesed_data_path = 'saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
-        Run_graficos_path = 'gráficos/Ridge_Trace/Stims_{}_EEG_{}/tmin{}_tmax{}/'.format(Stims_preprocess,
+        Run_graficos_path = 'gráficos/Ridge_Trace/Stims_{}_EEG_{}/tmin{}_tmax{}/Prueba'.format(Stims_preprocess,
                                                                                          EEG_preprocess, tmin, tmax)
 
         min_busqueda, max_busqueda = -1, 6
@@ -61,7 +61,7 @@ for Band in Bands:
         alphas_swept = np.logspace(min_busqueda, max_busqueda, pasos)
         alpha_step = np.diff(np.log(alphas_swept))[0]
 
-        sesiones = np.arange(21, 26)
+        sesiones = np.arange(21, 22)
         # Empiezo corrida
 
         sujeto_total = 0
@@ -69,14 +69,15 @@ for Band in Bands:
             print('Sesion {}'.format(sesion))
             Alphas_Sesion = {}
             # LOAD DATA BY SUBJECT
-            Sujeto_1, Sujeto_2 = Load.Load_Data(sesion, Band, sr, tmin, tmax, situacion, procesed_data_path,
-                                                sujeto_total)
+            Sujeto_1, Sujeto_2 = Load.Load_Data(sesion=sesion, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
+                                                procesed_data_path=procesed_data_path)
 
             # LOAD EEG BY SUBJECT
             eeg_sujeto_1, eeg_sujeto_2 = Sujeto_1['EEG'], Sujeto_2['EEG']
 
             # LOAD STIMULUS BY SUBJECT
-            dstims_para_sujeto_1, dstims_para_sujeto_2, info = Load.Estimulos(stim, Sujeto_1, Sujeto_2)
+            dstims_para_sujeto_1, dstims_para_sujeto_2, info = Load.Estimulos(stim=stim, Sujeto_1=Sujeto_1,
+                                                                              Sujeto_2=Sujeto_2)
             Cant_Estimulos = len(dstims_para_sujeto_1)
 
             for sujeto, eeg, dstims in zip((1, 2), (eeg_sujeto_1, eeg_sujeto_2),
@@ -225,7 +226,7 @@ for Band in Bands:
     Alphas[Band] = Alphas_Band
 
 # Save Alphas
-f = open(alphas_fname, 'wb')
-pickle.dump(Alphas, f)
-f.close()
-
+# f = open(alphas_fname, 'wb')
+# pickle.dump(Alphas, f)
+# f.close()
+Alphas['Theta']
