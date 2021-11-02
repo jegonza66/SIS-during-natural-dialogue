@@ -78,12 +78,11 @@ def plot_cabezas_canales(channel_names, info, sr, sesion, sujeto, Valores_promed
         plt.ioff()
 
     # Grafico cabezas Correlaciones
-    fig, axs = plt.subplots(1, 2)
-    plt.suptitle("Sesion{} Sujeto{}".format(sesion, sujeto))
-    im = mne.viz.plot_topomap(Valores_promedio_abs, info, axes=axs[0], show=False, sphere=0.07,
-                              cmap='Greys',
-                              vmin=Valores_promedio_abs.min(), vmax=Valores_promedio_abs.max())
-    if Canales_sobrevivientes:
+    if len(Canales_sobrevivientes):
+        fig, axs = plt.subplots(1, 2)
+        plt.suptitle("Sesion{} Sujeto{}".format(sesion, sujeto))
+        im = mne.viz.plot_topomap(Valores_promedio_abs, info, axes=axs[0], show=False, sphere=0.07, cmap='Greys',
+                                  vmin=Valores_promedio_abs.min(), vmax=Valores_promedio_abs.max())
         surviving_channels_names = [channel_names[j] for j in Canales_sobrevivientes]
         mask = []
         for j in range(len(channel_names)):
@@ -97,11 +96,21 @@ def plot_cabezas_canales(channel_names, info, sr, sesion, sujeto, Valores_promed
                                                                          markeredgecolor='k', linewidth=0,
                                                                          markersize=4))
 
-    plt.colorbar(im[0], ax=[axs[0], axs[1]], shrink=0.85, label=name, orientation='horizontal',
-                 boundaries=np.linspace(Valores_promedio_abs.min().round(decimals=3),
-                                        Valores_promedio_abs.max().round(decimals=3), 100),
-                 ticks=[np.linspace(Valores_promedio_abs.min(), Valores_promedio_abs.max(), 9).round(decimals=3)])
+        plt.colorbar(im[0], ax=[axs[0], axs[1]], shrink=0.85, label=name, orientation='horizontal',
+                     boundaries=np.linspace(Valores_promedio_abs.min().round(decimals=3),
+                                            Valores_promedio_abs.max().round(decimals=3), 100),
+                     ticks=[np.linspace(Valores_promedio_abs.min(), Valores_promedio_abs.max(), 9).round(decimals=3)])
 
+    else:
+        fig, ax = plt.subplots()
+        plt.suptitle("Sesion{} Sujeto{}".format(sesion, sujeto))
+        im = mne.viz.plot_topomap(Valores_promedio_abs, info, axes=ax, show=False, sphere=0.07, cmap='Greys',
+                                  vmin=Valores_promedio_abs.min(), vmax=Valores_promedio_abs.max())
+        plt.colorbar(im[0], ax=ax, shrink=0.85, label=name, orientation='horizontal',
+                     boundaries=np.linspace(Valores_promedio_abs.min().round(decimals=3),
+                                            Valores_promedio_abs.max().round(decimals=3), 100),
+                     ticks=[np.linspace(Valores_promedio_abs.min(), Valores_promedio_abs.max(), 9).round(decimals=3)])
+        fig.tight_layout()
     if Save:
         save_path_cabezas = Run_graficos_path + 'Cabezas_canales/'
         try:
@@ -138,7 +147,8 @@ def plot_grafico_pesos(Display, sesion, sujeto, best_alpha, Pesos_promedio,
         ax = fig.add_subplot(Cant_Estimulos, 1, i + 1)
         ax.set_title('{}'.format(Stims_Order[i]))
 
-        evoked = mne.EvokedArray(Pesos_promedio[:, i * len(times):(i + 1) * len(times)], info)
+        evoked = mne.EvokedArray(np.flip(Pesos_promedio[:, i * len(times):(i + 1) * len(times)], axis=1), info)
+        times = -np.flip(times)
         evoked.times = times
 
         evoked.plot(scalings=dict(eeg=1, grad=1, mag=1), zorder='std', time_unit='ms',
@@ -299,6 +309,7 @@ def Cabezas_canales_rep(Canales_repetidos_sujetos, info, Display, Save, Run_graf
 
 def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display,
                        Save, Run_graficos_path, Cant_Estimulos, Stims_Order, stim, decorrelation_times=None):
+
     # Armo pesos promedio por canal de todos los sujetos que por lo menos tuvieron un buen canal
     Pesos_totales_sujetos_todos_canales_copy = Pesos_totales_sujetos_todos_canales.swapaxes(0, 2)
     Pesos_totales_sujetos_todos_canales_copy = Pesos_totales_sujetos_todos_canales_copy.mean(0).transpose()
@@ -314,7 +325,8 @@ def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display
         curva_pesos_totales = Pesos_totales_sujetos_todos_canales_copy[:, j * len(times):(j + 1) * len(times)].mean(0)
         returns.append(curva_pesos_totales)
 
-        evoked = mne.EvokedArray(Pesos_totales_sujetos_todos_canales_copy[:, j * len(times):(j + 1) * len(times)], info)
+        evoked = mne.EvokedArray(np.flip(Pesos_totales_sujetos_todos_canales_copy[:, j * len(times):(j + 1) * len(times)], axis=1), info)
+        times = -np.flip(times)
         evoked.times = times
 
         fig, ax = plt.subplots(figsize=(15, 5))
@@ -323,19 +335,19 @@ def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display
                     show=False, spatial_colors=True, unit=True, units='W', axes=ax)
 
         ax.plot(times * 1000, evoked._data.mean(0), 'k--', label='Mean', zorder=130, linewidth=2)
-        if times[-1] > 0: ax.axvspan(0, ax.get_xlim()[1], alpha=0.4, color='grey', label='Unheard stimuli')
+        if times[-1] > 0: ax.axvspan(ax.get_xlim()[0], 0, alpha=0.4, color='grey', label='Unheard stimuli')
         if decorrelation_times and times[-1] > 0:
-            ax.vlines(np.mean(decorrelation_times), ax.get_ylim()[0], ax.get_ylim()[1], linestyle='dashed', color='red',
+            ax.vlines(-np.mean(decorrelation_times), ax.get_ylim()[0], ax.get_ylim()[1], linestyle='dashed', color='red',
                       label='Decorrelation time')
-            ax.axvspan(np.mean(decorrelation_times) - np.std(decorrelation_times) / 2,
-                       np.mean(decorrelation_times) + np.std(decorrelation_times) / 2,
+            ax.axvspan(-np.mean(decorrelation_times) - np.std(decorrelation_times) / 2,
+                       -np.mean(decorrelation_times) + np.std(decorrelation_times) / 2,
                        alpha=0.4, color='red', label='Decorrelation time std.')
 
         ax.xaxis.label.set_size(23)
         ax.yaxis.label.set_size(23)
         ax.tick_params(axis='both', labelsize=23)
         ax.grid()
-        ax.legend(fontsize=17, loc='lower left')
+        ax.legend(fontsize=15, loc='lower right')
 
         fig.tight_layout()
 
@@ -349,7 +361,6 @@ def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display
                 save_path_graficos + 'Regression_Weights_{}.svg'.format(Stims_Order[j] if Cant_Estimulos > 1 else stim))
             fig.savefig(
                 save_path_graficos + 'Regression_Weights_{}.png'.format(Stims_Order[j] if Cant_Estimulos > 1 else stim))
-
     return returns
 
 
@@ -367,11 +378,12 @@ def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, 
 
     returns = []
     for j in range(Cant_Estimulos):
-        mean_coefs = Pesos_totales_sujetos_todos_canales_copy[:, j * len(times):(j + 1) * len(times)]
+        mean_coefs = np.flip(Pesos_totales_sujetos_todos_canales_copy[:, j * len(times):(j + 1) * len(times)])
         curva_pesos_totales = mean_coefs.mean(0)
         returns.append(curva_pesos_totales)
 
         evoked = mne.EvokedArray(mean_coefs, info)
+        times = -np.flip(times)
         evoked.times = times
 
         fig, axs = plt.subplots(2, 1, sharex=True, figsize=(6, 8), gridspec_kw={'height_ratios': [1, 3]})
@@ -386,7 +398,7 @@ def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, 
                     show=False, spatial_colors=True, unit=False, units='w', axes=axs[0])
         axs[0].plot(times * 1000, curva_pesos_totales, "k--", label="Mean", zorder=130, linewidth=2)
         axs[0].axis('off')
-        axs[0].legend(loc="lower left")
+        axs[0].legend(loc="upper right")
 
         fig.tight_layout()
 

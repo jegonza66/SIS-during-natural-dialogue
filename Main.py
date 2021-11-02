@@ -19,6 +19,8 @@ Display_Total_Figures = True
 Save_Ind_Figures = False
 Save_Total_Figures = False
 
+Save_Final_Correlation = False
+
 # Define Parameters
 # Standarization
 Stims_preprocess = 'Normalize'
@@ -26,7 +28,7 @@ EEG_preprocess = 'Standarize'
 
 # Stimuli and EEG
 Stims_Order = ['Envelope', 'Pitch', 'Pitch_der', 'Spectrogram', 'Phonemes']
-Stims = ['Pitch']
+Stims = ['Envelope']
 Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All']
 Bands = ['Theta']
 
@@ -242,11 +244,12 @@ for Band in Bands:
 
 
         # SAVE FINAL CORRELATION
-        save_path = 'saves/Ridge/Final_Correlation/tmin{}_tmax{}/'.format(alpha, tmin, tmax)
-        try:
-            os.makedirs(save_path)
-        except:
-            pass
-        f = open(save_path + '{}_EEG_{}.pkl'.format(stim, Band), 'wb')
-        pickle.dump([Correlaciones_totales_sujetos, Canales_repetidos_corr_sujetos], f)
-        f.close()
+        if Save_Final_Correlation and sujeto_total == 9:
+            save_path = 'saves/Ridge/Final_Correlation/tmin{}_tmax{}/'.format(tmin, tmax)
+            try:
+                os.makedirs(save_path)
+            except:
+                pass
+            f = open(save_path + '{}_EEG_{}.pkl'.format(stim, Band), 'wb')
+            pickle.dump([Correlaciones_totales_sujetos, Canales_repetidos_corr_sujetos], f)
+            f.close()

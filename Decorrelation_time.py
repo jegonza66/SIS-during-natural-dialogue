@@ -25,20 +25,17 @@ Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All']
 stim = 'Envelope'
 Band = 'Theta'
 situacion = 'Escucha'
-tmin, tmax = -0.4, 0.1
+tmin, tmax = -0.6, 0.3
 sr = 128
 delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
 times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays))
 
 # Paths
 procesed_data_path = 'saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
-Run_graficos_path = 'gráficos/Ridge/Stims_{}_EEG_{}/Alpha_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
+Run_graficos_path = 'gráficos/Ridge/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
     Stims_preprocess, EEG_preprocess,  tmin, tmax, stim, Band)
-Path_it = 'saves/Ridge/Fake_it/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(Stims_preprocess,
-                                                                                          EEG_preprocess, tmin,
-                                                                                          tmax, stim, Band)
-alphas_fname = 'saves/Alphas/Alphas_Trace{:.1f}_Corr0.025.pkl'.format(2/3)
 
+alphas_fname = 'saves/Alphas/Alphas_Trace{:.1f}_Corr0.025.pkl'.format(2/3)
 try:
     f = open(alphas_fname, 'rb')
     Alphas = pickle.load(f)
@@ -121,12 +118,12 @@ for sesion in sesiones:
         sujeto_total += 1
 
 try:
-    f = open('saves/Decorrelation_times_{}_tmin{}_tmax{}.pkl'.format(stim, tmin, tmax), 'rb')
+    f = open('saves/Decorrelation_times_{}_NoFilt_tmin{}_tmax{}.pkl'.format(stim, tmin, tmax), 'rb')
     decorrelation_times = pickle.load(f)
     f.close()
 except:
     decorrelation_times = Funciones.decorrelation_time(Estimulos, sr)
-    f = open('saves/Decorrelation_times_{}_tmin{}_tmax{}.pkl'.format(stim, tmin, tmax), 'wb')
+    f = open('saves/Decorrelation_times_{}_NoFilt_tmin{}_tmax{}.pkl'.format(stim, tmin, tmax), 'wb')
     pickle.dump(decorrelation_times, f)
     f.close()
 
