@@ -378,7 +378,7 @@ def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, 
 
     returns = []
     for j in range(Cant_Estimulos):
-        mean_coefs = np.flip(Pesos_totales_sujetos_todos_canales_copy[:, j * len(times):(j + 1) * len(times)])
+        mean_coefs = np.flip(Pesos_totales_sujetos_todos_canales_copy[:, j * len(times):(j + 1) * len(times)], axis=1)
         curva_pesos_totales = mean_coefs.mean(0)
         returns.append(curva_pesos_totales)
 
