@@ -13,7 +13,7 @@ Save_figures_Trace = True
 
 Stims_Order = ['Envelope', 'Pitch', 'Pitch_der', 'Spectrogram', 'Phonemes']
 Stims = ['Envelope', 'Pitch', 'Pitch_der', 'Envelope_Pitch_Pitch_der']
-Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2', (1, 15), 'All']
+Bands = [(4, 6)]
 # Stims = ['Envelope']
 # Bands = ['Delta']
 
@@ -51,7 +51,7 @@ for Band in Bands:
         Failed_Band = {}
 
     for stim in Stims:
-        print(stim + '\n')
+        print('\n' + stim + '\n')
         try:
             Alphas_Stim = Alphas[Band][stim]
         except:
@@ -89,7 +89,7 @@ for Band in Bands:
 
         sujeto_total = 0
         for sesion in sesiones:
-            print('Sesion {}'.format(sesion))
+            print('\nSesion {}'.format(sesion))
             try:
                 Alphas_Sesion = Alphas[Band][stim][sesion]
             except:
@@ -114,7 +114,7 @@ for Band in Bands:
             for sujeto, eeg, dstims in zip((1, 2), (eeg_sujeto_1, eeg_sujeto_2),
                                            (dstims_para_sujeto_1, dstims_para_sujeto_2)):
                 # for sujeto, eeg, dstims in zip([2], [eeg_sujeto_2], [dstims_para_sujeto_2]):
-                print('\nSujeto {}'.format(sujeto))
+                print('\n\nSujeto {}'.format(sujeto))
                 # Separo los datos en 5 y tomo test set de 20% de datos con kfold (5 iteraciones)
                 n_splits = 5
 
