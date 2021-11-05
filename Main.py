@@ -59,6 +59,7 @@ for Band in Bands:
         # Start Run
         # sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
         sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
+        sesiones = [26]
         # sesiones = np.arange(21, 26)
         sujeto_total = 0
         for sesion in sesiones:

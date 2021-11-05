@@ -220,7 +220,7 @@ def plot_grafico_shadows(Display, sesion, sujeto, best_alpha,
         fig.savefig(save_path_graficos + 'Sesion{}_Sujeto{}.png'.format(sesion, sujeto))
 
 
-def Plot_PSD(sesion, sujeto, test_round, Band, situacion, Display, Save, save_path, info, data, fmin=4, fmax=40):
+def Plot_PSD(sesion, sujeto, Band, situacion, Display, Save, save_path, info, data, fmin=4, fmax=40):
     psds_welch_mean, freqs_mean = mne.time_frequency.psd_array_welch(data, info['sfreq'], fmin, fmax)
 
     if Display:
@@ -245,7 +245,7 @@ def Plot_PSD(sesion, sujeto, test_round, Band, situacion, Display, Save, save_pa
         except:
             pass
         plt.savefig(
-            save_path_graficos + 'Sesion{} - Sujeto{} - Band {} - Fold {}'.format(sesion, sujeto, Band, test_round + 1))
+            save_path_graficos + 'Sesion{} - Sujeto{} - Band {}'.format(sesion, sujeto, Band))
 
 
 def Cabezas_corr_promedio(Correlaciones_totales_sujetos, info, Display, Save, Run_graficos_path, title):

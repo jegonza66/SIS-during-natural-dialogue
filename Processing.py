@@ -126,6 +126,9 @@ def band_freq(band):
         l_freq = band[0]
         h_freq = band[1]
 
+    elif band == None:
+        return None, None
+
     return l_freq, h_freq
 
 

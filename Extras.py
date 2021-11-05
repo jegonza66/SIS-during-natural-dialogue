@@ -19,7 +19,7 @@ import Processing
 import Simulation
 
 # WHAT TO DO
-Plot_EEG_PSD = False
+Plot_EEG_PSD = True
 Simulate_random_data = False
 Cov_Matrix = False
 Signal_vs_Pred = False
@@ -28,7 +28,7 @@ Pitch = False
 
 # Figures
 Display = False
-Save = False
+Save = True
 
 if Display:
     plt.ion()
@@ -50,8 +50,8 @@ Stims = ['Envelope', 'Pitch', 'Pitch_der', 'Envelope_Pitch_Pitch_der']
 Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All']
 
 stim = 'Envelope'
-Band = 'Theta'
-situacion = 'Escucha'
+Band = None
+situacion = 'Todo'
 tmin, tmax = -0.6, -0.003
 sr = 128
 delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
@@ -103,7 +103,7 @@ for sesion in sesiones:
             n_splits = 5
 
             # Ploteo PSD de señal de EEG
-            if Plot_EEG_PSD: Plot.Plot_PSD(sesion, sujeto, -1, Band, situacion, Display, Save, 'Escucha', info,
+            if Plot_EEG_PSD: Plot.Plot_PSD(sesion, sujeto, Band, situacion, Display, Save, situacion, info,
                                            eeg.transpose())
 
             if Simulate_random_data or Signal_vs_Pred:

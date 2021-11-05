@@ -21,7 +21,7 @@ tmin, tmax = 0.053, 0.3
 delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
 
 ## EEG
-Band = 'Theta'
+Band = None
 l_freq_eeg, h_freq_eeg = Processing.band_freq(Band)
 
 eeg_fname = "Datos/EEG/S" + str(s) + "/s" + str(s) + "-" + str(channel) + "-Trial" + str(trial) + "-Deci-Filter-Trim-ICA-Pruned.set"
@@ -29,10 +29,18 @@ eeg = mne.io.read_raw_eeglab(eeg_fname)
 eeg_freq = eeg.info.get("sfreq")
 info = eeg.info
 eeg.load_data()
-eeg = eeg.filter(l_freq=l_freq_eeg, h_freq=h_freq_eeg, phase='minimum')
+if Band: eeg = eeg.filter(l_freq=l_freq_eeg, h_freq=h_freq_eeg, phase='minimum')
 
-eeg.plot()
-plt.savefig('{}Theta.png'.format(s))
+# eeg = eeg.to_data_frame()
+# eeg = np.array(eeg)[:, 1:129]  # paso a array y tomo tiro la primer columna de tiempos
+
+eeg = np.array(eeg._data*1e6).transpose() # 1e6 es por el factor de scaling del eeg.to_data_frame()
+
+# Downsample
+eeg = Processing.subsamplear(eeg, int(eeg_freq / sr))
+
+# eeg.plot()
+# plt.savefig('{}Theta.png'.format(s))
 
 ## PSD
 psds_welch_mean, freqs_mean = mne.time_frequency.psd_array_welch(eeg._data, sfreq=eeg_freq, fmin=1, fmax=60)
@@ -52,13 +60,12 @@ wav_fname = "Datos/wavs/S" + str(s) + "/s" + str(s) + ".objects." + "{:02d}".for
     channel) + ".wav"
 wav1 = wavfile.read(wav_fname)[1]
 wav1 = wav1.astype("float")
-# samples, sampling_rate = librosa.load(wav_fname)
 
 ## ENVELOPE
 
 envelope = np.abs(sgn.hilbert(wav1))
-envelope = Processing.butter_filter(envelope, frecuencias=25, sampling_freq=16000,
-                                    btype='lowpass', order=3, axis=0, ftype='Causal')
+# envelope = Processing.butter_filter(envelope, frecuencias=25, sampling_freq=16000,
+#                                     btype='lowpass', order=3, axis=0, ftype='Causal')
 
 window_size = 125
 stride = 125

@@ -45,10 +45,11 @@ class Trial_channel:
         eeg_freq = eeg.info.get("sfreq")
         eeg.load_data()
         # Hago un lowpass
-        if self.Causal_filter_EEG:
-            eeg = eeg.filter(l_freq=self.l_freq_eeg, h_freq=self.h_freq_eeg, phase='minimum')
-        else:
-            eeg = eeg.filter(l_freq=self.l_freq_eeg, h_freq=self.h_freq_eeg)
+        if self.Band:
+            if self.Causal_filter_EEG:
+                eeg = eeg.filter(l_freq=self.l_freq_eeg, h_freq=self.h_freq_eeg, phase='minimum')
+            else:
+                eeg = eeg.filter(l_freq=self.l_freq_eeg, h_freq=self.h_freq_eeg)
 
         # Paso a array
         eeg = eeg.to_data_frame()
@@ -283,7 +284,7 @@ class Sesion_class:
         # Save_Preprocesed
         EEG_path = self.procesed_data_path + 'EEG/'
         Envelope_path = self.procesed_data_path + 'Envelope/'
-        if self.Causal_filter_EEG: EEG_path += 'Causal_'
+        if self.Band and self.Causal_filter_EEG: EEG_path += 'Causal_'
         if self.Env_Filter: Envelope_path += self.Env_Filter + '_'
         EEG_path += 'Sit_{}_Band_{}/'.format(self.situacion, self.Band)
         Envelope_path += 'Sit_{}/'.format(self.situacion)
