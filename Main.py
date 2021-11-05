@@ -33,7 +33,7 @@ Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All']
 Bands = ['Theta']
 
 # Model parameters
-alphas_fname = 'saves/Alphas/Alphas_Trace{:.1f}_Corr0.025.pkl'.format(2/3)
+alphas_fname = 'saves/Alphas/Alphas_Trace{:.1f}_Corr0.025.pkl'.format(2 / 3)
 try:
     f = open(alphas_fname, 'rb')
     Alphas = pickle.load(f)
@@ -41,13 +41,13 @@ try:
 except:
     print('\n\nAlphas file not found.\n\n')
 
-
 for Band in Bands:
     for stim in Stims:
         tmin, tmax = -0.6, -0.003
         sr = 128
         delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
-        times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays))
+        times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr,
+                            len(delays))
 
         # Paths
         procesed_data_path = 'saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
@@ -58,7 +58,7 @@ for Band in Bands:
 
         # Start Run
         # sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
-        sesiones = [26, 27, 29, 30]
+        sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
         # sesiones = np.arange(21, 26)
         sujeto_total = 0
         for sesion in sesiones:
@@ -76,8 +76,9 @@ for Band in Bands:
                                                                               Sujeto_2=Sujeto_2)
             Cant_Estimulos = len(dstims_para_sujeto_1)
 
-            for sujeto, eeg, dstims in zip((1, 2), (eeg_sujeto_1, eeg_sujeto_2), (dstims_para_sujeto_1, dstims_para_sujeto_2)):
-            # for sujeto, eeg, dstims in zip([2], [eeg_sujeto_2], [dstims_para_sujeto_2]):
+            for sujeto, eeg, dstims in zip((1, 2), (eeg_sujeto_1, eeg_sujeto_2),
+                                           (dstims_para_sujeto_1, dstims_para_sujeto_2)):
+                # for sujeto, eeg, dstims in zip([2], [eeg_sujeto_2], [dstims_para_sujeto_2]):
                 print('Sujeto {}'.format(sujeto))
                 # Separo los datos en 5 y tomo test set de 20% de datos con kfold (5 iteraciones)
                 Predicciones = {}
@@ -113,8 +114,10 @@ for Band in Bands:
 
                     axis = 0
                     porcent = 5
-                    eeg, dstims_train_val, dstims_test = Processing.standarize_normalize(eeg, dstims_train_val, dstims_test,
-                                                                                         Stims_preprocess, EEG_preprocess,
+                    eeg, dstims_train_val, dstims_test = Processing.standarize_normalize(eeg, dstims_train_val,
+                                                                                         dstims_test,
+                                                                                         Stims_preprocess,
+                                                                                         EEG_preprocess,
                                                                                          axis, porcent)
                     # alpha = Alphas[Band][stim][sesion][sujeto]
                     # if alpha == 'FAILED':
@@ -141,13 +144,16 @@ for Band in Bands:
 
                     if Statistical_test:
                         if Run_permutations:
-                            Simulation.simular_iteraciones_Ridge(alpha, iteraciones, sesion, sujeto, fold, dstims_train_val,
-                                                                 eeg_train_val, dstims_test, eeg_test, Correlaciones_fake,
+                            Simulation.simular_iteraciones_Ridge(alpha, iteraciones, sesion, sujeto, fold,
+                                                                 dstims_train_val,
+                                                                 eeg_train_val, dstims_test, eeg_test,
+                                                                 Correlaciones_fake,
                                                                  Errores_fake, Path_it)
 
                         else:  # Load data from iterations
-                            f = open(Path_it + 'Corr_Rmse_fake_ronda_it_canal_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto),
-                                     'rb')
+                            f = open(
+                                Path_it + 'Corr_Rmse_fake_ronda_it_canal_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto),
+                                'rb')
                             Correlaciones_fake, Errores_fake = pickle.load(f)
                             f.close()
 
@@ -187,9 +193,11 @@ for Band in Bands:
 
                 # Grafico cabezas y canales
                 Plot.plot_cabezas_canales(info.ch_names, info, sr, sesion, sujeto, Corr_promedio, Display_Ind_Figures,
-                                          info['nchan'], 'Correlación', Save_Ind_Figures, Run_graficos_path, Canales_sobrevivientes_corr)
+                                          info['nchan'], 'Correlación', Save_Ind_Figures, Run_graficos_path,
+                                          Canales_sobrevivientes_corr)
                 Plot.plot_cabezas_canales(info.ch_names, info, sr, sesion, sujeto, Rmse_promedio, Display_Ind_Figures,
-                                          info['nchan'], 'Rmse', Save_Ind_Figures, Run_graficos_path, Canales_sobrevivientes_rmse)
+                                          info['nchan'], 'Rmse', Save_Ind_Figures, Run_graficos_path,
+                                          Canales_sobrevivientes_rmse)
 
                 # Grafico Pesos
                 Plot.plot_grafico_pesos(Display_Ind_Figures, sesion, sujeto, alpha, Pesos_promedio,
@@ -206,7 +214,8 @@ for Band in Bands:
                     Canales_repetidos_corr_sujetos = Canales_repetidos_corr_sujeto
                     Canales_repetidos_rmse_sujetos = Canales_repetidos_rmse_sujeto
                 else:
-                    Pesos_totales_sujetos_todos_canales = np.dstack((Pesos_totales_sujetos_todos_canales, Pesos_promedio))
+                    Pesos_totales_sujetos_todos_canales = np.dstack(
+                        (Pesos_totales_sujetos_todos_canales, Pesos_promedio))
                     Correlaciones_totales_sujetos = np.vstack((Correlaciones_totales_sujetos, Corr_promedio))
                     Rmse_totales_sujetos = np.vstack((Rmse_totales_sujetos, Rmse_promedio))
 
@@ -219,21 +228,27 @@ for Band in Bands:
         # Armo cabecita con correlaciones promedio entre sujetos
         Plot.Cabezas_corr_promedio(Correlaciones_totales_sujetos, info, Display_Total_Figures, Save_Total_Figures,
                                    Run_graficos_path, title='Correlation')
-        Plot.Cabezas_corr_promedio(Rmse_totales_sujetos, info, Display_Total_Figures, Save_Total_Figures, Run_graficos_path,
+        Plot.Cabezas_corr_promedio(Rmse_totales_sujetos, info, Display_Total_Figures, Save_Total_Figures,
+                                   Run_graficos_path,
                                    title='Rmse')
 
         # Armo cabecita con canales repetidos
         if Statistical_test:
-            Plot.Cabezas_canales_rep(Canales_repetidos_corr_sujetos.sum(0), info, Display_Total_Figures, Save_Total_Figures,
+            Plot.Cabezas_canales_rep(Canales_repetidos_corr_sujetos.sum(0), info, Display_Total_Figures,
+                                     Save_Total_Figures,
                                      Run_graficos_path, title='Correlation')
-            Plot.Cabezas_canales_rep(Canales_repetidos_rmse_sujetos.sum(0), info, Display_Total_Figures, Save_Total_Figures,
+            Plot.Cabezas_canales_rep(Canales_repetidos_rmse_sujetos.sum(0), info, Display_Total_Figures,
+                                     Save_Total_Figures,
                                      Run_graficos_path, title='Rmse')
 
         # Grafico Pesos
-        curva_pesos_totales = Plot.regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display_Total_Figures,
-                                                      Save_Total_Figures, Run_graficos_path, Cant_Estimulos, Stims_Order, stim)
+        curva_pesos_totales = Plot.regression_weights(Pesos_totales_sujetos_todos_canales, info, times,
+                                                      Display_Total_Figures,
+                                                      Save_Total_Figures, Run_graficos_path, Cant_Estimulos,
+                                                      Stims_Order, stim)
         curva_pesos_totales = Plot.regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times,
-                                                             Display_Total_Figures, Save_Total_Figures, Run_graficos_path,
+                                                             Display_Total_Figures, Save_Total_Figures,
+                                                             Run_graficos_path,
                                                              Cant_Estimulos, Stims_Order, stim)
 
         # Matriz de Correlacion
@@ -243,7 +258,6 @@ for Band in Bands:
         # Cabezas de correlacion de pesos por canal
         Plot.Channel_wise_correlation_topomap(Pesos_totales_sujetos_todos_canales, info, Display_Total_Figures,
                                               Save_Total_Figures, Run_graficos_path)
-
 
         # SAVE FINAL CORRELATION
         if Save_Final_Correlation and sujeto_total == 9:
