@@ -13,9 +13,9 @@ Save_figures_Trace = True
 
 Stims_Order = ['Envelope', 'Pitch', 'Pitch_der', 'Spectrogram', 'Phonemes']
 Stims = ['Envelope', 'Pitch', 'Pitch_der', 'Envelope_Pitch_Pitch_der']
-Bands = [(4, 6)]
-# Stims = ['Envelope']
-# Bands = ['Delta']
+# Bands = [(4, 6)]
+Stims = ['Envelope']
+Bands = ['Theta']
 
 Trace_interval = 2/3
 min_trace_derivate = 0
@@ -85,6 +85,7 @@ for Band in Bands:
         alpha_step = np.diff(np.log(alphas_swept))[0]
 
         sesiones = np.arange(21, 26)
+        sesiones = [26, 27, 29, 30]
         # Empiezo corrida
 
         sujeto_total = 0

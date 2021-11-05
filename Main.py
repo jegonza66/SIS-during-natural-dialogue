@@ -16,8 +16,8 @@ Run_permutations = False
 # Figures
 Display_Ind_Figures = False
 Display_Total_Figures = True
-Save_Ind_Figures = False
-Save_Total_Figures = False
+Save_Ind_Figures = True
+Save_Total_Figures = True
 
 Save_Final_Correlation = False
 
@@ -57,7 +57,9 @@ for Band in Bands:
             Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
 
         # Start Run
-        sesiones = np.arange(21, 26)
+        # sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
+        sesiones = [26, 27, 29, 30]
+        # sesiones = np.arange(21, 26)
         sujeto_total = 0
         for sesion in sesiones:
             print('Sesion {}'.format(sesion))
@@ -114,10 +116,10 @@ for Band in Bands:
                     eeg, dstims_train_val, dstims_test = Processing.standarize_normalize(eeg, dstims_train_val, dstims_test,
                                                                                          Stims_preprocess, EEG_preprocess,
                                                                                          axis, porcent)
-                    alpha = Alphas[Band][stim][sesion][sujeto]
-                    if alpha == 'FAILED':
-                        alpha = np.mean([value for sesion_dict in Alphas[Band][stim].keys() for value in list(Alphas[Band][stim][sesion_dict].values()) if type(value) != 'FAILED'])
-
+                    # alpha = Alphas[Band][stim][sesion][sujeto]
+                    # if alpha == 'FAILED':
+                    #     alpha = np.mean([value for sesion_dict in Alphas[Band][stim].keys() for value in list(Alphas[Band][stim][sesion_dict].values()) if type(value) != 'FAILED'])
+                    alpha = 100
                     # Ajusto el modelo y guardo
                     Model = Models.Ridge(alpha)
                     Model.fit(dstims_train_val, eeg_train_val)
