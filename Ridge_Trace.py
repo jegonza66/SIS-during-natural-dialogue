@@ -15,6 +15,7 @@ Stims_Order = ['Envelope', 'Pitch', 'Pitch_der', 'Spectrogram', 'Phonemes']
 Stims = ['Envelope_Pitch']
 Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All', (1, 15), (4, 6)]
 
+
 Trace_interval = 2 / 3
 min_trace_derivate = 0
 Corr_limit = 0.025
