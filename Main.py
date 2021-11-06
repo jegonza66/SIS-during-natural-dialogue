@@ -19,7 +19,7 @@ Display_Total_Figures = True
 Save_Ind_Figures = True
 Save_Total_Figures = True
 
-Save_Final_Correlation = False
+Save_Final_Correlation = True
 
 # Define Parameters
 # Standarization
@@ -28,7 +28,8 @@ EEG_preprocess = 'Standarize'
 
 # Stimuli and EEG
 Stims_Order = ['Envelope', 'Pitch', 'Pitch_der', 'Spectrogram', 'Phonemes']
-Stims = ['Envelope']
+Stims = ['Envelope', 'Pitch', 'Envelope_Pitch']
+Stims = ['Envelope_Pitch']
 Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All']
 Bands = ['Theta']
 
@@ -57,10 +58,7 @@ for Band in Bands:
             Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
 
         # Start Run
-        # sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
         sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
-        sesiones = [26]
-        # sesiones = np.arange(21, 26)
         sujeto_total = 0
         for sesion in sesiones:
             print('Sesion {}'.format(sesion))
@@ -92,6 +90,7 @@ for Band in Bands:
                 Prob_Corr_ronda_canales = np.ones((n_splits, info['nchan']))
                 Prob_Rmse_ronda_canales = np.ones((n_splits, info['nchan']))
 
+                Pesos_fake = np.zeros((n_splits, iteraciones, info['nchan'], len(times) * Cant_Estimulos))
                 Correlaciones_fake = np.zeros((n_splits, iteraciones, info['nchan']))
                 Errores_fake = np.zeros((n_splits, iteraciones, info['nchan']))
 
@@ -120,10 +119,10 @@ for Band in Bands:
                                                                                          Stims_preprocess,
                                                                                          EEG_preprocess,
                                                                                          axis, porcent)
-                    # alpha = Alphas[Band][stim][sesion][sujeto]
-                    # if alpha == 'FAILED':
-                    #     alpha = np.mean([value for sesion_dict in Alphas[Band][stim].keys() for value in list(Alphas[Band][stim][sesion_dict].values()) if type(value) != 'FAILED'])
-                    alpha = 100
+                    alpha = Alphas[Band][stim][sesion][sujeto]
+                    if alpha == 'FAILED':
+                        alpha = np.mean([value for sesion_dict in Alphas[Band][stim].keys() for value in list(Alphas[Band][stim][sesion_dict].values()) if type(value) != 'FAILED'])
+
                     # Ajusto el modelo y guardo
                     Model = Models.Ridge(alpha)
                     Model.fit(dstims_train_val, eeg_train_val)
@@ -146,10 +145,8 @@ for Band in Bands:
                     if Statistical_test:
                         if Run_permutations:
                             Simulation.simular_iteraciones_Ridge(alpha, iteraciones, sesion, sujeto, fold,
-                                                                 dstims_train_val,
-                                                                 eeg_train_val, dstims_test, eeg_test,
-                                                                 Correlaciones_fake,
-                                                                 Errores_fake, Path_it)
+                                                                 dstims_train_val, eeg_train_val, dstims_test, eeg_test,
+                                                                 Pesos_fake, Correlaciones_fake, Errores_fake, Path_it)
 
                         else:  # Load data from iterations
                             f = open(
@@ -261,7 +258,7 @@ for Band in Bands:
                                               Save_Total_Figures, Run_graficos_path)
 
         # SAVE FINAL CORRELATION
-        if Save_Final_Correlation and sujeto_total == 9:
+        if Save_Final_Correlation and sujeto_total == 17:
             save_path = 'saves/Ridge/Final_Correlation/tmin{}_tmax{}/'.format(tmin, tmax)
             try:
                 os.makedirs(save_path)

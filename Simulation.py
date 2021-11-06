@@ -10,9 +10,9 @@ import matplotlib.pyplot as plt
 import Models
 
 
-def simular_iteraciones_Ridge(alpha, iteraciones, sesion, sujeto, test_round, dstims_train_val, eeg_train_val,
-                              dstims_test, eeg_test, Correlaciones_fake, Errores_fake, Path_it):
-    print("\nSesion {} - Sujeto {} - Test round {}".format(sesion, sujeto, test_round + 1))
+def simular_iteraciones_Ridge(alpha, iteraciones, sesion, sujeto, fold, dstims_train_val, eeg_train_val,
+                              dstims_test, eeg_test, Pesos_fake, Correlaciones_fake, Errores_fake, Path_it):
+    print("\nSesion {} - Sujeto {} - Test round {}".format(sesion, sujeto, fold + 1))
     for iteracion in np.arange(iteraciones):
         # Random permutations of stimuli
         dstims_train_random = copy.deepcopy(dstims_train_val)
@@ -21,6 +21,7 @@ def simular_iteraciones_Ridge(alpha, iteraciones, sesion, sujeto, test_round, ds
         # Fit Model
         Fake_Model = Models.Ridge(alpha)
         Fake_Model.fit(dstims_train_random, eeg_train_val)  # entreno el modelo
+        Pesos_fake[fold, iteracion] = Fake_Model.coefs
 
         # Test
         predicho_fake = Fake_Model.predict(dstims_test)
@@ -29,11 +30,11 @@ def simular_iteraciones_Ridge(alpha, iteraciones, sesion, sujeto, test_round, ds
         Rcorr_fake = np.array(
             [np.corrcoef(eeg_test[:, ii].ravel(), np.array(predicho_fake[:, ii]).ravel())[0, 1] for ii in
              range(eeg_test.shape[1])])
-        Correlaciones_fake[test_round, iteracion] = Rcorr_fake
+        Correlaciones_fake[fold, iteracion] = Rcorr_fake
 
         # Error
         Rmse_fake = np.array(np.sqrt(np.power((predicho_fake - eeg_test), 2).mean(0)))
-        Errores_fake[test_round, iteracion] = Rmse_fake
+        Errores_fake[fold, iteracion] = Rmse_fake
 
         print("\rProgress: {}%".format(int((iteracion + 1) * 100 / iteraciones)), end='')
 
@@ -42,15 +43,14 @@ def simular_iteraciones_Ridge(alpha, iteraciones, sesion, sujeto, test_round, ds
         os.makedirs(Path_it)
     except:
         pass
-    f = open(Path_it + 'Corr_Rmse_fake_ronda_it_canal_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto), 'wb')
-    pickle.dump([Correlaciones_fake, Errores_fake], f)
+    f = open(Path_it + 'Pesos, Corr_Rmse_fake_ronda_it_canal_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto), 'wb')
+    pickle.dump([Pesos_fake, Correlaciones_fake, Errores_fake], f)
     f.close()
 
 
-
-def simular_iteraciones_Ridge_plot(info, times, situacion, alpha, iteraciones, sesion, sujeto, test_round,
+def simular_iteraciones_Ridge_plot(info, times, situacion, alpha, iteraciones, sesion, sujeto, fold,
                                    dstims_train_val, eeg_train_val, dstims_test, eeg_test, fmin, fmax, Display=False):
-    print("\nSesion {} - Sujeto {} - Test round {}".format(sesion, sujeto, test_round + 1))
+    print("\nSesion {} - Sujeto {} - Test round {}".format(sesion, sujeto, fold + 1))
     psds_rand_correlations = []
     for iteracion in range(iteraciones):
         # Random permutation of stimuli
@@ -130,12 +130,12 @@ def simular_iteraciones_Ridge_plot(info, times, situacion, alpha, iteraciones, s
     return psds_rand_correlations
 
 
-def simular_iteraciones_mtrf(iteraciones, sesion, sujeto, test_round, sr, info, tmin, tmax, dstims_train, eeg_train,
+def simular_iteraciones_mtrf(iteraciones, sesion, sujeto, fold, sr, info, tmin, tmax, dstims_train, eeg_train,
                              dstims_test, eeg_test, scores, coefs, Correlaciones_fake, Errores_fake, Path_it):
     rf_fake = ReceptiveField(tmin, tmax, sr, feature_names=['envelope'],
                              estimator=1., scoring='corrcoef')
 
-    print("\nSesion {} - Sujeto {} - Test round {}".format(sesion, sujeto, test_round + 1))
+    print("\nSesion {} - Sujeto {} - Test round {}".format(sesion, sujeto, fold + 1))
     for iteracion in np.arange(iteraciones):
         # Randomizo estimulos
 
@@ -158,18 +158,18 @@ def simular_iteraciones_mtrf(iteraciones, sesion, sujeto, test_round, sr, info, 
         predicho_fake = rf_fake.predict(speech_test_random)
 
         # Metricas
-        scores[test_round] = rf_fake.score(speech_test_random, eeg_test)
-        coefs[test_round] = rf_fake.coef_[:, 0, :]
+        scores[fold] = rf_fake.score(speech_test_random, eeg_test)
+        coefs[fold] = rf_fake.coef_[:, 0, :]
 
         # Correlacion
         Rcorr_fake = np.array(
             [np.corrcoef(eeg_test[:, ii].ravel(), np.array(predicho_fake[:, ii]).ravel())[0, 1] for ii in
              range(eeg_test.shape[1])])
-        Correlaciones_fake[test_round, iteracion] = Rcorr_fake
+        Correlaciones_fake[fold, iteracion] = Rcorr_fake
 
         # Error
         Rmse_fake = np.array(np.sqrt(np.power((predicho_fake - eeg_test), 2).mean(0)))
-        Errores_fake[test_round, iteracion] = Rmse_fake
+        Errores_fake[fold, iteracion] = Rmse_fake
 
         print("\rProgress: {}%".format(int((iteracion + 1) * 100 / iteraciones)), end='')
 

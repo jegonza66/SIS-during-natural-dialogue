@@ -12,12 +12,10 @@ Display_figures_Trace = False
 Save_figures_Trace = True
 
 Stims_Order = ['Envelope', 'Pitch', 'Pitch_der', 'Spectrogram', 'Phonemes']
-Stims = ['Envelope', 'Pitch', 'Pitch_der', 'Envelope_Pitch_Pitch_der']
-# Bands = [(4, 6)]
-Stims = ['Envelope']
-Bands = ['Theta']
+Stims = ['Envelope_Pitch']
+Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All', (1, 15), (4, 6)]
 
-Trace_interval = 2/3
+Trace_interval = 2 / 3
 min_trace_derivate = 0
 Corr_limit = 0.025
 
@@ -84,10 +82,8 @@ for Band in Bands:
         alphas_swept = np.logspace(min_busqueda, max_busqueda, pasos)
         alpha_step = np.diff(np.log(alphas_swept))[0]
 
-        sesiones = np.arange(21, 26)
-        sesiones = [26, 27, 29, 30]
+        sesiones = [21, 22, 23, 24, 25]
         # Empiezo corrida
-
         sujeto_total = 0
         for sesion in sesiones:
             print('\nSesion {}'.format(sesion))
@@ -197,7 +193,7 @@ for Band in Bands:
 
                 try:
                     if Trace_range_med in Overlap and alphas_swept[Correlaciones.argmax()] in Overlap:
-                        Alpha_Sujeto = (alphas_swept[Trace_range_med],alphas_swept[Correlaciones.argmax()]).max()
+                        Alpha_Sujeto = (alphas_swept[Trace_range_med], alphas_swept[Correlaciones.argmax()]).max()
                         Failed_sujeto = 'MAX'
 
                     elif Trace_range_med in Overlap:
@@ -244,8 +240,8 @@ for Band in Bands:
                 axs[0].set_ylabel('Standarized Coefficents')
                 axs[0].plot(alphas_swept, Standarized_Betas, 'o--')
                 if Alpha_Sujeto != 'FAILED': axs[0].vlines(Alpha_Sujeto, axs[0].get_ylim()[0],
-                                                                 axs[0].get_ylim()[1], linestyle='dashed',
-                                                                 color='black', linewidth=1.5)
+                                                           axs[0].get_ylim()[1], linestyle='dashed',
+                                                           color='black', linewidth=1.5)
                 if Trace_range.size: axs[0].axvspan(alphas_swept[Trace_range[0]], alphas_swept[Trace_range[-1]],
                                                     alpha=0.4, color='grey',
                                                     label='Trace range')
@@ -259,9 +255,10 @@ for Band in Bands:
                 axs[1].plot(alphas_swept, Correlaciones, 'o--')
                 axs[1].errorbar(alphas_swept, Correlaciones, yerr=Std_Corr, fmt='none', ecolor='black',
                                 elinewidth=0.5, capsize=0.5)
-                if alphas_swept[Correlaciones.argmax()]: axs[1].vlines(alphas_swept[Correlaciones.argmax()], axs[1].get_ylim()[0],
-                                                    axs[1].get_ylim()[1], linestyle='dashed',
-                                                    color='black', linewidth=1.5)
+                if alphas_swept[Correlaciones.argmax()]: axs[1].vlines(alphas_swept[Correlaciones.argmax()],
+                                                                       axs[1].get_ylim()[0],
+                                                                       axs[1].get_ylim()[1], linestyle='dashed',
+                                                                       color='black', linewidth=1.5)
                 if Corr_range.size: axs[1].axvspan(alphas_swept[Corr_range[0]], alphas_swept[Corr_range[-1]], alpha=0.4,
                                                    color='grey',
                                                    label='Corr range')
