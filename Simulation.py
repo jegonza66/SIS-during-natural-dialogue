@@ -11,7 +11,7 @@ import Models
 
 def simular_iteraciones_Ridge(alpha, iteraciones, sesion, sujeto, fold, dstims_train_val, eeg_train_val,
                               dstims_test, eeg_test, Pesos_fake, Correlaciones_fake, Errores_fake, Path_it):
-    print("\nSesion {} - Sujeto {} - Test round {}".format(sesion, sujeto, fold + 1))
+    print("\nSesion {} - Sujeto {} - Fold {}".format(sesion, sujeto, fold + 1))
     for iteracion in np.arange(iteraciones):
         # Random permutations of stimuli
         dstims_train_random = copy.deepcopy(dstims_train_val)
