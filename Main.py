@@ -10,8 +10,8 @@ import Processing
 import Simulation
 
 # Random permutations
-Statistical_test = False
-Run_permutations = False
+Statistical_test = True
+Run_permutations = True
 
 # Figures
 Display_Ind_Figures = False
@@ -41,7 +41,9 @@ except:
     print('\n\nAlphas file not found.\n\n')
 
 for Band in Bands:
+    print('\n{}\n'.format(Band))
     for stim in Stims:
+        print('\n' + stim + '\n')
         tmin, tmax = -0.6, -0.003
         sr = 128
         delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
