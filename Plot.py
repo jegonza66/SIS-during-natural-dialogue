@@ -164,7 +164,7 @@ def plot_grafico_pesos(Display, sesion, sujeto, best_alpha, Pesos_promedio,
     fig.tight_layout()
 
     if Save:
-        save_path_graficos = Run_graficos_path + 'Betas_alpha_forced/'
+        save_path_graficos = Run_graficos_path + 'Individual weights/'
         try:
             os.makedirs(save_path_graficos)
         except:
@@ -537,9 +537,9 @@ def Matriz_corr_channel_wise(Pesos_totales_sujetos_todos_canales, Display, Save,
     Correlation_mean, Correlation_std = np.mean(np.abs(corr_values)), np.std(np.abs(corr_values))
 
     fig, (ax, cax) = plt.subplots(ncols=2, figsize=(15, 9), gridspec_kw={"width_ratios": [1, 0.05]})
-    fig.suptitle('Absolute value of the correlation among subject\'s $w$', fontsize=26)
+    fig.suptitle('Correlation among subject\'s $w$', fontsize=26)
     ax.set_title('Mean: {:.3f} +/- {:.3f}'.format(Correlation_mean, Correlation_std), fontsize=18)
-    sn.heatmap(abs(Correlation_matrix), mask=mask, cmap="coolwarm", fmt='.2f', ax=ax,
+    sn.heatmap(Correlation_matrix, mask=mask, cmap="coolwarm", fmt='.2f', ax=ax,
                annot=True, center=0, xticklabels=True, annot_kws={"size": 15},
                cbar=False)
 
