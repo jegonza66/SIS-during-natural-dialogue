@@ -520,7 +520,7 @@ def Matriz_corr_channel_wise(Pesos_totales_sujetos_todos_canales, Display, Save,
     for i in range(len(Correlation_matrix)):
         Correlation_matrix[i, i] = Correlation_matrix[-1, i]
 
-    lista_nombres = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "Promedio"]
+    lista_nombres = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "Promedio"]
     Correlation_matrix = pd.DataFrame(Correlation_matrix[:-1, :-1])
     Correlation_matrix.columns = lista_nombres[:len(Correlation_matrix) - 1] + [lista_nombres[-1]]
 
@@ -539,8 +539,8 @@ def Matriz_corr_channel_wise(Pesos_totales_sujetos_todos_canales, Display, Save,
     fig, (ax, cax) = plt.subplots(ncols=2, figsize=(15, 9), gridspec_kw={"width_ratios": [1, 0.05]})
     fig.suptitle('Absolute value of the correlation among subject\'s $w$', fontsize=26)
     ax.set_title('Mean: {:.3f} +/- {:.3f}'.format(Correlation_mean, Correlation_std), fontsize=18)
-    sn.heatmap(abs(Correlation_matrix), mask=mask, cmap="coolwarm", fmt='.3f', ax=ax,
-               annot=True, center=0, xticklabels=True, annot_kws={"size": 19},
+    sn.heatmap(abs(Correlation_matrix), mask=mask, cmap="coolwarm", fmt='.2f', ax=ax,
+               annot=True, center=0, xticklabels=True, annot_kws={"size": 15},
                cbar=False)
 
     ax.set_yticklabels(['Mean of subjects'] + lista_nombres[1:len(Correlation_matrix)], rotation='horizontal',
