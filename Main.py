@@ -121,7 +121,7 @@ for Band in Bands:
                                                                                          axis, porcent)
                     alpha = Alphas[Band][stim][sesion][sujeto]
                     if alpha == 'FAILED':
-                        alpha = np.mean([value for sesion_dict in Alphas[Band][stim].keys() for value in list(Alphas[Band][stim][sesion_dict].values()) if type(value) != 'FAILED'])
+                        alpha = np.mean([value for sesion_dict in Alphas[Band][stim].keys() for value in list(Alphas[Band][stim][sesion_dict].values()) if type(value) != str])
 
                     # Ajusto el modelo y guardo
                     Model = Models.Ridge(alpha)
@@ -143,17 +143,19 @@ for Band in Bands:
                     Rmse_buenos_ronda_canal[fold] = Rmse
 
                     if Statistical_test:
-                        if Run_permutations:
-                            Simulation.simular_iteraciones_Ridge(alpha, iteraciones, sesion, sujeto, fold,
-                                                                 dstims_train_val, eeg_train_val, dstims_test, eeg_test,
-                                                                 Pesos_fake, Correlaciones_fake, Errores_fake, Path_it)
-
-                        else:  # Load data from iterations
+                        try:
                             f = open(
-                                Path_it + 'Corr_Rmse_fake_ronda_it_canal_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto),
+                                Path_it + 'Pesos_Corr_Rmse_fake_ronda_it_canal_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto),
                                 'rb')
-                            Correlaciones_fake, Errores_fake = pickle.load(f)
+                            Pesos_fake, Correlaciones_fake, Errores_fake = pickle.load(f)
                             f.close()
+                        except:
+                            if Run_permutations:
+                                Simulation.simular_iteraciones_Ridge(alpha, iteraciones, sesion, sujeto, fold,
+                                                                     dstims_train_val, eeg_train_val, dstims_test, eeg_test,
+                                                                     Pesos_fake, Correlaciones_fake, Errores_fake, Path_it)
+                            else:
+                                Statistical_test = False
 
                         # TEST ESTADISTICO
                         Rcorr_fake = Correlaciones_fake[fold]
@@ -166,6 +168,11 @@ for Band in Bands:
                         umbral = 0.05 / 128
                         Prob_Corr_ronda_canales[fold][p_corr < umbral] = p_corr[p_corr < umbral]
                         Prob_Rmse_ronda_canales[fold][p_rmse < umbral] = p_rmse[p_rmse < umbral]
+
+                # Tomo promedio de pesos Corr y Rmse entre los folds para todos los canales
+                Pesos_promedio = Pesos_ronda_canales.mean(0)
+                Corr_promedio = Corr_buenas_ronda_canal.mean(0)
+                Rmse_promedio = Rmse_buenos_ronda_canal.mean(0)
 
                 Canales_sobrevivientes_corr = []
                 Canales_sobrevivientes_rmse = []
@@ -183,11 +190,6 @@ for Band in Bands:
                                               Canales_sobrevivientes_corr, info, sr,
                                               Corr_promedio, Save_Ind_Figures, Run_graficos_path,
                                               Corr_buenas_ronda_canal, Correlaciones_fake)
-
-                # Tomo promedio de pesos Corr y Rmse entre los folds para todos los canales
-                Pesos_promedio = Pesos_ronda_canales.mean(0)
-                Corr_promedio = Corr_buenas_ronda_canal.mean(0)
-                Rmse_promedio = Rmse_buenos_ronda_canal.mean(0)
 
                 # Grafico cabezas y canales
                 Plot.plot_cabezas_canales(info.ch_names, info, sr, sesion, sujeto, Corr_promedio, Display_Ind_Figures,

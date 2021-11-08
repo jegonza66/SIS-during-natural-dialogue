@@ -421,7 +421,7 @@ def Matriz_corr(Pesos_totales_sujetos_promedio, Pesos_totales_sujetos_todos_cana
     Pesos_totales_sujetos_promedio = Pesos_totales_sujetos_promedio[:sujeto_total]
     Pesos_totales_sujetos_promedio.append(
         Pesos_totales_sujetos_todos_canales.transpose().mean(0).mean(1))  # agrego pesos promedio de todos los sujetos
-    lista_nombres = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "Promedio"]
+    lista_nombres = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "Promedio"]
     Pesos_totales_sujetos_df = pd.DataFrame(Pesos_totales_sujetos_promedio).transpose()
     Pesos_totales_sujetos_df.columns = lista_nombres[:len(Pesos_totales_sujetos_df.columns) - 1] + [lista_nombres[-1]]
 
