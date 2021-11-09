@@ -42,8 +42,12 @@ def simular_iteraciones_Ridge(alpha, iteraciones, sesion, sujeto, fold, dstims_t
         os.makedirs(Path_it)
     except:
         pass
-    f = open(Path_it + 'Pesos_Corr_Rmse_fake_ronda_it_canal_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto), 'wb')
-    pickle.dump([Pesos_fake, Correlaciones_fake, Errores_fake], f)
+    f = open(Path_it + 'Corr_Rmse_fake_ronda_it_canal_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto), 'wb')
+    pickle.dump([Correlaciones_fake, Errores_fake], f)
+    f.close()
+
+    f = open(Path_it + 'Pesos_fake_ronda_it_canal_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto), 'wb')
+    pickle.dump(Pesos_fake, f)
     f.close()
 
 
