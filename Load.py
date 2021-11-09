@@ -53,7 +53,7 @@ class Trial_channel:
 
         # Paso a array
         eeg = eeg.to_data_frame()
-        eeg = np.array(eeg)[:, 1:129]  # paso a array y tomo tiro la primer columna de tiempos
+        eeg = np.array(eeg)[:, 1:129]  # paso a array y tiro la primer columna de tiempos
 
         # Downsample
         eeg = Processing.subsamplear(eeg, int(eeg_freq / self.sr))
