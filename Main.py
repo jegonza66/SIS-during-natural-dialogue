@@ -29,7 +29,7 @@ EEG_preprocess = 'Standarize'
 # Stimuli and EEG
 Stims_Order = ['Envelope', 'Pitch', 'Pitch_der', 'Spectrogram', 'Phonemes']
 Stims = ['Envelope', 'Pitch', 'Envelope_Pitch']
-Bands = ['Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All']
+Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All']
 
 # Model parameters
 alphas_fname = 'saves/Alphas/Alphas_Trace{:.1f}_Corr0.025.pkl'.format(2 / 3)
