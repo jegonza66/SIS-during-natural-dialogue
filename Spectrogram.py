@@ -1,9 +1,7 @@
-from scipy.fft import fftshift
 from scipy import signal
 import numpy as np
 import scipy.io.wavfile as wavfile
 import matplotlib.pyplot as plt
-import librosa
 import librosa.display
 
 s = 21
