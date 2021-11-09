@@ -145,15 +145,17 @@ for Band in Bands:
                     if Statistical_test:
                         try:
                             f = open(
-                                Path_it + 'Pesos_fake_ronda_it_canal_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto),
+                                Path_it + 'Corr_Rmse_fake_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto),
                                 'rb')
-                            Pesos_fake = pickle.load(f)
+                            Correlaciones_fake, Errores_fake = pickle.load(f)
                             f.close()
                         except:
                             if Run_permutations:
-                                Simulation.simular_iteraciones_Ridge(alpha, iteraciones, sesion, sujeto, fold,
-                                                                     dstims_train_val, eeg_train_val, dstims_test, eeg_test,
-                                                                     Pesos_fake, Correlaciones_fake, Errores_fake, Path_it)
+                                Pesos_fake, Correlaciones_fake, Errores_fake = \
+                                    Simulation.simular_iteraciones_Ridge(alpha, iteraciones, sesion, sujeto, fold,
+                                                                         dstims_train_val, eeg_train_val, dstims_test,
+                                                                         eeg_test, Pesos_fake, Correlaciones_fake,
+                                                                         Errores_fake, Path_it)
                             else:
                                 Statistical_test = False
 
@@ -168,6 +170,20 @@ for Band in Bands:
                         umbral = 0.05 / 128
                         Prob_Corr_ronda_canales[fold][p_corr < umbral] = p_corr[p_corr < umbral]
                         Prob_Rmse_ronda_canales[fold][p_rmse < umbral] = p_rmse[p_rmse < umbral]
+
+                # Save permutations
+                if Run_permutations:
+                    try:
+                        os.makedirs(Path_it)
+                    except:
+                        pass
+                    f = open(Path_it + 'Corr_Rmse_fake_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto), 'wb')
+                    pickle.dump([Correlaciones_fake, Errores_fake], f)
+                    f.close()
+
+                    f = open(Path_it + 'Pesos_fake_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto), 'wb')
+                    pickle.dump(Pesos_fake, f)
+                    f.close()
 
                 # Tomo promedio de pesos Corr y Rmse entre los folds para todos los canales
                 Pesos_promedio = Pesos_ronda_canales.mean(0)
@@ -235,11 +251,9 @@ for Band in Bands:
         # Armo cabecita con canales repetidos
         if Statistical_test:
             Plot.Cabezas_canales_rep(Canales_repetidos_corr_sujetos.sum(0), info, Display_Total_Figures,
-                                     Save_Total_Figures,
-                                     Run_graficos_path, title='Correlation')
+                                     Save_Total_Figures, Run_graficos_path, title='Correlation')
             Plot.Cabezas_canales_rep(Canales_repetidos_rmse_sujetos.sum(0), info, Display_Total_Figures,
-                                     Save_Total_Figures,
-                                     Run_graficos_path, title='Rmse')
+                                     Save_Total_Figures, Run_graficos_path, title='Rmse')
 
         # Grafico Pesos
         curva_pesos_totales = Plot.regression_weights(Pesos_totales_sujetos_todos_canales, info, times,

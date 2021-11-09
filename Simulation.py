@@ -36,19 +36,7 @@ def simular_iteraciones_Ridge(alpha, iteraciones, sesion, sujeto, fold, dstims_t
         Errores_fake[fold, iteracion] = Rmse_fake
 
         print("\rProgress: {}%".format(int((iteracion + 1) * 100 / iteraciones)), end='')
-
-    # Save
-    try:
-        os.makedirs(Path_it)
-    except:
-        pass
-    f = open(Path_it + 'Corr_Rmse_fake_ronda_it_canal_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto), 'wb')
-    pickle.dump([Correlaciones_fake, Errores_fake], f)
-    f.close()
-
-    f = open(Path_it + 'Pesos_fake_ronda_it_canal_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto), 'wb')
-    pickle.dump(Pesos_fake, f)
-    f.close()
+    return Pesos_fake, Correlaciones_fake, Errores_fake
 
 
 def simular_iteraciones_Ridge_plot(info, times, situacion, alpha, iteraciones, sesion, sujeto, fold,
