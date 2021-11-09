@@ -29,7 +29,7 @@ EEG_preprocess = 'Standarize'
 # Stimuli and EEG
 Stims_Order = ['Envelope', 'Pitch', 'Pitch_der', 'Spectrogram', 'Phonemes']
 Stims = ['Envelope', 'Pitch', 'Envelope_Pitch']
-Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All']
+Bands = ['Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All']
 
 # Model parameters
 alphas_fname = 'saves/Alphas/Alphas_Trace{:.1f}_Corr0.025.pkl'.format(2 / 3)
@@ -145,9 +145,9 @@ for Band in Bands:
                     if Statistical_test:
                         try:
                             f = open(
-                                Path_it + 'Pesos_Corr_Rmse_fake_ronda_it_canal_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto),
+                                Path_it + 'Pesos_fake_ronda_it_canal_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto),
                                 'rb')
-                            Pesos_fake, Correlaciones_fake, Errores_fake = pickle.load(f)
+                            Pesos_fake = pickle.load(f)
                             f.close()
                         except:
                             if Run_permutations:
