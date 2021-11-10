@@ -60,7 +60,6 @@ for Band in Bands:
 
         # Start Run
         sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
-        sesiones = [21]
         sujeto_total = 0
         for sesion in sesiones:
             print('Sesion {}'.format(sesion))
@@ -75,8 +74,7 @@ for Band in Bands:
             # LOAD STIMULUS BY SUBJECT
             dstims_para_sujeto_1, dstims_para_sujeto_2, info = Load.Estimulos(stim=stim, Sujeto_1=Sujeto_1,
                                                                               Sujeto_2=Sujeto_2)
-            Cant_Estimulos = len(dstims_para_sujeto_1)
-            Len_Estimulos = sum(len(dstims_para_sujeto_1[i][0]) for i in range(Cant_Estimulos))
+            Len_Estimulos = [len(dstims_para_sujeto_1[i][0]) for i in range(len(dstims_para_sujeto_1))]
 
             for sujeto, eeg, dstims in zip((1, 2), (eeg_sujeto_1, eeg_sujeto_2),
                                            (dstims_para_sujeto_1, dstims_para_sujeto_2)):
@@ -88,12 +86,12 @@ for Band in Bands:
                 iteraciones = 3000
 
                 # Defino variables donde voy a guardar mil cosas
-                Pesos_ronda_canales = np.zeros((n_splits, info['nchan'], Len_Estimulos))
+                Pesos_ronda_canales = np.zeros((n_splits, info['nchan'], sum(Len_Estimulos)))
 
                 Prob_Corr_ronda_canales = np.ones((n_splits, info['nchan']))
                 Prob_Rmse_ronda_canales = np.ones((n_splits, info['nchan']))
 
-                Pesos_fake = np.zeros((n_splits, iteraciones, info['nchan'], Len_Estimulos))
+                Pesos_fake = np.zeros((n_splits, iteraciones, info['nchan'], sum(Len_Estimulos)))
                 Correlaciones_fake = np.zeros((n_splits, iteraciones, info['nchan']))
                 Errores_fake = np.zeros((n_splits, iteraciones, info['nchan']))
 
@@ -206,7 +204,7 @@ for Band in Bands:
                 # Grafico Pesos
                 Plot.plot_grafico_pesos(Display_Ind_Figures, sesion, sujeto, alpha, Pesos_promedio,
                                         info, times, sr, Corr_promedio, Rmse_promedio, Save_Ind_Figures,
-                                        Run_graficos_path, Cant_Estimulos, Stims_Order)
+                                        Run_graficos_path, Len_Estimulos, stim)
 
                 # Guardo las correlaciones y los pesos promediados entre folds de cada canal del sujeto y lo adjunto a lista
                 # para promediar entre canales de sujetos
@@ -246,14 +244,12 @@ for Band in Bands:
                                      Run_graficos_path, title='Rmse')
 
         # Grafico Pesos
-        curva_pesos_totales = Plot.regression_weights(Pesos_totales_sujetos_todos_canales, info, times,
-                                                      Display_Total_Figures,
-                                                      Save_Total_Figures, Run_graficos_path, Cant_Estimulos, Len_Estimulos,
-                                                      Stims_Order, stim)
-        curva_pesos_totales = Plot.regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times,
-                                                             Display_Total_Figures, Save_Total_Figures,
-                                                             Run_graficos_path,
-                                                             Cant_Estimulos, Len_Estimulos, Stims_Order, stim)
+        Plot.regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display_Total_Figures,
+                                                      Save_Total_Figures, Run_graficos_path, Len_Estimulos, stim)
+        # Plot.regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times,
+        #                                                      Display_Total_Figures, Save_Total_Figures,
+        #                                                      Run_graficos_path,
+        #                                                      Len_Estimulos, stim)
 
         # Matriz de Correlacion
         Plot.Matriz_corr_channel_wise(Pesos_totales_sujetos_todos_canales, Display_Total_Figures, Save_Total_Figures,

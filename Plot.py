@@ -122,7 +122,8 @@ def plot_cabezas_canales(channel_names, info, sr, sesion, sujeto, Valores_promed
 
 def plot_grafico_pesos(Display, sesion, sujeto, best_alpha, Pesos_promedio,
                        info, times, sr, Corr_promedio, Rmse_promedio, Save,
-                       Run_graficos_path, Cant_Estimulos, Stims_Order):
+                       Run_graficos_path, Len_Estimulos, stim):
+
     # Defino cosas que voy a graficar
     mejor_canal_corr = Corr_promedio.argmax()
     Corr_mejor_canal = Corr_promedio[mejor_canal_corr]
@@ -142,24 +143,36 @@ def plot_grafico_pesos(Display, sesion, sujeto, best_alpha, Pesos_promedio,
                                                                                                    Corr_mejor_canal,
                                                                                                    Rmse_mejor_canal,
                                                                                                    best_alpha))
+    Stims_Order = stim.split('_')
+    Cant_Estimulos = len(Len_Estimulos)
 
     for i in range(Cant_Estimulos):
         ax = fig.add_subplot(Cant_Estimulos, 1, i + 1)
-        ax.set_title('{}'.format(Stims_Order[i]))
 
-        evoked = mne.EvokedArray(Pesos_promedio[:, i * len(times):(i + 1) * len(times)], info)
-        evoked.times = times
+        if Stims_Order[i] == 'Spectrogram':
+            spectrogram_weights = Pesos_promedio[:, sum(Len_Estimulos[j] for j in range(i)):sum(Len_Estimulos[j] for j in range(i+1))].mean(0)
+            spectrogram_weights = spectrogram_weights.reshape(16, len(times))
 
-        evoked.plot(scalings=dict(eeg=1, grad=1, mag=1), zorder='std', time_unit='ms',
-                    show=False, spatial_colors=True, unit=False, units=dict(eeg='w', grad='fT/cm', mag='fT'),
-                    axes=ax)
+            im = ax.pcolormesh(times * 1000, np.arange(16), spectrogram_weights, cmap='RdBu_r',
+                              vmin=-spectrogram_weights.max(), vmax=spectrogram_weights.max(), shading='gouraud')
+            ax.set(xlabel='Time (ms)', ylabel='Band')
+            fig.colorbar(im, ax=ax, orientation='vertical')
 
-        ax.plot(times * 1000, evoked._data.mean(0), 'k--', label='Mean', zorder=130, linewidth=2)
+        else:
+            evoked = mne.EvokedArray(Pesos_promedio[:, sum(Len_Estimulos[j] for j in range(i)):sum(Len_Estimulos[j] for j in range(i+1))], info)
+            evoked.times = times
 
-        ax.xaxis.label.set_size(13)
-        ax.yaxis.label.set_size(13)
-        ax.legend(fontsize=13)
-        ax.grid()
+            evoked.plot(scalings=dict(eeg=1, grad=1, mag=1), zorder='std', time_unit='ms',
+                        show=False, spatial_colors=True, unit=False, units=dict(eeg='w', grad='fT/cm', mag='fT'),
+                        axes=ax)
+
+            ax.plot(times * 1000, evoked._data.mean(0), 'k--', label='Mean', zorder=130, linewidth=2)
+
+            ax.xaxis.label.set_size(13)
+            ax.yaxis.label.set_size(13)
+            ax.legend(fontsize=13)
+            ax.grid()
+            ax.set_title('{}'.format(Stims_Order[i]))
 
     fig.tight_layout()
 
@@ -307,7 +320,7 @@ def Cabezas_canales_rep(Canales_repetidos_sujetos, info, Display, Save, Run_graf
 
 
 def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display,
-                       Save, Run_graficos_path, Cant_Estimulos, Len_Estimulos, Stims_Order, stim, decorrelation_times=None):
+                       Save, Run_graficos_path, Len_Estimulos, stim, decorrelation_times=None):
 
     # Armo pesos promedio por canal de todos los sujetos que por lo menos tuvieron un buen canal
     Pesos_totales_sujetos_todos_canales_copy = Pesos_totales_sujetos_todos_canales.swapaxes(0, 2)
@@ -319,35 +332,47 @@ def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display
     else:
         plt.ioff()
 
-    returns = []
-    for j in range(Cant_Estimulos):
-        curva_pesos_totales = Pesos_totales_sujetos_todos_canales_copy[:, j * len(times):(j + 1) * len(times)].mean(0)
-        returns.append(curva_pesos_totales)
+    Stims_Order = stim.split('_')
+    Cant_Estimulos = len(Len_Estimulos)
 
-        evoked = mne.EvokedArray(Pesos_totales_sujetos_todos_canales_copy[:, j * len(times):(j + 1) * len(times)], info)
-        evoked.times = times
+    fig, ax = plt.subplots(figsize=(15, 5))
 
-        fig, ax = plt.subplots(figsize=(15, 5))
-        fig.suptitle('{}'.format(Stims_Order[j] if Cant_Estimulos > 1 else stim), fontsize=23)
-        evoked.plot(scalings=dict(eeg=1, grad=1, mag=1), zorder='std', time_unit='ms',
-                    show=False, spatial_colors=True, unit=True, units='W', axes=ax)
+    for i in range(Cant_Estimulos):
+        fig.suptitle('{}'.format(Stims_Order[i] if Cant_Estimulos > 1 else stim), fontsize=23)
 
-        ax.plot(times * 1000, evoked._data.mean(0), 'k--', label='Mean', zorder=130, linewidth=2)
-        if times[-1] > 0: ax.axvspan(0, ax.get_xlim()[1], alpha=0.4, color='grey', label='Unheard stimuli')
-        if decorrelation_times and times[-1] > 0:
-            ax.vlines(np.mean(decorrelation_times), ax.get_ylim()[0], ax.get_ylim()[1], linestyle='dashed', color='red',
-                      label='Decorrelation time')
-            ax.axvspan(np.mean(decorrelation_times) - np.std(decorrelation_times) / 2,
-                       np.mean(decorrelation_times) + np.std(decorrelation_times) / 2,
-                       alpha=0.4, color='red', label='Decorrelation time std.')
+        if Stims_Order[i] == 'Spectrogram':
+            spectrogram_weights = Pesos_totales_sujetos_todos_canales_copy[:, sum(Len_Estimulos[j] for j in range(i)):sum(Len_Estimulos[j] for j in range(i+1))].mean(0)
+            spectrogram_weights = spectrogram_weights.reshape(16,len(times))
 
-        ax.xaxis.label.set_size(23)
-        ax.yaxis.label.set_size(23)
-        ax.tick_params(axis='both', labelsize=23)
-        ax.grid()
-        ax.legend(fontsize=15, loc='lower right')
+            im = ax.pcolormesh(times * 1000, np.arange(16), spectrogram_weights, cmap='RdBu_r',
+                              vmin=-spectrogram_weights.max(), vmax=spectrogram_weights.max(), shading='gouraud')
 
-        fig.tight_layout()
+            ax.set(xlabel='Time (ms)', ylabel='Band')
+            fig.colorbar(im, ax=ax, orientation='vertical')
+
+        else:
+            evoked = mne.EvokedArray(Pesos_totales_sujetos_todos_canales_copy[:, sum(Len_Estimulos[j] for j in range(i)):sum(Len_Estimulos[j] for j in range(i+1))], info)
+            evoked.times = times
+
+            evoked.plot(scalings=dict(eeg=1, grad=1, mag=1), zorder='std', time_unit='ms',
+                        show=False, spatial_colors=True, unit=True, units='W', axes=ax)
+
+            ax.plot(times * 1000, evoked._data.mean(0), 'k--', label='Mean', zorder=130, linewidth=2)
+            if times[-1] > 0: ax.axvspan(0, ax.get_xlim()[1], alpha=0.4, color='grey', label='Unheard stimuli')
+            if decorrelation_times and times[-1] > 0:
+                ax.vlines(np.mean(decorrelation_times), ax.get_ylim()[0], ax.get_ylim()[1], linestyle='dashed', color='red',
+                          label='Decorrelation time')
+                ax.axvspan(np.mean(decorrelation_times) - np.std(decorrelation_times) / 2,
+                           np.mean(decorrelation_times) + np.std(decorrelation_times) / 2,
+                           alpha=0.4, color='red', label='Decorrelation time std.')
+
+            ax.xaxis.label.set_size(23)
+            ax.yaxis.label.set_size(23)
+            ax.tick_params(axis='both', labelsize=23)
+            ax.grid()
+            ax.legend(fontsize=15, loc='lower right')
+
+            fig.tight_layout()
 
         if Save:
             save_path_graficos = Run_graficos_path
@@ -356,14 +381,14 @@ def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display
             except:
                 pass
             fig.savefig(
-                save_path_graficos + 'Regression_Weights_{}.svg'.format(Stims_Order[j] if Cant_Estimulos > 1 else stim))
+                save_path_graficos + 'Regression_Weights_{}.svg'.format(Stims_Order[i]))
             fig.savefig(
-                save_path_graficos + 'Regression_Weights_{}.png'.format(Stims_Order[j] if Cant_Estimulos > 1 else stim))
+                save_path_graficos + 'Regression_Weights_{}.png'.format(Stims_Order[i]))
     return returns
 
 
 def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, Display,
-                              Save, Run_graficos_path, Cant_Estimulos, Len_Estimulos, Stims_Order, stim):
+                              Save, Run_graficos_path, Len_Estimulos, stim):
     # Armo pesos promedio por canal de todos los sujetos que por lo menos tuvieron un buen canal
     Pesos_totales_sujetos_todos_canales_copy = Pesos_totales_sujetos_todos_canales.swapaxes(0, 2)
     Pesos_totales_sujetos_todos_canales_copy = Pesos_totales_sujetos_todos_canales_copy.mean(0).transpose()
@@ -374,11 +399,11 @@ def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, 
     else:
         plt.ioff()
 
-    returns = []
-    for j in range(Cant_Estimulos):
-        mean_coefs = Pesos_totales_sujetos_todos_canales_copy[:, j * len(times):(j + 1) * len(times)]
-        curva_pesos_totales = mean_coefs.mean(0)
-        returns.append(curva_pesos_totales)
+    Stims_Order = stim.split('_')
+    Cant_Estimulos = len(Len_Estimulos)
+
+    for i in range(Cant_Estimulos):
+        mean_coefs = Pesos_totales_sujetos_todos_canales_copy[:, sum(Len_Estimulos[j] for j in range(i)):sum(Len_Estimulos[j] for j in range(i+1))]
 
         evoked = mne.EvokedArray(mean_coefs, info)
         evoked.times = times
@@ -393,7 +418,7 @@ def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, 
 
         evoked.plot(scalings=dict(eeg=1, grad=1, mag=1), zorder='std', time_unit='ms',
                     show=False, spatial_colors=True, unit=False, units='w', axes=axs[0])
-        axs[0].plot(times * 1000, curva_pesos_totales, "k--", label="Mean", zorder=130, linewidth=2)
+        axs[0].plot(times * 1000, evoked._data.mean(0), "k--", label="Mean", zorder=130, linewidth=2)
         axs[0].axis('off')
         axs[0].legend(loc="upper right")
 
@@ -405,10 +430,8 @@ def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, 
                 os.makedirs(save_path_graficos)
             except:
                 pass
-            fig.savefig(save_path_graficos + 'Regression_Weights_matrix_{}.svg'.format(
-                Stims_Order[j] if Cant_Estimulos > 1 else stim))
-            fig.savefig(save_path_graficos + 'Regression_Weights_marix_{}.png'.format(
-                Stims_Order[j] if Cant_Estimulos > 1 else stim))
+            fig.savefig(save_path_graficos + 'Regression_Weights_matrix_{}.svg'.format(Stims_Order[i]))
+            fig.savefig(save_path_graficos + 'Regression_Weights_marix_{}.png'.format(Stims_Order[i]))
 
 
 def pearsonr_pval(x, y):
@@ -653,10 +676,8 @@ def weights_ERP(Pesos_totales_sujetos_todos_canales, info, times, Display,
     else:
         plt.ioff()
 
-    returns = []
     for j in range(Cant_Estimulos):
-        curva_pesos_totales = Pesos_totales_sujetos_todos_canales_copy[:, j * len(times):(j + 1) * len(times)].mean(0)
-        returns.append(curva_pesos_totales)
+        Pesos_totales_sujetos_todos_canales_copy[:, j * len(times):(j + 1) * len(times)].mean(0)
 
         evoked = mne.EvokedArray(np.flip(Pesos_totales_sujetos_todos_canales_copy[:, j * len(times):(j + 1) * len(times)], axis=1), info)
         times = -np.flip(times)
@@ -694,7 +715,6 @@ def weights_ERP(Pesos_totales_sujetos_todos_canales, info, times, Display,
                 save_path_graficos + 'Regression_Weights_{}.svg'.format(Stims_Order[j] if Cant_Estimulos > 1 else stim))
             fig.savefig(
                 save_path_graficos + 'Regression_Weights_{}.png'.format(Stims_Order[j] if Cant_Estimulos > 1 else stim))
-    return returns
 
 ## VIEJAS NO SE USAN
 
