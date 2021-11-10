@@ -10,12 +10,12 @@ import Processing
 import Simulation
 
 # Random permutations
-Statistical_test = True
-Run_permutations = True
+Statistical_test = False
+Run_permutations = False
 
 # Figures
 Display_Ind_Figures = False
-Display_Total_Figures = False
+Display_Total_Figures = True
 Save_Ind_Figures = True
 Save_Total_Figures = True
 
@@ -27,9 +27,11 @@ Stims_preprocess = 'Normalize'
 EEG_preprocess = 'Standarize'
 
 # Stimuli and EEG
-Stims_Order = ['Envelope', 'Pitch', 'Pitch_der', 'Spectrogram', 'Phonemes']
+Stims_Order = ['Envelope', 'Pitch', 'Spectrogram', 'Phonemes']
 Stims = ['Envelope', 'Pitch', 'Envelope_Pitch']
-Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All']
+Stims = ['Spectrogram']
+Bands = ['Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All']
+Bands = ['Theta']
 
 # Model parameters
 alphas_fname = 'saves/Alphas/Alphas_Trace{:.1f}_Corr0.025.pkl'.format(2 / 3)
@@ -47,8 +49,7 @@ for Band in Bands:
         tmin, tmax = -0.6, -0.003
         sr = 128
         delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
-        times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr,
-                            len(delays))
+        times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays))
 
         # Paths
         procesed_data_path = 'saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
@@ -59,6 +60,7 @@ for Band in Bands:
 
         # Start Run
         sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
+        sesiones = [21]
         sujeto_total = 0
         for sesion in sesiones:
             print('Sesion {}'.format(sesion))
@@ -74,6 +76,7 @@ for Band in Bands:
             dstims_para_sujeto_1, dstims_para_sujeto_2, info = Load.Estimulos(stim=stim, Sujeto_1=Sujeto_1,
                                                                               Sujeto_2=Sujeto_2)
             Cant_Estimulos = len(dstims_para_sujeto_1)
+            Len_Estimulos = sum(len(dstims_para_sujeto_1[i][0]) for i in range(Cant_Estimulos))
 
             for sujeto, eeg, dstims in zip((1, 2), (eeg_sujeto_1, eeg_sujeto_2),
                                            (dstims_para_sujeto_1, dstims_para_sujeto_2)):
@@ -85,12 +88,12 @@ for Band in Bands:
                 iteraciones = 3000
 
                 # Defino variables donde voy a guardar mil cosas
-                Pesos_ronda_canales = np.zeros((n_splits, info['nchan'], len(delays) * Cant_Estimulos))
+                Pesos_ronda_canales = np.zeros((n_splits, info['nchan'], Len_Estimulos))
 
                 Prob_Corr_ronda_canales = np.ones((n_splits, info['nchan']))
                 Prob_Rmse_ronda_canales = np.ones((n_splits, info['nchan']))
 
-                Pesos_fake = np.zeros((n_splits, iteraciones, info['nchan'], len(times) * Cant_Estimulos))
+                Pesos_fake = np.zeros((n_splits, iteraciones, info['nchan'], Len_Estimulos))
                 Correlaciones_fake = np.zeros((n_splits, iteraciones, info['nchan']))
                 Errores_fake = np.zeros((n_splits, iteraciones, info['nchan']))
 
@@ -119,9 +122,10 @@ for Band in Bands:
                                                                                          Stims_preprocess,
                                                                                          EEG_preprocess,
                                                                                          axis, porcent)
-                    alpha = Alphas[Band][stim][sesion][sujeto]
-                    if alpha == 'FAILED':
-                        alpha = np.mean([value for sesion_dict in Alphas[Band][stim].keys() for value in list(Alphas[Band][stim][sesion_dict].values()) if type(value) != str])
+                    # alpha = Alphas[Band][stim][sesion][sujeto]
+                    # if alpha == 'FAILED':
+                    #     alpha = np.mean([value for sesion_dict in Alphas[Band][stim].keys() for value in list(Alphas[Band][stim][sesion_dict].values()) if type(value) != str])
+                    alpha = 100
 
                     # Ajusto el modelo y guardo
                     Model = Models.Ridge(alpha)
@@ -145,17 +149,15 @@ for Band in Bands:
                     if Statistical_test:
                         try:
                             f = open(
-                                Path_it + 'Corr_Rmse_fake_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto),
+                                Path_it + 'Pesos_fake_ronda_it_canal_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto),
                                 'rb')
-                            Correlaciones_fake, Errores_fake = pickle.load(f)
+                            Pesos_fake = pickle.load(f)
                             f.close()
                         except:
                             if Run_permutations:
-                                Pesos_fake, Correlaciones_fake, Errores_fake = \
-                                    Simulation.simular_iteraciones_Ridge(alpha, iteraciones, sesion, sujeto, fold,
-                                                                         dstims_train_val, eeg_train_val, dstims_test,
-                                                                         eeg_test, Pesos_fake, Correlaciones_fake,
-                                                                         Errores_fake, Path_it)
+                                Simulation.simular_iteraciones_Ridge(alpha, iteraciones, sesion, sujeto, fold,
+                                                                     dstims_train_val, eeg_train_val, dstims_test, eeg_test,
+                                                                     Pesos_fake, Correlaciones_fake, Errores_fake, Path_it)
                             else:
                                 Statistical_test = False
 
@@ -170,20 +172,6 @@ for Band in Bands:
                         umbral = 0.05 / 128
                         Prob_Corr_ronda_canales[fold][p_corr < umbral] = p_corr[p_corr < umbral]
                         Prob_Rmse_ronda_canales[fold][p_rmse < umbral] = p_rmse[p_rmse < umbral]
-
-                # Save permutations
-                if Run_permutations:
-                    try:
-                        os.makedirs(Path_it)
-                    except:
-                        pass
-                    f = open(Path_it + 'Corr_Rmse_fake_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto), 'wb')
-                    pickle.dump([Correlaciones_fake, Errores_fake], f)
-                    f.close()
-
-                    f = open(Path_it + 'Pesos_fake_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto), 'wb')
-                    pickle.dump(Pesos_fake, f)
-                    f.close()
 
                 # Tomo promedio de pesos Corr y Rmse entre los folds para todos los canales
                 Pesos_promedio = Pesos_ronda_canales.mean(0)
@@ -251,19 +239,21 @@ for Band in Bands:
         # Armo cabecita con canales repetidos
         if Statistical_test:
             Plot.Cabezas_canales_rep(Canales_repetidos_corr_sujetos.sum(0), info, Display_Total_Figures,
-                                     Save_Total_Figures, Run_graficos_path, title='Correlation')
+                                     Save_Total_Figures,
+                                     Run_graficos_path, title='Correlation')
             Plot.Cabezas_canales_rep(Canales_repetidos_rmse_sujetos.sum(0), info, Display_Total_Figures,
-                                     Save_Total_Figures, Run_graficos_path, title='Rmse')
+                                     Save_Total_Figures,
+                                     Run_graficos_path, title='Rmse')
 
         # Grafico Pesos
         curva_pesos_totales = Plot.regression_weights(Pesos_totales_sujetos_todos_canales, info, times,
                                                       Display_Total_Figures,
-                                                      Save_Total_Figures, Run_graficos_path, Cant_Estimulos,
+                                                      Save_Total_Figures, Run_graficos_path, Cant_Estimulos, Len_Estimulos,
                                                       Stims_Order, stim)
         curva_pesos_totales = Plot.regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times,
                                                              Display_Total_Figures, Save_Total_Figures,
                                                              Run_graficos_path,
-                                                             Cant_Estimulos, Stims_Order, stim)
+                                                             Cant_Estimulos, Len_Estimulos, Stims_Order, stim)
 
         # Matriz de Correlacion
         Plot.Matriz_corr_channel_wise(Pesos_totales_sujetos_todos_canales, Display_Total_Figures, Save_Total_Figures,

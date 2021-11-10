@@ -6,9 +6,9 @@ import mne
 from scipy import signal as sgn
 import Processing
 from numpy.fft import fft, fftfreq
-
+import librosa
 ## PARAMETROS
-s = 26
+s = 21
 trial = 1
 channel = 2
 
@@ -17,7 +17,7 @@ audio_sr = 16000
 sampleStep = 0.01
 
 sr = 128
-tmin, tmax = 0.053, 0.3
+tmin, tmax = 0.06, -0.003
 delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
 
 ## EEG
@@ -58,12 +58,12 @@ ax.grid()
 
 wav_fname = "Datos/wavs/S" + str(s) + "/s" + str(s) + ".objects." + "{:02d}".format(trial) + ".channel" + str(
     channel) + ".wav"
-wav1 = wavfile.read(wav_fname)[1]
-wav1 = wav1.astype("float")
+wav = wavfile.read(wav_fname)[1]
+wav = wav.astype("float")
 
 ## ENVELOPE
 
-envelope = np.abs(sgn.hilbert(wav1))
+envelope = np.abs(sgn.hilbert(wav))
 # envelope = Processing.butter_filter(envelope, frecuencias=25, sampling_freq=16000,
 #                                     btype='lowpass', order=3, axis=0, ftype='Causal')
 
@@ -145,22 +145,33 @@ pitch = Processing.subsamplear(pitch, 125)
 pitch_der = np.array(np.repeat(pitch_der, audio_sr * sampleStep), dtype=float)
 pitch_der = Processing.subsamplear(pitch_der, 125)
 
-norm.normalize_11(wav1)
-wav1 -= wav1.mean()
+norm.normalize_11(wav)
+wav -= wav.mean()
+
+## Spectrogram
+n_fft = 125
+hop_length = 125
+n_mels = 16
+
+S = librosa.feature.melspectrogram(wav, sr=audio_sr, n_fft=n_fft, hop_length=hop_length, n_mels=n_mels)
+S_DB = librosa.power_to_db(S, ref=np.max)
+S_DB = S_DB.ravel().flatten()
+S_DB = Processing.matriz_shifteada(S_DB, delays)
 
 ## PLOT
-time = np.arange(len(wav1)) / 16000
+time = np.arange(len(wav)) / 16000
 
 
 
 # plt.ion()
 # plt.figure()
-# plt.plot(time, wav1, label='Audio signal')
-plt.plot(np.linspace(0, time[-1], len(envelope)), envelope, label='Envelope Causal')
+# plt.plot(time, wav, label='Audio signal')
+plt.plot(np.linspace(0, time[-1], len(envelope)), envelope, label='Envelope')
+plt.plot(np.linspace(0, time[-1], len(S_DB[-1])), S_DB[-1], label='Spectrogram')
 # plt.plot(np.linspace(0, time[-1], len(pitch)), pitch, label='Pitch [Hz]')
 # plt.plot(np.linspace(0, time[-1], len(pitch_der)), pitch_der, label='Pitch derivate [Hz/s]')
 plt.ylabel('Magnitude')
 plt.xlabel('Time [s]')
-plt.xlim([41,43])
+# plt.xlim([41,43])
 plt.title('Scaled audio features')
 plt.legend()

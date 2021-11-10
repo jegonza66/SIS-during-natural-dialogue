@@ -3,12 +3,13 @@ import pandas as pd
 import os
 import pickle
 import mne
+import librosa
 import scipy.io.wavfile as wavfile
 from scipy import signal as sgn
+import platform
 from praatio import pitch_and_intensity
 import Processing
 import Funciones
-import platform
 
 
 class Trial_channel:
@@ -69,11 +70,11 @@ class Trial_channel:
         return info
 
     def f_envelope(self):
-        wav1 = wavfile.read(self.wav_fname)[1]
-        wav1 = wav1.astype("float")
+        wav = wavfile.read(self.wav_fname)[1]
+        wav = wav.astype("float")
 
         # Envelope
-        envelope = np.abs(sgn.hilbert(wav1))
+        envelope = np.abs(sgn.hilbert(wav))
         if self.Env_Filter == 'Causal':
             envelope = Processing.butter_filter(envelope, frecuencias=25, sampling_freq=self.audio_sr,
                                                 btype='lowpass', order=3, axis=0, ftype='Causal')
@@ -154,12 +155,31 @@ class Trial_channel:
 
         return pitch, pitch_der
 
+    def f_spectrogram(self):
+        wav = wavfile.read(self.wav_fname)[1]
+        wav = wav.astype("float")
+
+        n_fft = 125
+        hop_length = 125
+        n_mels = 16
+
+        S = librosa.feature.melspectrogram(wav, sr=self.audio_sr, n_fft=n_fft, hop_length=hop_length, n_mels=n_mels)
+        S_DB = librosa.power_to_db(S, ref=np.max)
+
+        spec_shift = Processing.matriz_shifteada(S_DB[0], self.delays)
+
+        for i in np.arange(1,len(S_DB)):
+            spec_shift = np.hstack((spec_shift, Processing.matriz_shifteada(S_DB[i], self.delays)))
+
+        return spec_shift
+
     def load_trial(self):
         channel = {}
         channel['eeg'] = self.f_eeg()
         channel['info'] = self.f_info()
         channel['envelope'] = self.f_envelope()
         channel['pitch'], channel['pitch_der'] = self.load_pitch()
+        channel['spectrogram'] = self.f_spectrogram()
         return channel
 
 
@@ -190,11 +210,13 @@ class Sesion_class:
         envelope_para_sujeto_1 = pd.DataFrame()
         pitch_para_sujeto_1 = pd.DataFrame()
         pitch_der_para_sujeto_1 = pd.DataFrame()
+        spectrogram_para_sujeto_1 = pd.DataFrame()
 
         eeg_sujeto_2 = pd.DataFrame()
         envelope_para_sujeto_2 = pd.DataFrame()
         pitch_para_sujeto_2 = pd.DataFrame()
         pitch_der_para_sujeto_2 = pd.DataFrame()
+        spectrogram_para_sujeto_2 = pd.DataFrame()
 
         run = True
         trial = 1
@@ -225,12 +247,14 @@ class Sesion_class:
 
                 # Cargo data
                 eeg_trial_sujeto_1, envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1, \
-                pitch_der_trial_para_sujeto_1 = Trial_channel_1['eeg'], Trial_channel_2['envelope'], \
-                                                Trial_channel_2['pitch'], Trial_channel_2['pitch_der']
+                pitch_der_trial_para_sujeto_1, spectrogram_trial_para_sujeto_1 = \
+                    Trial_channel_1['eeg'], Trial_channel_2['envelope'], Trial_channel_2['pitch'], \
+                    Trial_channel_2['pitch_der'], Trial_channel_2['spectrogram']
 
                 eeg_trial_sujeto_2, envelope_trial_para_sujeto_2, pitch_trial_para_sujeto_2, \
-                pitch_der_trial_para_sujeto_2 = Trial_channel_2['eeg'], Trial_channel_1['envelope'], \
-                                                Trial_channel_1['pitch'], Trial_channel_1['pitch_der']
+                pitch_der_trial_para_sujeto_2, spectrogram_trial_para_sujeto_2 = \
+                    Trial_channel_2['eeg'], Trial_channel_1['envelope'], Trial_channel_1['pitch'], \
+                    Trial_channel_1['pitch_der'], Trial_channel_1['spectrogram']
 
                 momentos_sujeto_1_trial = Processing.labeling(self.sesion, trial, canal_hablante=2, sr=self.sr)
                 momentos_sujeto_2_trial = Processing.labeling(self.sesion, trial, canal_hablante=1, sr=self.sr)
@@ -240,26 +264,39 @@ class Sesion_class:
 
             if run:
                 # Igualar largos
-                eeg_trial_sujeto_1, envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1, pitch_der_trial_para_sujeto_1, momentos_sujeto_1_trial = Funciones.igualar_largos(
+                eeg_trial_sujeto_1, envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1, \
+                pitch_der_trial_para_sujeto_1, spectrogram_trial_para_sujeto_1, \
+                momentos_sujeto_1_trial = Funciones.igualar_largos(
                     eeg_trial_sujeto_1, envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1,
-                    pitch_der_trial_para_sujeto_1, momentos_sujeto_1_trial)
-                eeg_trial_sujeto_2, envelope_trial_para_sujeto_2, pitch_trial_para_sujeto_2, pitch_der_trial_para_sujeto_2, momentos_sujeto_2_trial = Funciones.igualar_largos(
+                    pitch_der_trial_para_sujeto_1, spectrogram_trial_para_sujeto_1, momentos_sujeto_1_trial)
+
+                eeg_trial_sujeto_2, envelope_trial_para_sujeto_2, pitch_trial_para_sujeto_2, \
+                pitch_der_trial_para_sujeto_2, spectrogram_trial_para_sujeto_2, \
+                momentos_sujeto_2_trial = Funciones.igualar_largos(
                     eeg_trial_sujeto_2, envelope_trial_para_sujeto_2, pitch_trial_para_sujeto_2,
-                    pitch_der_trial_para_sujeto_2, momentos_sujeto_2_trial)
+                    pitch_der_trial_para_sujeto_2, spectrogram_trial_para_sujeto_2, momentos_sujeto_2_trial)
 
                 # Preprocesamiento
-                eeg_trial_sujeto_1, envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1, pitch_der_trial_para_sujeto_1 = Processing.preproc(
+                eeg_trial_sujeto_1, envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1, \
+                pitch_der_trial_para_sujeto_1, spectrogram_trial_para_sujeto_1 = Processing.preproc(
                     momentos_sujeto_1_trial, self.delays, self.situacion, eeg_trial_sujeto_1,
-                    envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1, pitch_der_trial_para_sujeto_1)
-                eeg_trial_sujeto_2, envelope_trial_para_sujeto_2, pitch_trial_para_sujeto_2, pitch_der_trial_para_sujeto_2 = Processing.preproc(
+                    envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1, pitch_der_trial_para_sujeto_1,
+                    spectrogram_trial_para_sujeto_1)
+                eeg_trial_sujeto_2, envelope_trial_para_sujeto_2, pitch_trial_para_sujeto_2, \
+                pitch_der_trial_para_sujeto_2, spectrogram_trial_para_sujeto_2 = Processing.preproc(
                     momentos_sujeto_2_trial, self.delays, self.situacion, eeg_trial_sujeto_2,
-                    envelope_trial_para_sujeto_2, pitch_trial_para_sujeto_2, pitch_der_trial_para_sujeto_2)
+                    envelope_trial_para_sujeto_2, pitch_trial_para_sujeto_2, pitch_der_trial_para_sujeto_2,
+                    spectrogram_trial_para_sujeto_2)
 
                 # Convierto a DF
-                eeg_trial_sujeto_1, envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1, pitch_der_trial_para_sujeto_1, eeg_trial_sujeto_2, envelope_trial_para_sujeto_2, pitch_trial_para_sujeto_2, pitch_der_trial_para_sujeto_2 = Funciones.make_df(
+                eeg_trial_sujeto_1, envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1, \
+                pitch_der_trial_para_sujeto_1, spectrogram_trial_para_sujeto_1, eeg_trial_sujeto_2, \
+                envelope_trial_para_sujeto_2, pitch_trial_para_sujeto_2, pitch_der_trial_para_sujeto_2, \
+                spectrogram_trial_para_sujeto_2 = Funciones.make_df(
                     eeg_trial_sujeto_1, envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1,
-                    pitch_der_trial_para_sujeto_1, eeg_trial_sujeto_2, envelope_trial_para_sujeto_2,
-                    pitch_trial_para_sujeto_2, pitch_der_trial_para_sujeto_2)
+                    pitch_der_trial_para_sujeto_1, spectrogram_trial_para_sujeto_1, eeg_trial_sujeto_2,
+                    envelope_trial_para_sujeto_2, pitch_trial_para_sujeto_2, pitch_der_trial_para_sujeto_2,
+                    spectrogram_trial_para_sujeto_2)
 
                 # Adjunto a datos de sujeto
                 if len(eeg_trial_sujeto_1):
@@ -267,19 +304,23 @@ class Sesion_class:
                     envelope_para_sujeto_1 = envelope_para_sujeto_1.append(envelope_trial_para_sujeto_1)
                     pitch_para_sujeto_1 = pitch_para_sujeto_1.append(pitch_trial_para_sujeto_1)
                     pitch_der_para_sujeto_1 = pitch_der_para_sujeto_1.append(pitch_der_trial_para_sujeto_1)
+                    spectrogram_para_sujeto_1 = spectrogram_para_sujeto_1.append(spectrogram_trial_para_sujeto_1)
                 if len(eeg_trial_sujeto_2):
                     eeg_sujeto_2 = eeg_sujeto_2.append(eeg_trial_sujeto_2)
                     envelope_para_sujeto_2 = envelope_para_sujeto_2.append(envelope_trial_para_sujeto_2)
                     pitch_para_sujeto_2 = pitch_para_sujeto_2.append(pitch_trial_para_sujeto_2)
                     pitch_der_para_sujeto_2 = pitch_der_para_sujeto_2.append(pitch_der_trial_para_sujeto_2)
+                    spectrogram_para_sujeto_2 = spectrogram_para_sujeto_2.append(spectrogram_trial_para_sujeto_2)
 
                 trial += 1
         info = Trial_channel_1['info']
 
         # Convierto a array
-        eeg_sujeto_1, envelope_para_sujeto_1, pitch_para_sujeto_1, pitch_der_para_sujeto_1, eeg_sujeto_2, envelope_para_sujeto_2, pitch_para_sujeto_2, pitch_der_para_sujeto_2 = Funciones.make_array(
-            eeg_sujeto_1, envelope_para_sujeto_1, pitch_para_sujeto_1, pitch_der_para_sujeto_1, eeg_sujeto_2,
-            envelope_para_sujeto_2, pitch_para_sujeto_2, pitch_der_para_sujeto_2)
+        eeg_sujeto_1, envelope_para_sujeto_1, pitch_para_sujeto_1, pitch_der_para_sujeto_1, spectrogram_para_sujeto_1,\
+        eeg_sujeto_2, envelope_para_sujeto_2, pitch_para_sujeto_2, pitch_der_para_sujeto_2, spectrogram_para_sujeto_2\
+            = Funciones.make_array(eeg_sujeto_1, envelope_para_sujeto_1, pitch_para_sujeto_1, pitch_der_para_sujeto_1,
+                                   spectrogram_para_sujeto_1, eeg_sujeto_2, envelope_para_sujeto_2, pitch_para_sujeto_2,
+                                   pitch_der_para_sujeto_2, spectrogram_para_sujeto_2)
 
         # Save_Preprocesed
         EEG_path = self.procesed_data_path + 'EEG/'
@@ -290,7 +331,9 @@ class Sesion_class:
         Envelope_path += 'Sit_{}/'.format(self.situacion)
         Pitch_path = self.procesed_data_path + 'Pitch/Sit_{}_Faltantes_0/'.format(self.situacion)
         Pitch_der_path = self.procesed_data_path + 'Pitch_der/Sit_{}_Faltantes_0/'.format(self.situacion)
-        for path in [EEG_path, Envelope_path, Pitch_path, Pitch_der_path]:
+        Spectrogram_path = self.procesed_data_path + 'Spectrogram/Sit_{}/'.format(self.situacion)
+
+        for path in [EEG_path, Envelope_path, Pitch_path, Pitch_der_path, Spectrogram_path]:
             try:
                 os.makedirs(path)
             except:
@@ -312,14 +355,18 @@ class Sesion_class:
         pickle.dump([pitch_der_para_sujeto_1, pitch_der_para_sujeto_2], f)
         f.close()
 
+        f = open(Spectrogram_path + 'Sesion{}.pkl'.format(self.sesion), 'wb')
+        pickle.dump([spectrogram_para_sujeto_1, spectrogram_para_sujeto_2], f)
+        f.close()
+
         f = open(self.procesed_data_path + 'EEG/info.pkl', 'wb')
         pickle.dump(info, f)
         f.close()
 
         Sujeto_1 = {'EEG': eeg_sujeto_1, 'Envelope': envelope_para_sujeto_2, 'Pitch': pitch_para_sujeto_2,
-                    'Pitch_der': pitch_der_para_sujeto_2, 'info': info}
+                    'Pitch_der': pitch_der_para_sujeto_2, 'Spectrogram': spectrogram_para_sujeto_2, 'info': info}
         Sujeto_2 = {'EEG': eeg_sujeto_2, 'Envelope': envelope_para_sujeto_1, 'Pitch': pitch_para_sujeto_1,
-                    'Pitch_der': pitch_der_para_sujeto_1, 'info': info}
+                    'Pitch_der': pitch_der_para_sujeto_1, 'Spectrogram': spectrogram_para_sujeto_1, 'info': info}
         Sesion = {'Sujeto_1': Sujeto_1, 'Sujeto_2': Sujeto_2}
 
         return Sesion
@@ -351,6 +398,12 @@ class Sesion_class:
         pitch_der_para_sujeto_1, pitch_der_para_sujeto_2 = pickle.load(f)
         f.close()
 
+        f = open(
+            self.procesed_data_path + 'Spectrogram/Sit_{}/'.format(self.situacion) + 'Sesion{}.pkl'.format(
+                self.sesion), 'rb')
+        spectrogram_para_sujeto_1, spectrogram_para_sujeto_2 = pickle.load(f)
+        f.close()
+
         f = open(self.procesed_data_path + 'EEG/info.pkl', 'rb')
         info = pickle.load(f)
         f.close()
@@ -366,9 +419,9 @@ class Sesion_class:
                 pitch_para_sujeto_2 == 0] = self.valores_faltantes_pitch, self.valores_faltantes_pitch  # cambio 0s
 
         Sujeto_1 = {'EEG': eeg_sujeto_1, 'Envelope': envelope_para_sujeto_2, 'Pitch': pitch_para_sujeto_2,
-                    'Pitch_der': pitch_der_para_sujeto_2, 'info': info}
+                    'Pitch_der': pitch_der_para_sujeto_2, 'Spectrogram': spectrogram_para_sujeto_2, 'info': info}
         Sujeto_2 = {'EEG': eeg_sujeto_2, 'Envelope': envelope_para_sujeto_1, 'Pitch': pitch_para_sujeto_1,
-                    'Pitch_der': pitch_der_para_sujeto_1, 'info': info}
+                    'Pitch_der': pitch_der_para_sujeto_1, 'Spectrogram': spectrogram_para_sujeto_1, 'info': info}
         Sesion = {'Sujeto_1': Sujeto_1, 'Sujeto_2': Sujeto_2}
 
         return Sesion
@@ -394,10 +447,10 @@ def Load_Data(sesion, Band, sr, tmin, tmax, procesed_data_path, situacion='Escuc
 
 
 def Estimulos(stim, Sujeto_1, Sujeto_2):
-    envelope_para_sujeto_1, pitch_para_sujeto_1, pitch_der_para_sujeto_1 = Sujeto_2['Envelope'], Sujeto_2['Pitch'], \
-                                                                           Sujeto_2['Pitch_der']
-    envelope_para_sujeto_2, pitch_para_sujeto_2, pitch_der_para_sujeto_2 = Sujeto_1['Envelope'], Sujeto_1['Pitch'], \
-                                                                           Sujeto_1['Pitch_der']
+    envelope_para_sujeto_1, pitch_para_sujeto_1, pitch_der_para_sujeto_1, spectrogram_para_sujeto_1 = \
+        Sujeto_2['Envelope'], Sujeto_2['Pitch'], Sujeto_2['Pitch_der'], Sujeto_2['Spectrogram']
+    envelope_para_sujeto_2, pitch_para_sujeto_2, pitch_der_para_sujeto_2, spectrogram_para_sujeto_2 = \
+        Sujeto_1['Envelope'], Sujeto_1['Pitch'], Sujeto_1['Pitch_der'], Sujeto_1['Spectrogram']
     info = Sujeto_1['info']
 
     if stim == 'Envelope':
@@ -406,14 +459,22 @@ def Estimulos(stim, Sujeto_1, Sujeto_2):
         dstims_para_sujeto_1, dstims_para_sujeto_2 = (pitch_para_sujeto_1,), (pitch_para_sujeto_2,)
     elif stim == 'Pitch_der':
         dstims_para_sujeto_1, dstims_para_sujeto_2 = (pitch_der_para_sujeto_1,), (pitch_der_para_sujeto_2,)
+    elif stim == 'Spectrogram':
+        dstims_para_sujeto_1, dstims_para_sujeto_2 = (spectrogram_para_sujeto_1,), (spectrogram_para_sujeto_2,)
     elif stim == 'Envelope_Pitch':
         dstims_para_sujeto_1, dstims_para_sujeto_2 = (envelope_para_sujeto_1, pitch_para_sujeto_1), (
             envelope_para_sujeto_2, pitch_para_sujeto_2)
-    elif stim == 'Envelope_Pitch_Pitch_der':
+    elif stim == 'Envelope_Spectrogram':
+        dstims_para_sujeto_1, dstims_para_sujeto_2 = (envelope_para_sujeto_1, spectrogram_para_sujeto_1), (
+            envelope_para_sujeto_2, spectrogram_para_sujeto_2)
+    elif stim == 'Pitch_Spectrogram':
+        dstims_para_sujeto_1, dstims_para_sujeto_2 = (pitch_para_sujeto_1, spectrogram_para_sujeto_1), (
+            pitch_para_sujeto_2, spectrogram_para_sujeto_2)
+    elif stim == 'Envelope_Pitch_Spectrogram':
         dstims_para_sujeto_1, dstims_para_sujeto_2 = (envelope_para_sujeto_1, pitch_para_sujeto_1,
-                                                      pitch_der_para_sujeto_1), (
+                                                      spectrogram_para_sujeto_1), (
                                                          envelope_para_sujeto_2, pitch_para_sujeto_2,
-                                                         pitch_der_para_sujeto_2)
+                                                         spectrogram_para_sujeto_2)
     else:
         print('Invalid sitmulus: {}'.format(stim))
 

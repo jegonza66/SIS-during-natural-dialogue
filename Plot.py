@@ -307,7 +307,7 @@ def Cabezas_canales_rep(Canales_repetidos_sujetos, info, Display, Save, Run_graf
 
 
 def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display,
-                       Save, Run_graficos_path, Cant_Estimulos, Stims_Order, stim, decorrelation_times=None):
+                       Save, Run_graficos_path, Cant_Estimulos, Len_Estimulos, Stims_Order, stim, decorrelation_times=None):
 
     # Armo pesos promedio por canal de todos los sujetos que por lo menos tuvieron un buen canal
     Pesos_totales_sujetos_todos_canales_copy = Pesos_totales_sujetos_todos_canales.swapaxes(0, 2)
@@ -363,7 +363,7 @@ def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display
 
 
 def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, Display,
-                              Save, Run_graficos_path, Cant_Estimulos, Stims_Order, stim):
+                              Save, Run_graficos_path, Cant_Estimulos, Len_Estimulos, Stims_Order, stim):
     # Armo pesos promedio por canal de todos los sujetos que por lo menos tuvieron un buen canal
     Pesos_totales_sujetos_todos_canales_copy = Pesos_totales_sujetos_todos_canales.swapaxes(0, 2)
     Pesos_totales_sujetos_todos_canales_copy = Pesos_totales_sujetos_todos_canales_copy.mean(0).transpose()
