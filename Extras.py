@@ -19,7 +19,7 @@ import Processing
 import Simulation
 
 # WHAT TO DO
-Plot_EEG_PSD = True
+Plot_EEG_PSD = False
 Simulate_random_data = False
 Cov_Matrix = False
 Signal_vs_Pred = False
@@ -28,7 +28,7 @@ Pitch = False
 
 # Figures
 Display = False
-Save = True
+Save = False
 
 if Display:
     plt.ion()
@@ -45,13 +45,12 @@ EEG_preprocess = 'Standarize'
 alpha = 100
 
 # Stimuli and EEG
-Stims_Order = ['Envelope', 'Pitch', 'Pitch_der', 'Spectrogram', 'Phonemes']
-Stims = ['Envelope', 'Pitch', 'Pitch_der', 'Envelope_Pitch_Pitch_der']
+Stims = ['Envelope', 'Pitch', 'Spectrogram', 'Envelope_Pitch_Spectrogram']
 Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All']
 
 stim = 'Envelope'
 Band = None
-situacion = 'Todo'
+situacion = 'Escucha'
 tmin, tmax = -0.6, -0.003
 sr = 128
 delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
@@ -68,7 +67,7 @@ if Pitch:
     pitch_mean, pitch_std = [], []
 
 # Start Run
-sesiones = np.arange(21, 26)
+
 sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
 sujeto_total = 0
 N_Samples = []
@@ -77,24 +76,25 @@ for sesion in sesiones:
 
     # LOAD DATA BY SUBJECT
     Sujeto_1, Sujeto_2 = Load.Load_Data(sesion=sesion, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
-                                        procesed_data_path=procesed_data_path)
-
-    # LOAD EEG BY SUBJECT
-    eeg_sujeto_1, eeg_sujeto_2 = Sujeto_1['EEG'], Sujeto_2['EEG']
-    N_Samples.append(len(eeg_sujeto_1))
-    N_Samples.append(len(eeg_sujeto_2))
-    # LOAD STIMULUS BY SUBJECT
-    dstims_para_sujeto_1, dstims_para_sujeto_2, info = Load.Estimulos(stim, Sujeto_1, Sujeto_2)
-    Cant_Estimulos = len(dstims_para_sujeto_1)
+                                        procesed_data_path=procesed_data_path, situacion=situacion)
 
     if Pitch:
+        dstims_para_sujeto_1, dstims_para_sujeto_2, info = Load.Estimulos('Pitch', Sujeto_1, Sujeto_2)
         for sujeto, dstims in zip((1, 2), (dstims_para_sujeto_2, dstims_para_sujeto_1)):
             print('Sujeto {}'.format(sujeto))
 
-            pitch = dstims[:, -1]
+            pitch = dstims[0][1:, -1]
             pitch_mean.append(np.mean(pitch))
             pitch_std.append(np.std(pitch))
     else:
+        # LOAD EEG BY SUBJECT
+        eeg_sujeto_1, eeg_sujeto_2 = Sujeto_1['EEG'], Sujeto_2['EEG']
+        N_Samples.append(len(eeg_sujeto_1))
+        N_Samples.append(len(eeg_sujeto_2))
+        # LOAD STIMULUS BY SUBJECT
+        dstims_para_sujeto_1, dstims_para_sujeto_2, info = Load.Estimulos(stim, Sujeto_1, Sujeto_2)
+        Len_Estimulos = [len(dstims_para_sujeto_1[i][0]) for i in range(len(dstims_para_sujeto_1))]
+
         for sujeto, eeg, dstims in zip((1, 2), (eeg_sujeto_1, eeg_sujeto_2),
                                        (dstims_para_sujeto_1, dstims_para_sujeto_2)):
             # for sujeto, eeg, dstims in zip([1], [eeg_sujeto_1], [dstims_para_sujeto_1]):

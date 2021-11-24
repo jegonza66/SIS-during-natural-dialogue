@@ -133,12 +133,9 @@ class Trial_channel:
         pitch_der.append(None)
         pitch_der = np.array(pitch_der, dtype=float)
 
-        if not self.valores_faltantes_pitch:
-            pitch[np.isnan(pitch)] = self.valores_faltantes_pitch
-            pitch_der[np.isnan(pitch_der)] = self.valores_faltantes_pitch
-        elif not np.isfinite(self.valores_faltantes_pitch):
-            pitch[np.isnan(pitch)] = float(self.valores_faltantes_pitch)
-            pitch_der[np.isnan(pitch_der)] = float(self.valores_faltantes_pitch)
+        if self.valores_faltantes_pitch == None:
+            pitch = pitch[~np.isnan(pitch)]
+            pitch_der = pitch_der[~np.isnan(pitch_der)]
         elif np.isfinite(self.valores_faltantes_pitch):
             pitch[np.isnan(pitch)] = np.float(self.valores_faltantes_pitch)
             pitch_der[np.isnan(pitch_der)] = np.float(self.valores_faltantes_pitch)
@@ -166,9 +163,9 @@ class Trial_channel:
         S = librosa.feature.melspectrogram(wav, sr=self.audio_sr, n_fft=n_fft, hop_length=hop_length, n_mels=n_mels)
         S_DB = librosa.power_to_db(S, ref=np.max)
 
+        # Shifted matrix row by row
         spec_shift = Processing.matriz_shifteada(S_DB[0], self.delays)
-
-        for i in np.arange(1,len(S_DB)):
+        for i in np.arange(1, len(S_DB)):
             spec_shift = np.hstack((spec_shift, Processing.matriz_shifteada(S_DB[i], self.delays)))
 
         return spec_shift
@@ -316,8 +313,8 @@ class Sesion_class:
         info = Trial_channel_1['info']
 
         # Convierto a array
-        eeg_sujeto_1, envelope_para_sujeto_1, pitch_para_sujeto_1, pitch_der_para_sujeto_1, spectrogram_para_sujeto_1,\
-        eeg_sujeto_2, envelope_para_sujeto_2, pitch_para_sujeto_2, pitch_der_para_sujeto_2, spectrogram_para_sujeto_2\
+        eeg_sujeto_1, envelope_para_sujeto_1, pitch_para_sujeto_1, pitch_der_para_sujeto_1, spectrogram_para_sujeto_1, \
+        eeg_sujeto_2, envelope_para_sujeto_2, pitch_para_sujeto_2, pitch_der_para_sujeto_2, spectrogram_para_sujeto_2 \
             = Funciones.make_array(eeg_sujeto_1, envelope_para_sujeto_1, pitch_para_sujeto_1, pitch_der_para_sujeto_1,
                                    spectrogram_para_sujeto_1, eeg_sujeto_2, envelope_para_sujeto_2, pitch_para_sujeto_2,
                                    pitch_der_para_sujeto_2, spectrogram_para_sujeto_2)
@@ -329,8 +326,10 @@ class Sesion_class:
         if self.Env_Filter: Envelope_path += self.Env_Filter + '_'
         EEG_path += 'Sit_{}_Band_{}/'.format(self.situacion, self.Band)
         Envelope_path += 'Sit_{}/'.format(self.situacion)
-        Pitch_path = self.procesed_data_path + 'Pitch/Sit_{}_Faltantes_0/'.format(self.situacion)
-        Pitch_der_path = self.procesed_data_path + 'Pitch_der/Sit_{}_Faltantes_0/'.format(self.situacion)
+        Pitch_path = self.procesed_data_path + 'Pitch/Sit_{}_Faltantes_{}/'.format(self.situacion,
+                                                                                   self.valores_faltantes_pitch)
+        Pitch_der_path = self.procesed_data_path + 'Pitch_der/Sit_{}_Faltantes_{}/'.format(self.situacion,
+                                                                                           self.valores_faltantes_pitch)
         Spectrogram_path = self.procesed_data_path + 'Spectrogram/Sit_{}/'.format(self.situacion)
 
         for path in [EEG_path, Envelope_path, Pitch_path, Pitch_der_path, Spectrogram_path]:
@@ -374,7 +373,7 @@ class Sesion_class:
     def load_procesed(self):
         EEG_path = self.procesed_data_path + 'EEG/'
         Envelope_path = self.procesed_data_path + 'Envelope/'
-        if self.Causal_filter_EEG: EEG_path += 'Causal_'
+        if self.Band and self.Causal_filter_EEG: EEG_path += 'Causal_'
         if self.Env_Filter: Envelope_path += self.Env_Filter + '_'
         Envelope_path += 'Sit_{}/Sesion{}.pkl'.format(self.situacion, self.sesion)
         EEG_path += 'Sit_{}_Band_{}/Sesion{}.pkl'.format(self.situacion, self.Band, self.sesion)
@@ -387,20 +386,17 @@ class Sesion_class:
         envelope_para_sujeto_1, envelope_para_sujeto_2 = pickle.load(f)
         f.close()
 
-        f = open(self.procesed_data_path + 'Pitch/Sit_{}_Faltantes_0/'.format(self.situacion) + 'Sesion{}.pkl'.format(
-            self.sesion), 'rb')
+        f = open(self.procesed_data_path + 'Pitch/Sit_{}_Faltantes_{}/Sesion{}.pkl' \
+                 .format(self.situacion, self.valores_faltantes_pitch, self.sesion), 'rb')
         pitch_para_sujeto_1, pitch_para_sujeto_2 = pickle.load(f)
         f.close()
 
-        f = open(
-            self.procesed_data_path + 'Pitch_der/Sit_{}_Faltantes_0/'.format(self.situacion) + 'Sesion{}.pkl'.format(
-                self.sesion), 'rb')
+        f = open(self.procesed_data_path + 'Pitch_der/Sit_{}_Faltantes_{}/Sesion{}.pkl' \
+                 .format(self.situacion, self.valores_faltantes_pitch, self.sesion), 'rb')
         pitch_der_para_sujeto_1, pitch_der_para_sujeto_2 = pickle.load(f)
         f.close()
 
-        f = open(
-            self.procesed_data_path + 'Spectrogram/Sit_{}/'.format(self.situacion) + 'Sesion{}.pkl'.format(
-                self.sesion), 'rb')
+        f = open(self.procesed_data_path + 'Spectrogram/Sit_{}/Sesion{}.pkl'.format(self.situacion, self.sesion), 'rb')
         spectrogram_para_sujeto_1, spectrogram_para_sujeto_2 = pickle.load(f)
         f.close()
 

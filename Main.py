@@ -15,11 +15,11 @@ Run_permutations = False
 
 # Figures
 Display_Ind_Figures = False
-Display_Total_Figures = True
+Display_Total_Figures = False
 Save_Ind_Figures = True
 Save_Total_Figures = True
 
-Save_Final_Correlation = True
+Save_Final_Correlation = False
 
 # Define Parameters
 # Standarization
@@ -41,6 +41,10 @@ try:
     f.close()
 except:
     print('\n\nAlphas file not found.\n\n')
+
+f = open('saves/Subjects_Pitch.pkl', 'rb')
+subjects_pitch = pickle.load(f)
+f.close()
 
 for Band in Bands:
     print('\n{}\n'.format(Band))
@@ -203,8 +207,8 @@ for Band in Bands:
 
                 # Grafico Pesos
                 Plot.plot_grafico_pesos(Display_Ind_Figures, sesion, sujeto, alpha, Pesos_promedio,
-                                        info, times, sr, Corr_promedio, Rmse_promedio, Save_Ind_Figures,
-                                        Run_graficos_path, Len_Estimulos, stim)
+                                        info, times, Corr_promedio, Rmse_promedio, Save_Ind_Figures,
+                                        Run_graficos_path, Len_Estimulos, stim, subjects_pitch, sujeto_total)
 
                 # Guardo las correlaciones y los pesos promediados entre folds de cada canal del sujeto y lo adjunto a lista
                 # para promediar entre canales de sujetos
@@ -245,7 +249,7 @@ for Band in Bands:
 
         # Grafico Pesos
         Plot.regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display_Total_Figures,
-                                                      Save_Total_Figures, Run_graficos_path, Len_Estimulos, stim)
+                                Save_Total_Figures, Run_graficos_path, Len_Estimulos, stim, subjects_pitch, sujeto_total)
         # Plot.regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times,
         #                                                      Display_Total_Figures, Save_Total_Figures,
         #                                                      Run_graficos_path,

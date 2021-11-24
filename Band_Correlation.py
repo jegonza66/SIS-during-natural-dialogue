@@ -6,12 +6,12 @@ import os
 import pickle
 
 
-Stims = ['Pitch', 'Pitch_der', 'Envelope_Pitch_Pitch_der']
-# Stims = ['Envelope']
+Stims = ['Envelope', 'Pitch', 'Spectrogram', 'Envelope_Pitch_Spectrogram']
+Stims = ['Spectrogram']
 Alphas = [100]
 
-Bands_low = np.flip(np.arange(3, 7, 0.5))
-Bands_range = np.arange(1, 3.2, 0.2)
+Bands_low = np.flip(np.arange(1, 12))
+Bands_range = np.arange(0.5, 9, 0.5)
 
 save_path = 'saves/Bands Correlation/'
 try:

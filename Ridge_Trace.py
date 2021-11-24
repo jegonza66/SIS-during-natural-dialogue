@@ -11,8 +11,7 @@ import Funciones
 Display_figures_Trace = False
 Save_figures_Trace = True
 
-Stims_Order = ['Envelope', 'Pitch', 'Pitch_der', 'Spectrogram', 'Phonemes']
-Stims = ['Envelope_Pitch']
+Stims = ['Spectrogram']
 Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All', (1, 15), (4, 6)]
 
 Trace_interval = 2 / 3
