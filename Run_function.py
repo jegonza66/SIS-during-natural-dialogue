@@ -6,27 +6,26 @@ import Models
 import Processing
 
 def run_pipeline(Stims_preprocess='Normalize', EEG_preprocess='Standarize', stim='Envelope', Band='Theta',
-                 situacion='Escucha', tmin=-0.6, tmax=-0.003, sr=128,
+                 tmin=-0.6, tmax=-0.003, sr=128,
                  procesed_data_path='saves/Preprocesed_Data/tmin{}_tmax{}/'.format(-0.6, -0.003), alpha=100
                  ):
-    sesiones = np.arange(21, 26)
+    sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
     sujeto_total = 0
     for sesion in sesiones:
         # print('Sesion {}'.format(sesion))
 
         # LOAD DATA BY SUBJECT
-        Sujeto_1, Sujeto_2 = Load.Load_Data(sesion, Band, sr, tmin, tmax, situacion, procesed_data_path)
+        Sujeto_1, Sujeto_2 = Load.Load_Data(sesion=sesion, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
+                                            procesed_data_path=procesed_data_path)
 
         # LOAD EEG BY SUBJECT
         eeg_sujeto_1, eeg_sujeto_2 = Sujeto_1['EEG'], Sujeto_2['EEG']
 
         # LOAD STIMULUS BY SUBJECT
-        dstims_para_sujeto_1, dstims_para_sujeto_2, info = Load.Estimulos(stim, Sujeto_1, Sujeto_2)
-        Cant_Estimulos = len(dstims_para_sujeto_1)
+        dstims_para_sujeto_1, dstims_para_sujeto_2, info = Load.Estimulos(stim=stim, Sujeto_1=Sujeto_1, Sujeto_2=Sujeto_2)
 
         for sujeto, eeg, dstims in zip((1, 2), (eeg_sujeto_1, eeg_sujeto_2),
                                        (dstims_para_sujeto_1, dstims_para_sujeto_2)):
-            # for sujeto, eeg, dstims in zip([2], [eeg_sujeto_2], [dstims_para_sujeto_2]):
             # print('Sujeto {}'.format(sujeto))
             # Separo los datos en 5 y tomo test set de 20% de datos con kfold (5 iteraciones)
             n_splits = 5
