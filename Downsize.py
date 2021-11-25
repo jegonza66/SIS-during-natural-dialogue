@@ -7,13 +7,12 @@ folders_path = pathlib.Path(folders_path_str)
 folders = list(folders_path.glob('*'))
 
 for folder in folders:
-    files_paths_str = folders_path_str + str(folder)
-    files_path = pathlib.Path(files_paths_str)
+    files_path = folder
     files = list(files_path.glob('Pesos*.pkl'))
 
     for file in files:
         f = open(file, 'rb')
-        Data = pickle.load(file)
+        Data = pickle.load(f)
         f.close()
 
         Data = np.array(Data, dtype=np.float16)
