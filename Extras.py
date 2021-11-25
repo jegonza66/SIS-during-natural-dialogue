@@ -74,11 +74,11 @@ N_Samples = []
 for sesion in sesiones:
     print('Sesion {}'.format(sesion))
 
-    # LOAD DATA BY SUBJECT
-    Sujeto_1, Sujeto_2 = Load.Load_Data(sesion=sesion, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
-                                        procesed_data_path=procesed_data_path, situacion=situacion)
-
     if Pitch:
+        # LOAD DATA BY SUBJECT
+        Sujeto_1, Sujeto_2 = Load.Load_Data(sesion=sesion, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
+                                            procesed_data_path=procesed_data_path, situacion=situacion,
+                                            valores_faltantes_pitch=None)
         dstims_para_sujeto_1, dstims_para_sujeto_2, info = Load.Estimulos('Pitch', Sujeto_1, Sujeto_2)
         for sujeto, dstims in zip((1, 2), (dstims_para_sujeto_2, dstims_para_sujeto_1)):
             print('Sujeto {}'.format(sujeto))
@@ -87,6 +87,9 @@ for sesion in sesiones:
             pitch_mean.append(np.mean(pitch))
             pitch_std.append(np.std(pitch))
     else:
+        # LOAD DATA BY SUBJECT
+        Sujeto_1, Sujeto_2 = Load.Load_Data(sesion=sesion, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
+                                            procesed_data_path=procesed_data_path, situacion=situacion)
         # LOAD EEG BY SUBJECT
         eeg_sujeto_1, eeg_sujeto_2 = Sujeto_1['EEG'], Sujeto_2['EEG']
         N_Samples.append(len(eeg_sujeto_1))

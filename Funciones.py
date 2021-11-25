@@ -22,7 +22,7 @@ def flatten_list(t):
 def make_array(*args):
     returns = []
     for var in args:
-        returns.append(np.array(var))
+        returns.append(np.array(var, dtype=np.float32))
     return tuple(returns)
 
 

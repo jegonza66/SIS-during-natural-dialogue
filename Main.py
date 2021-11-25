@@ -159,7 +159,7 @@ for Band in Bands:
                             if Run_permutations:
                                 Simulation.simular_iteraciones_Ridge(alpha, iteraciones, sesion, sujeto, fold,
                                                                      dstims_train_val, eeg_train_val, dstims_test, eeg_test,
-                                                                     Pesos_fake, Correlaciones_fake, Errores_fake, Path_it)
+                                                                     Pesos_fake, Correlaciones_fake, Errores_fake)
                             else:
                                 Statistical_test = False
 

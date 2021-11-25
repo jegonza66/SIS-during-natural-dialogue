@@ -8,9 +8,8 @@ import copy
 import matplotlib.pyplot as plt
 import Models
 
-
 def simular_iteraciones_Ridge(alpha, iteraciones, sesion, sujeto, fold, dstims_train_val, eeg_train_val,
-                              dstims_test, eeg_test, Pesos_fake, Correlaciones_fake, Errores_fake, Path_it):
+                              dstims_test, eeg_test, Pesos_fake, Correlaciones_fake, Errores_fake):
     print("\nSesion {} - Sujeto {} - Fold {}".format(sesion, sujeto, fold + 1))
     for iteracion in np.arange(iteraciones):
         # Random permutations of stimuli
@@ -36,7 +35,7 @@ def simular_iteraciones_Ridge(alpha, iteraciones, sesion, sujeto, fold, dstims_t
         Errores_fake[fold, iteracion] = Rmse_fake
 
         print("\rProgress: {}%".format(int((iteracion + 1) * 100 / iteraciones)), end='')
-    return Pesos_fake, Correlaciones_fake, Errores_fake
+    return np.array(Pesos_fake, dtype=np.float16), np.array(Correlaciones_fake, dtype=np.float16), np.array(Errores_fake, dtype=np.float16)
 
 
 def simular_iteraciones_Ridge_plot(info, times, situacion, alpha, iteraciones, sesion, sujeto, fold,
