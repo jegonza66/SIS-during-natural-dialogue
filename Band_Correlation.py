@@ -10,8 +10,8 @@ Stims = ['Envelope', 'Pitch', 'Spectrogram', 'Envelope_Pitch_Spectrogram']
 Stims = ['Spectrogram']
 Alphas = [100]
 
-Bands_low = np.flip(np.arange(1, 12))
-Bands_range = np.arange(0.5, 9, 0.5)
+Bands_low = np.flip(np.arange(2, 9))
+Bands_range = np.arange(0.5, 7, 0.5)
 
 save_path = 'saves/Bands Correlation/'
 try:

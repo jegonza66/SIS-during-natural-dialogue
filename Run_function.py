@@ -48,7 +48,7 @@ def run_pipeline(Stims_preprocess='Normalize', EEG_preprocess='Standarize', stim
 
                 axis = 0
                 porcent = 5
-                eeg, dstims_train_val, dstims_test = Processing.standarize_normalize(eeg, dstims_train_val, dstims_test,
+                eeg_train_val, eeg_test, dstims_train_val, dstims_test = Processing.standarize_normalize(eeg_train_val, eeg_test, dstims_train_val, dstims_test,
                                                                                      Stims_preprocess, EEG_preprocess,
                                                                                      axis, porcent)
 

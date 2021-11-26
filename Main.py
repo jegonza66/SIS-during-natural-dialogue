@@ -15,10 +15,10 @@ Run_permutations = False
 
 # Figures
 Display_Ind_Figures = False
-Display_Total_Figures = True
+Display_Total_Figures = False
 
-Save_Ind_Figures = False
-Save_Total_Figures = False
+Save_Ind_Figures = True
+Save_Total_Figures = True
 
 Save_Final_Correlation = False
 

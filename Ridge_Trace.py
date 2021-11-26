@@ -81,7 +81,7 @@ for Band in Bands:
         alphas_swept = np.logspace(min_busqueda, max_busqueda, pasos)
         alpha_step = np.diff(np.log(alphas_swept))[0]
 
-        sesiones = [21, 22, 23, 24, 25]
+        sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
         # Empiezo corrida
         sujeto_total = 0
         for sesion in sesiones:
@@ -141,7 +141,7 @@ for Band in Bands:
 
                         axis = 0
                         porcent = 5
-                        eeg, dstims_train_val, dstims_test = Processing.standarize_normalize(eeg, dstims_train_val,
+                        eeg_train_val, eeg_test, dstims_train_val, dstims_test = Processing.standarize_normalize(eeg_train_val, eeg_test, dstims_train_val,
                                                                                              dstims_test,
                                                                                              Stims_preprocess,
                                                                                              EEG_preprocess,
