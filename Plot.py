@@ -360,7 +360,7 @@ def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display
                                       Len_Estimulos[j] for j in range(i + 1))].mean(0)
             spectrogram_weights = spectrogram_weights.reshape(16, len(times))
 
-            im = ax.pcolormesh(times * 1000, np.linspace(0, 8192, 16), spectrogram_weights, cmap='RdBu_r',
+            im = ax.pcolormesh(times * 1000, np.arange(16), spectrogram_weights, cmap='RdBu_r',
                                vmin=-spectrogram_weights.max(), vmax=spectrogram_weights.max(), shading='gouraud')
 
             ax.set(xlabel='Time (ms)', ylabel='Hz')

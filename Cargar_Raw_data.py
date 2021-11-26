@@ -17,7 +17,8 @@ audio_sr = 16000
 sampleStep = 0.01
 
 sr = 128
-tmin, tmax = 0.06, -0.003
+audio_sr = 16000
+tmin, tmax = -0.6, -0.003
 delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
 
 ## EEG
@@ -64,8 +65,6 @@ wav = wav.astype("float")
 ## ENVELOPE
 
 envelope = np.abs(sgn.hilbert(wav))
-# envelope = Processing.butter_filter(envelope, frecuencias=25, sampling_freq=16000,
-#                                     btype='lowpass', order=3, axis=0, ftype='Causal')
 
 window_size = 125
 stride = 125
@@ -149,19 +148,23 @@ norm.normalize_11(wav)
 wav -= wav.mean()
 
 ## Spectrogram
+import librosa.display
 n_fft = 125
 hop_length = 125
 n_mels = 16
 
 S = librosa.feature.melspectrogram(wav, sr=audio_sr, n_fft=n_fft, hop_length=hop_length, n_mels=n_mels)
 S_DB = librosa.power_to_db(S, ref=np.max)
+
+plt.figure()
+librosa.display.specshow(S_DB,sr=audio_sr, hop_length=hop_length, x_axis='time', y_axis='mel', )
+plt.colorbar(format='%+2.0f dB')
+
 S_DB = S_DB.ravel().flatten()
 S_DB = Processing.matriz_shifteada(S_DB, delays)
 
 ## PLOT
 time = np.arange(len(wav)) / 16000
-
-
 
 # plt.ion()
 # plt.figure()

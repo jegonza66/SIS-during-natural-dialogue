@@ -46,15 +46,15 @@ f = open('saves/Subjects_Pitch.pkl', 'rb')
 subjects_pitch = pickle.load(f)
 f.close()
 
+tmin, tmax = -0.6, -0.003
+sr = 128
+delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
+times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays))
+
 for Band in Bands:
     print('\n{}\n'.format(Band))
     for stim in Stims:
         print('\n' + stim + '\n')
-        tmin, tmax = -0.6, -0.003
-        sr = 128
-        delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
-        times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays))
-
         # Paths
         procesed_data_path = 'saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
         Run_graficos_path = 'gráficos/Ridge/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
