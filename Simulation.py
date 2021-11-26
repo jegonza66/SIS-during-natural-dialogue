@@ -35,7 +35,7 @@ def simular_iteraciones_Ridge(alpha, iteraciones, sesion, sujeto, fold, dstims_t
         Errores_fake[fold, iteracion] = Rmse_fake
 
         print("\rProgress: {}%".format(int((iteracion + 1) * 100 / iteraciones)), end='')
-    return np.array(Pesos_fake, dtype=np.float16), np.array(Correlaciones_fake, dtype=np.float16), np.array(Errores_fake, dtype=np.float16)
+    return np.array(Pesos_fake, dtype=np.float16), np.array(Correlaciones_fake), np.array(Errores_fake)
 
 
 def simular_iteraciones_Ridge_plot(info, times, situacion, alpha, iteraciones, sesion, sujeto, fold,

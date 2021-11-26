@@ -59,7 +59,7 @@ class Trial_channel:
         # Downsample
         eeg = Processing.subsamplear(eeg, int(eeg_freq / self.sr))
 
-        return np.array(eeg, dtype=np.float16)
+        return np.array(eeg)
 
     def f_info(self):
         # Defino montage e info
@@ -88,7 +88,7 @@ class Trial_channel:
         envelope = envelope.ravel().flatten()
         envelope = Processing.matriz_shifteada(envelope, self.delays)  # armo la matriz shifteada
 
-        return np.array(envelope, dtype=np.float16)
+        return np.array(envelope)
 
     def f_calculate_pitch(self):
         if platform.system() == 'Linux':
@@ -121,7 +121,7 @@ class Trial_channel:
         intensity = np.array(read_file['intensity'])
 
         pitch[pitch == '--undefined--'] = np.nan
-        pitch = np.array(pitch, dtype=np.float16)
+        pitch = np.array(pitch, dtype=float)
 
         pitch_der = []
         for i in range(len(pitch) - 1):
@@ -131,7 +131,7 @@ class Trial_channel:
             except:
                 pitch_der.append(None)
         pitch_der.append(None)
-        pitch_der = np.array(pitch_der, dtype=np.float16)
+        pitch_der = np.array(pitch_der, dtype=float)
 
         if self.valores_faltantes_pitch == None:
             pitch = pitch[~np.isnan(pitch)]
@@ -150,7 +150,7 @@ class Trial_channel:
         pitch_der = Processing.subsamplear(pitch_der, 125)
         pitch_der = Processing.matriz_shifteada(pitch_der, self.delays)
 
-        return np.array(pitch, dtype=np.float16), np.array(pitch_der, dtype=np.float16)
+        return np.array(pitch), np.array(pitch_der)
 
     def f_spectrogram(self):
         wav = wavfile.read(self.wav_fname)[1]
@@ -168,7 +168,7 @@ class Trial_channel:
         for i in np.arange(1, len(S_DB)):
             spec_shift = np.hstack((spec_shift, Processing.matriz_shifteada(S_DB[i], self.delays)))
 
-        return np.array(spec_shift, dtype=np.float16)
+        return np.array(spec_shift)
 
     def load_trial(self):
         channel = {}
@@ -219,6 +219,7 @@ class Sesion_class:
         trial = 1
         while run:
             try:
+
                 if self.Calculate_pitch:
                     Trial_channel(s=self.sesion, trial=trial, channel=1,
                                   Band=self.Band, sr=self.sr, tmin=self.tmin, tmax=self.tmax,
@@ -236,6 +237,7 @@ class Sesion_class:
                                                 valores_faltantes_pitch=self.valores_faltantes_pitch,
                                                 Causal_filter_EEG=self.Causal_filter_EEG,
                                                 Env_Filter=self.Env_Filter).load_trial()
+
                 Trial_channel_2 = Trial_channel(s=self.sesion, trial=trial, channel=2,
                                                 Band=self.Band, sr=self.sr, tmin=self.tmin, tmax=self.tmax,
                                                 valores_faltantes_pitch=self.valores_faltantes_pitch,

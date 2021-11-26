@@ -226,7 +226,7 @@ class normalizar():
         matrix -= 1
 
 
-def standarize_normalize(eeg, dstims_train_val, dstims_test, Stims_preprocess, EEG_preprocess, axis=0, porcent=5):
+def standarize_normalize(eeg_train_val, eeg_test, dstims_train_val, dstims_test, Stims_preprocess, EEG_preprocess, axis=0, porcent=5):
     norm = normalizar(axis, porcent)
     estandar = estandarizar(axis)
 
@@ -245,9 +245,11 @@ def standarize_normalize(eeg, dstims_train_val, dstims_test, Stims_preprocess, E
         dstims_test = np.hstack([dstims_test[i] for i in range(len(dstims_test))])
 
     if EEG_preprocess == 'Standarize':
-        estandar.standarize_data(eeg)
+        estandar.fit_standarize_train_data(eeg_train_val)
+        estandar.standarize_test_data(eeg_test)
 
     if EEG_preprocess == 'Normalize':
-        norm.fit_normalize_percent(eeg)
+        norm.fit_normalize_percent(eeg_train_val)
+        norm.normlize_test_data(eeg_test)
 
-    return eeg, dstims_train_val, dstims_test
+    return eeg_train_val, eeg_test, dstims_train_val, dstims_test

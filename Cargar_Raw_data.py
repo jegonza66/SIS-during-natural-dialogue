@@ -87,6 +87,7 @@ plt.ylabel('Amplitud')
 ## PITCH
 pitch_fname = "Datos/Pitch/S" + str(s) + "/s" + str(s) + ".objects." + "{:02d}".format(trial) + ".channel" + str(
     channel) + ".txt"
+
 read_file = pd.read_csv(pitch_fname)
 
 time = np.array(read_file['time'])

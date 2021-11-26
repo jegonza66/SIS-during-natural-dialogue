@@ -15,9 +15,10 @@ Run_permutations = False
 
 # Figures
 Display_Ind_Figures = False
-Display_Total_Figures = False
-Save_Ind_Figures = True
-Save_Total_Figures = True
+Display_Total_Figures = True
+
+Save_Ind_Figures = False
+Save_Total_Figures = False
 
 Save_Final_Correlation = False
 
@@ -29,7 +30,7 @@ EEG_preprocess = 'Standarize'
 # Stimuli and EEG
 Stims_Order = ['Envelope', 'Pitch', 'Spectrogram', 'Phonemes']
 Stims = ['Envelope', 'Pitch', 'Envelope_Pitch']
-Stims = ['Spectrogram']
+Stims = ['Envelope']
 Bands = ['Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All']
 Bands = ['Theta']
 
@@ -90,12 +91,12 @@ for Band in Bands:
                 iteraciones = 3000
 
                 # Defino variables donde voy a guardar mil cosas
-                Pesos_ronda_canales = np.zeros((n_splits, info['nchan'], sum(Len_Estimulos)))
+                Pesos_ronda_canales = np.zeros((n_splits, info['nchan'], sum(Len_Estimulos)), dtype=np.float16)
 
                 Prob_Corr_ronda_canales = np.ones((n_splits, info['nchan']))
                 Prob_Rmse_ronda_canales = np.ones((n_splits, info['nchan']))
 
-                Pesos_fake = np.zeros((n_splits, iteraciones, info['nchan'], sum(Len_Estimulos)))
+                Pesos_fake = np.zeros((n_splits, iteraciones, info['nchan'], sum(Len_Estimulos)), dtype=np.float16)
                 Correlaciones_fake = np.zeros((n_splits, iteraciones, info['nchan']))
                 Errores_fake = np.zeros((n_splits, iteraciones, info['nchan']))
 
@@ -119,7 +120,7 @@ for Band in Bands:
 
                     axis = 0
                     porcent = 5
-                    eeg, dstims_train_val, dstims_test = Processing.standarize_normalize(eeg, dstims_train_val,
+                    eeg_train_val, eeg_test, dstims_train_val, dstims_test = Processing.standarize_normalize(eeg_train_val, eeg_test, dstims_train_val,
                                                                                          dstims_test,
                                                                                          Stims_preprocess,
                                                                                          EEG_preprocess,
