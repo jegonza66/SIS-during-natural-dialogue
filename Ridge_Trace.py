@@ -105,7 +105,7 @@ for Band in Bands:
             # LOAD STIMULUS BY SUBJECT
             dstims_para_sujeto_1, dstims_para_sujeto_2, info = Load.Estimulos(stim=stim, Sujeto_1=Sujeto_1,
                                                                               Sujeto_2=Sujeto_2)
-            Cant_Estimulos = len(dstims_para_sujeto_1)
+            Len_Estimulos = [len(dstims_para_sujeto_1[i][0]) for i in range(len(dstims_para_sujeto_1))]
 
             for sujeto, eeg, dstims in zip((1, 2), (eeg_sujeto_1, eeg_sujeto_2),
                                            (dstims_para_sujeto_1, dstims_para_sujeto_2)):
@@ -123,7 +123,7 @@ for Band in Bands:
                     # print('Alpha: {}'.format(alpha))
 
                     # Defino variables donde voy a guardar cosas para el alpha
-                    Pesos_ronda_canales = np.zeros((n_splits, info['nchan'], len(delays) * Cant_Estimulos))
+                    Pesos_ronda_canales = np.zeros((n_splits, info['nchan'], sum(Len_Estimulos)))
                     Corr_buenas_ronda_canal = np.zeros((n_splits, info['nchan']))
                     Rmse_buenos_ronda_canal = np.zeros((n_splits, info['nchan']))
 
