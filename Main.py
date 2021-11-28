@@ -30,7 +30,7 @@ EEG_preprocess = 'Standarize'
 # Stimuli and EEG
 Stims_Order = ['Envelope', 'Pitch', 'Spectrogram', 'Phonemes']
 Stims = ['Envelope', 'Pitch', 'Envelope_Pitch']
-Stims = ['Envelope']
+Stims = ['Envelope_Spectrogram']
 Bands = ['Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All']
 Bands = ['Theta']
 

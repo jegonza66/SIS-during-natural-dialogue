@@ -8,6 +8,7 @@ import os
 import seaborn as sn
 import pickle
 import Funciones
+import librosa
 
 
 def highlight_cell(x, y, ax=None, **kwargs):
@@ -156,9 +157,10 @@ def plot_grafico_pesos(Display, sesion, sujeto, best_alpha, Pesos_promedio,
             im = ax.pcolormesh(times * 1000, np.arange(16), spectrogram_weights, cmap='RdBu_r',
                                vmin=-spectrogram_weights.max(), vmax=spectrogram_weights.max(), shading='gouraud')
 
+            Bands_center = librosa.mel_frequencies(n_mels=16, fmin=62, fmax=8000)
             ax.set(xlabel='Time (ms)', ylabel='Hz')
-            ticks_positions = [0, 3, 6, 9, 12, 15]
-            ticks_labels = [0, 512, 1024, 2048, 4096, 8192]
+            ticks_positions = np.arange(0, 16, 2)
+            ticks_labels = [int(Bands_center[i]) for i in np.arange(0, len(Bands_center), 2)]
             ax.set_yticks(ticks_positions)
             ax.set_yticklabels(ticks_labels)
 
@@ -349,9 +351,8 @@ def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display
     Stims_Order = stim.split('_')
     Cant_Estimulos = len(Len_Estimulos)
 
-    fig, ax = plt.subplots(figsize=(15, 5))
-
     for i in range(Cant_Estimulos):
+        fig, ax = plt.subplots(figsize=(15, 5))
         fig.suptitle('{}'.format(Stims_Order[i] if Cant_Estimulos > 1 else stim), fontsize=23)
 
         if Stims_Order[i] == 'Spectrogram':
@@ -363,9 +364,10 @@ def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display
             im = ax.pcolormesh(times * 1000, np.arange(16), spectrogram_weights, cmap='RdBu_r',
                                vmin=-spectrogram_weights.max(), vmax=spectrogram_weights.max(), shading='gouraud')
 
+            Bands_center = librosa.mel_frequencies(n_mels=16, fmin=62, fmax=8000)
             ax.set(xlabel='Time (ms)', ylabel='Hz')
-            ticks_positions = [0, 3, 6, 9, 12, 15]
-            ticks_labels = [62, 512, 1024, 2048, 4096, 8192]
+            ticks_positions = np.arange(0,16,2)
+            ticks_labels = [int(Bands_center[i]) for i in np.arange(0,len(Bands_center), 2)]
             ax.set_yticks(ticks_positions)
             ax.set_yticklabels(ticks_labels)
 
