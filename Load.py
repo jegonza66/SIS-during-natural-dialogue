@@ -451,29 +451,20 @@ def Estimulos(stim, Sujeto_1, Sujeto_2):
         Sujeto_1['Envelope'], Sujeto_1['Pitch'], Sujeto_1['Pitch_der'], Sujeto_1['Spectrogram']
     info = Sujeto_1['info']
 
-    if stim == 'Envelope':
-        dstims_para_sujeto_1, dstims_para_sujeto_2 = (envelope_para_sujeto_1,), (envelope_para_sujeto_2,)
-    elif stim == 'Pitch':
-        dstims_para_sujeto_1, dstims_para_sujeto_2 = (pitch_para_sujeto_1,), (pitch_para_sujeto_2,)
-    elif stim == 'Pitch_der':
-        dstims_para_sujeto_1, dstims_para_sujeto_2 = (pitch_der_para_sujeto_1,), (pitch_der_para_sujeto_2,)
-    elif stim == 'Spectrogram':
-        dstims_para_sujeto_1, dstims_para_sujeto_2 = (spectrogram_para_sujeto_1,), (spectrogram_para_sujeto_2,)
-    elif stim == 'Envelope_Pitch':
-        dstims_para_sujeto_1, dstims_para_sujeto_2 = (envelope_para_sujeto_1, pitch_para_sujeto_1), (
-            envelope_para_sujeto_2, pitch_para_sujeto_2)
-    elif stim == 'Envelope_Spectrogram':
-        dstims_para_sujeto_1, dstims_para_sujeto_2 = (envelope_para_sujeto_1, spectrogram_para_sujeto_1), (
-            envelope_para_sujeto_2, spectrogram_para_sujeto_2)
-    elif stim == 'Pitch_Spectrogram':
-        dstims_para_sujeto_1, dstims_para_sujeto_2 = (pitch_para_sujeto_1, spectrogram_para_sujeto_1), (
-            pitch_para_sujeto_2, spectrogram_para_sujeto_2)
-    elif stim == 'Envelope_Pitch_Spectrogram':
-        dstims_para_sujeto_1, dstims_para_sujeto_2 = (envelope_para_sujeto_1, pitch_para_sujeto_1,
-                                                      spectrogram_para_sujeto_1), (
-                                                         envelope_para_sujeto_2, pitch_para_sujeto_2,
-                                                         spectrogram_para_sujeto_2)
-    else:
-        print('Invalid sitmulus: {}'.format(stim))
+    dfinal_para_sujeto_1 = []
+    dfinal_para_sujeto_2 = []
 
-    return dstims_para_sujeto_1, dstims_para_sujeto_2, info
+    for stimuli in stim.split('_'):
+        if stimuli == 'Envelope':
+            dstims_para_sujeto_1, dstims_para_sujeto_2 = envelope_para_sujeto_1, envelope_para_sujeto_2
+        elif stimuli == 'Pitch':
+            dstims_para_sujeto_1, dstims_para_sujeto_2 = pitch_para_sujeto_1, pitch_para_sujeto_2
+        elif stimuli == 'Pitch_der':
+            dstims_para_sujeto_1, dstims_para_sujeto_2 = pitch_der_para_sujeto_1, pitch_der_para_sujeto_2
+        elif stimuli == 'Spectrogram':
+            dstims_para_sujeto_1, dstims_para_sujeto_2 = spectrogram_para_sujeto_1, spectrogram_para_sujeto_2
+
+        dfinal_para_sujeto_1.append(dstims_para_sujeto_1)
+        dfinal_para_sujeto_2.append(dstims_para_sujeto_2)
+
+    return dfinal_para_sujeto_1, dfinal_para_sujeto_2, info
