@@ -10,8 +10,8 @@ import Processing
 import Simulation
 
 # Random permutations
-Statistical_test = False
-Run_permutations = False
+Statistical_test = True
+Run_permutations = True
 
 # Figures
 Display_Ind_Figures = False
@@ -20,7 +20,7 @@ Display_Total_Figures = False
 Save_Ind_Figures = True
 Save_Total_Figures = True
 
-Save_Final_Correlation = False
+Save_Final_Correlation = True
 
 # Define Parameters
 # Standarization
@@ -30,9 +30,9 @@ EEG_preprocess = 'Standarize'
 # Stimuli and EEG
 Stims_Order = ['Envelope', 'Pitch', 'Spectrogram', 'Phonemes']
 Stims = ['Envelope', 'Pitch', 'Envelope_Pitch']
-Stims = ['Envelope']
+Stims = ['Envelope_Pitch']
 Bands = ['Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All']
-Bands = ['Theta']
+Bands = ['Alpha']
 
 # Model parameters
 alphas_fname = 'saves/Alphas/Alphas_Trace{:.1f}_Corr0.025.pkl'.format(2 / 3)
@@ -125,10 +125,9 @@ for Band in Bands:
                                                                                          Stims_preprocess,
                                                                                          EEG_preprocess,
                                                                                          axis, porcent)
-                    # alpha = Alphas[Band][stim][sesion][sujeto]
-                    # if alpha == 'FAILED':
-                    #     alpha = np.mean([value for sesion_dict in Alphas[Band][stim].keys() for value in list(Alphas[Band][stim][sesion_dict].values()) if type(value) != str])
-                    alpha = 100
+                    alpha = Alphas[Band][stim][sesion][sujeto]
+                    if alpha == 'FAILED':
+                        alpha = np.mean([value for sesion_dict in Alphas[Band][stim].keys() for value in list(Alphas[Band][stim][sesion_dict].values()) if type(value) != str])
 
                     # Ajusto el modelo y guardo
                     Model = Models.Ridge(alpha)
