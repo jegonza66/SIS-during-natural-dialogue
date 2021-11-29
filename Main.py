@@ -13,7 +13,6 @@ import Simulation
 Statistical_test = True
 Run_permutations = True
 
-
 # Figures
 Display_Ind_Figures = False
 Display_Total_Figures = False
