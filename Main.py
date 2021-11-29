@@ -9,18 +9,21 @@ import Plot
 import Processing
 import Simulation
 
+from datetime import datetime
+startTime = datetime.now()
+
 # Random permutations
-Statistical_test = True
-Run_permutations = True
+Statistical_test = False
+Run_permutations = False
 
 # Figures
 Display_Ind_Figures = False
-Display_Total_Figures = False
+Display_Total_Figures = True
 
-Save_Ind_Figures = True
-Save_Total_Figures = True
+Save_Ind_Figures = False
+Save_Total_Figures = False
 
-Save_Final_Correlation = True
+Save_Final_Correlation = False
 
 # Define Parameters
 # Standarization
@@ -30,9 +33,9 @@ EEG_preprocess = 'Standarize'
 # Stimuli and EEG
 Stims_Order = ['Envelope', 'Pitch', 'Spectrogram', 'Phonemes']
 Stims = ['Envelope', 'Pitch', 'Envelope_Pitch']
-Stims = ['Envelope_Pitch']
+Stims = ['Envelope']
 Bands = ['Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All']
-Bands = ['Alpha']
+Bands = ['Theta']
 
 # Model parameters
 alphas_fname = 'saves/Alphas/Alphas_Trace{:.1f}_Corr0.025.pkl'.format(2 / 3)
@@ -96,7 +99,6 @@ for Band in Bands:
                 Prob_Corr_ronda_canales = np.ones((n_splits, info['nchan']))
                 Prob_Rmse_ronda_canales = np.ones((n_splits, info['nchan']))
 
-                Pesos_fake = np.zeros((n_splits, iteraciones, info['nchan'], sum(Len_Estimulos)), dtype=np.float16)
                 Correlaciones_fake = np.zeros((n_splits, iteraciones, info['nchan']))
                 Errores_fake = np.zeros((n_splits, iteraciones, info['nchan']))
 
@@ -273,3 +275,6 @@ for Band in Bands:
             f = open(save_path + '{}_EEG_{}.pkl'.format(stim, Band), 'wb')
             pickle.dump([Correlaciones_totales_sujetos, Canales_repetidos_corr_sujetos], f)
             f.close()
+
+
+print(datetime.now() - startTime)
