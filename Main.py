@@ -12,32 +12,38 @@ import Permutations
 from datetime import datetime
 startTime = datetime.now()
 
+# Define Parameters
+# Model parameters
+tmin, tmax = -0.6, -0.003
+sr = 128
+delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
+times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays))
+
+# Stimuli and EEG
+Stims_Order = ['Envelope', 'Pitch', 'Spectrogram', 'Phonemes']
+Stims = ['Envelope', 'Pitch', 'Envelope_Pitch']
+Stims = ['Envelope']
+Bands = ['Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All']
+Bands = ['Theta']
+
+# Standarization
+Stims_preprocess = 'Normalize'
+EEG_preprocess = 'Standarize'
+
 # Random permutations
 Statistical_test = False
 Run_permutations = False
 
 # Figures
 Display_Ind_Figures = False
-Display_Total_Figures = True
+Display_Total_Figures = False
 
-Save_Ind_Figures = False
-Save_Total_Figures = False
+Save_Ind_Figures = True
+Save_Total_Figures = True
 
-Save_Final_Correlation = False
+Save_Final_Correlation = True
 
-# Define Parameters
-# Standarization
-Stims_preprocess = 'Normalize'
-EEG_preprocess = 'Standarize'
-
-# Stimuli and EEG
-Stims_Order = ['Envelope', 'Pitch', 'Spectrogram', 'Phonemes']
-Stims = ['Envelope', 'Pitch', 'Envelope_Pitch']
-Stims = ['Envelope_Spectrogram']
-Bands = ['Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All']
-Bands = ['Theta']
-
-# Model parameters
+# Files
 alphas_fname = 'saves/Alphas/Alphas_Trace{:.1f}_Corr0.025.pkl'.format(2 / 3)
 try:
     f = open(alphas_fname, 'rb')
@@ -46,20 +52,35 @@ try:
 except:
     print('\n\nAlphas file not found.\n\n')
 
+Mean_Correlations_fname = 'saves/Ridge/Final_Correlation/tmin{}_tmax{}/Mean_Correlations.pkl'.format(tmin, tmax)
+try:
+    f = open(Mean_Correlations_fname, 'rb')
+    Mean_Correlations = pickle.load(f)
+    f.close()
+except:
+    print('\n\nMean_Correlations file not found\n\n')
+    Mean_Correlations = {}
+
 f = open('saves/Subjects_Pitch.pkl', 'rb')
 subjects_pitch = pickle.load(f)
 f.close()
 
-tmin, tmax = -0.6, -0.003
-sr = 128
-delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
-times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays))
 
 for Band in Bands:
     print('\n{}\n'.format(Band))
+    try:
+        Mean_correlations_Band = Mean_Correlations[Band]
+    except:
+        Mean_Correlations_Band = {}
+
     for stim in Stims:
         print('\n' + stim + '\n')
+        try:
+            Mean_correlations_Stim = Mean_Correlations[Band][stim]
+        except:
+            Mean_Correlations_Stim = {}
         # Paths
+        save_path = 'saves/Ridge/Final_Correlation/tmin{}_tmax{}/'.format(tmin, tmax)
         procesed_data_path = 'saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
         Run_graficos_path = 'gráficos/Ridge/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
             Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
@@ -70,6 +91,7 @@ for Band in Bands:
 
         # Start Run
         sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
+        # sesiones = [21]
         sujeto_total = 0
         for sesion in sesiones:
             print('Sesion {}'.format(sesion))
@@ -128,9 +150,10 @@ for Band in Bands:
                                                                                          Stims_preprocess,
                                                                                          EEG_preprocess,
                                                                                          axis, porcent)
-                    alpha = Alphas[Band][stim][sesion][sujeto]
-                    if alpha == 'FAILED':
-                        alpha = np.mean([value for sesion_dict in Alphas[Band][stim].keys() for value in list(Alphas[Band][stim][sesion_dict].values()) if type(value) != str])
+                    # alpha = Alphas[Band][stim][sesion][sujeto]
+                    # if alpha == 'FAILED':
+                    #     alpha = np.mean([value for sesion_dict in Alphas[Band][stim].keys() for value in list(Alphas[Band][stim][sesion_dict].values()) if type(value) != str])
+                    alpha = 100
 
                     # Ajusto el modelo y guardo
                     Model = Models.Ridge(alpha)
@@ -229,10 +252,10 @@ for Band in Bands:
                                               Corr_buenas_ronda_canal, Correlaciones_fake)
 
                 # Grafico cabezas y canales
-                Plot.plot_cabezas_canales(info.ch_names, info, sr, sesion, sujeto, Corr_promedio, Display_Ind_Figures,
+                Plot.plot_cabezas_canales(info.ch_names, info, sesion, sujeto, Corr_promedio, Display_Ind_Figures,
                                           info['nchan'], 'Correlación', Save_Ind_Figures, Run_graficos_path,
                                           Canales_sobrevivientes_corr)
-                Plot.plot_cabezas_canales(info.ch_names, info, sr, sesion, sujeto, Rmse_promedio, Display_Ind_Figures,
+                Plot.plot_cabezas_canales(info.ch_names, info, sesion, sujeto, Rmse_promedio, Display_Ind_Figures,
                                           info['nchan'], 'Rmse', Save_Ind_Figures, Run_graficos_path,
                                           Canales_sobrevivientes_rmse)
 
@@ -263,7 +286,7 @@ for Band in Bands:
                 sujeto_total += 1
 
         # Armo cabecita con correlaciones promedio entre sujetos
-        Plot.Cabezas_corr_promedio(Correlaciones_totales_sujetos, info, Display_Total_Figures, Save_Total_Figures,
+        Mean_Correlations[Band][stim] = Plot.Cabezas_corr_promedio(Correlaciones_totales_sujetos, info, Display_Total_Figures, Save_Total_Figures,
                                    Run_graficos_path, title='Correlation')
         Plot.Cabezas_corr_promedio(Rmse_totales_sujetos, info, Display_Total_Figures, Save_Total_Figures,
                                    Run_graficos_path,
@@ -281,6 +304,7 @@ for Band in Bands:
         # Grafico Pesos
         Plot.regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display_Total_Figures,
                                 Save_Total_Figures, Run_graficos_path, Len_Estimulos, stim, subjects_pitch, sujeto_total)
+
         # Plot.regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times,
         #                                                      Display_Total_Figures, Save_Total_Figures,
         #                                                      Run_graficos_path,
@@ -295,8 +319,7 @@ for Band in Bands:
                                               Save_Total_Figures, Run_graficos_path)
 
         # SAVE FINAL CORRELATION
-        if Save_Final_Correlation and sujeto_total == 17:
-            save_path = 'saves/Ridge/Final_Correlation/tmin{}_tmax{}/'.format(tmin, tmax)
+        if Save_Final_Correlation and sujeto_total == 18:
             try:
                 os.makedirs(save_path)
             except:
@@ -305,5 +328,8 @@ for Band in Bands:
             pickle.dump([Correlaciones_totales_sujetos, Canales_repetidos_corr_sujetos], f)
             f.close()
 
+            f = open(Mean_Correlations_fname, 'wb')
+            pickle.dump(Mean_Correlations, f)
+            f.close()
 
 print(datetime.now() - startTime)

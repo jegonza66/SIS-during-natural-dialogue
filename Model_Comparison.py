@@ -1,4 +1,3 @@
-
 import pickle
 import matplotlib.pyplot as plt
 import numpy as np
@@ -8,7 +7,6 @@ import pandas as pd
 import mne
 from scipy.spatial import ConvexHull
 
-alpha = 100
 tmin, tmax = -0.6, -0.003
 
 Run_graficos_path = 'gráficos/Model_Comparison/tmin{}_tmax{}/'.format(tmin, tmax)
@@ -19,7 +17,7 @@ Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All']
 Bands = ['Theta']
 for Band in Bands:
 
-    f = open('saves/Ridge/Final_Correlation/tmin{}_tmax{}/Envelope_EEG_{}.pkl'.format(tmin, tmax, Band),'rb')
+    f = open('saves/Ridge/Final_Correlation/tmin{}_tmax{}/Envelope_EEG_{}.pkl'.format(tmin, tmax, Band), 'rb')
     Corr_Envelope, Pass_Envelope = pickle.load(f)
     f.close()
 
@@ -28,7 +26,8 @@ for Band in Bands:
     f.close()
 
     f = open(
-        'saves/Ridge/Final_Correlation/tmin{}_tmax{}/Envelope_Pitch_Pitch_der_EEG_{}.pkl'.format(tmin, tmax, Band), 'rb')
+        'saves/Ridge/Final_Correlation/tmin{}_tmax{}/Envelope_Pitch_Pitch_der_EEG_{}.pkl'.format(tmin, tmax, Band),
+        'rb')
     Corr_Envelope_Pitch_Pitch_der, Pass_Envelope_Pitch_Pitch_der = pickle.load(f)
     f.close()
 
@@ -114,8 +113,6 @@ import matplotlib.pyplot as plt
 import os
 import seaborn as sn
 
-
-alpha = 100
 tmin, tmax = -0.6, -0.003
 
 Run_graficos_path = 'gráficos/Model_Comparison/tmin{}_tmax{}/'.format(tmin, tmax)
@@ -152,6 +149,42 @@ if Save_fig:
     plt.savefig(save_path_graficos + '{}.png'.format(stim))
     plt.savefig(save_path_graficos + '{}.svg'.format(stim))
 
+## Venn Diagrams
+from matplotlib_venn import venn2, venn2_circles, venn2_unweighted
+from matplotlib_venn import venn3, venn3_circles
+from matplotlib import pyplot as plt
+
+tmin, tmax = -0.6, -0.003
+
+f = open('saves/Ridge/Final_Correlation/tmin{}_tmax{}/Mean_Correlations.pkl'.format(tmin, tmax), 'rb')
+Mean_Correlations = pickle.load(f)
+f.close()
+
+Band = 'Theta'
+stims = ['Envelope', 'Pitch', 'Spectrogram']
+
+stims.append('{}_{}'.format(stims[0], stims[1]))
+stims.append('{}_{}'.format(stims[0], stims[2]))
+stims.append('{}_{}'.format(stims[1], stims[2]))
+stims.append('{}_{}_{}'.format(stims[0], stims[1], stims[2]))
+
+r2_1 = Mean_Correlations[Band][stims[0]][0]
+r2_2 = Mean_Correlations[Band][stims[1]][0]
+r2_3 = Mean_Correlations[Band][stims[2]][0]
+r2_12 = Mean_Correlations[Band][stims[3]][0]
+r2_13 = Mean_Correlations[Band][stims[4]][0]
+r2_23 = Mean_Correlations[Band][stims[5]][0]
+r2_123 = Mean_Correlations[Band][stims[6]][0]
+
+r2_int_12 = r2_1 + r2_2 - r2_12
+r2_int_13 = r2_1 + r2_3 - r2_13
+r2_int_23 = r2_2 + r2_3 - r2_23
+r2_int_123 = r2_123 + r2_1 + r2_2 + r2_3 - r2_12 - r2_13 - r2_23
+
+plt.figure()
+venn3(subsets=(r2_1, r2_2, r2_12, r2_3, r2_13, r2_23, r2_123), set_labels=(stims[0], stims[1], stims[2]),
+      set_colors=('purple', 'skyblue', 'pink'), alpha=0.5)
+
 ## Plot por subjects
 
 montage = mne.channels.make_standard_montage('biosemi128')
@@ -177,7 +210,8 @@ for Band in Bands:
     f.close()
 
     f = open(
-        'saves/Ridge/Final_Correlation/tmin{}_tmax{}/Envelope_Pitch_Pitch_der_EEG_{}.pkl'.format(tmin, tmax, Band), 'rb')
+        'saves/Ridge/Final_Correlation/tmin{}_tmax{}/Envelope_Pitch_Pitch_der_EEG_{}.pkl'.format(tmin, tmax, Band),
+        'rb')
     Corr_Envelope_Pitch_Pitch_der, Pass_Envelope_Pitch_Pitch_der = pickle.load(f)
     f.close()
 

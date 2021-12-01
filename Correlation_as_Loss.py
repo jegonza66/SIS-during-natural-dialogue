@@ -10,7 +10,6 @@ import Load
 import Models
 import Plot
 import Processing
-import Simulation
 
 from datetime import datetime
 

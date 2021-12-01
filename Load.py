@@ -90,6 +90,7 @@ class Trial_channel:
                              i + window_size <= len(envelope)])
         envelope = envelope.ravel().flatten()
         envelope = Processing.matriz_shifteada(envelope, self.delays)  # armo la matriz shifteada
+        self.envelope = envelope
 
         return np.array(envelope)
 
@@ -155,56 +156,68 @@ class Trial_channel:
 
         return np.array(pitch), np.array(pitch_der)
 
-    def f_shimmer(self):
+    def f_jitter_shimmer(self):
         smile = opensmile.Smile(
             feature_set=opensmile.FeatureSet.eGeMAPSv02,
             feature_level=opensmile.FeatureLevel.LowLevelDescriptors)
 
-        y = smile.process_file(self.wav_fname)
-        y.index = y.index.droplevel(0)
-        y.index = y.index.map(lambda x: x[0].total_seconds())
-
-        shimmer = y['shimmerLocaldB_sma3nz']
-        shimmer = np.array(np.repeat(shimmer, self.audio_sr * self.sampleStep))
-        shimmer = Processing.subsamplear(shimmer, 125)
-        shimmer = Processing.matriz_shifteada(shimmer, self.delays)
-        return shimmer
-
-    def f_jitter(self):
-        smile = opensmile.Smile(
-            feature_set=opensmile.FeatureSet.eGeMAPSv02,
-            feature_level=opensmile.FeatureLevel.LowLevelDescriptors)
         y = smile.process_file(self.wav_fname)
         y.index = y.index.droplevel(0)
         y.index = y.index.map(lambda x: x[0].total_seconds())
 
         jitter = y['jitterLocal_sma3nz']
-        jitter = np.array(np.repeat(jitter, self.audio_sr * self.sampleStep))
-        jitter = Processing.subsamplear(jitter, 125)
+        shimmer = y['shimmerLocaldB_sma3nz']
+
+        mcm = Funciones.minimo_comun_multiplo(len(jitter), len(self.envelope))
+        jitter = np.repeat(jitter, mcm / len(jitter))
+        jitter = Processing.subsamplear(jitter, mcm / len(self.envelope))
         jitter = Processing.matriz_shifteada(jitter, self.delays)
 
-        return jitter
+        mcm = Funciones.minimo_comun_multiplo(len(shimmer), len(self.envelope))
+        shimmer = np.repeat(shimmer, mcm / len(shimmer))
+        shimmer = Processing.subsamplear(shimmer, mcm / len(self.envelope))
+        shimmer = Processing.matriz_shifteada(shimmer, self.delays)
+
+        return jitter, shimmer
+
+    # def f_shimmer(self):
+    #     smile = opensmile.Smile(
+    #         feature_set=opensmile.FeatureSet.eGeMAPSv02,
+    #         feature_level=opensmile.FeatureLevel.LowLevelDescriptors)
+    #
+    #     y = smile.process_file(self.wav_fname)
+    #     y.index = y.index.droplevel(0)
+    #     y.index = y.index.map(lambda x: x[0].total_seconds())
+    #
+    #     shimmer = y['shimmerLocaldB_sma3nz']
+    #     mcm = Funciones.minimo_comun_multiplo(len(shimmer), len(self.envelope))
+    #     shimmer = np.repeat(shimmer, mcm / len(shimmer))
+    #     shimmer = Processing.subsamplear(shimmer, mcm / len(self.envelope))
+    #     shimmer = Processing.matriz_shifteada(shimmer, self.delays)
+    #
+    #     return shimmer
 
     def f_cssp(self):
         snd = parselmouth.Sound(self.wav_fname)
 
-        data = []
-        frame_length = 0.2
-        hop_length = 1/128
-        t1s = np.arange(0, snd.duration - frame_length, hop_length)
-        times = zip(t1s, t1s + frame_length)
+        cssp = self.envelope
+        # data = []
+        # frame_length = 0.2
+        # hop_length = 1/128
+        # t1s = np.arange(0, snd.duration - frame_length, hop_length)
+        # times = zip(t1s, t1s + frame_length)
+        #
+        # for t1, t2 in times:
+        #     powercepstrogram = call(snd.extract_part(t1, t2), "To PowerCepstrogram", 60, 0.0020001, 5000, 50)
+        #     cpps = call(powercepstrogram, "Get CPPS", "yes", 0.02, 0.0005, 60, 330, 0.05, "Parabolic", 0.001, 0,
+        #                 "Exponential decay", "Robust")
+        #     data.append(cpps)
+        #
+        # cssp = np.array(np.repeat(data, self.audio_sr * self.sampleStep))
+        # cssp = Processing.subsamplear(cssp, 125)
+        # cssp = Processing.matriz_shifteada(cssp, self.delays)
 
-        for t1, t2 in times:
-            powercepstrogram = call(snd.extract_part(t1, t2), "To PowerCepstrogram", 60, 0.0020001, 5000, 50)
-            cpps = call(powercepstrogram, "Get CPPS", "yes", 0.02, 0.0005, 60, 330, 0.05, "Parabolic", 0.001, 0,
-                        "Exponential decay", "Robust")
-            data.append(cpps)
-
-        data = np.array(np.repeat(data, self.audio_sr * self.sampleStep))
-        data = Processing.subsamplear(data, 125)
-        data = Processing.matriz_shifteada(data, self.delays)
-
-        return data
+        return cssp
 
     def f_spectrogram(self):
         wav = wavfile.read(self.wav_fname)[1]
@@ -231,8 +244,8 @@ class Trial_channel:
         channel['envelope'] = self.f_envelope()
         channel['pitch'], channel['pitch_der'] = self.load_pitch()
         channel['spectrogram'] = self.f_spectrogram()
-        channel['jitter'] = self.f_jitter()
-        channel['shimmer'] = self.f_shimmer()
+        channel['jitter'], channel['shimmer'] = self.f_jitter_shimmer()
+        # channel['shimmer'] = self.f_shimmer()
         channel['cssp'] = self.f_cssp()
         return channel
 
@@ -587,8 +600,8 @@ class Sesion_class:
                     stimuli_para_sujeto_1[stimuli_para_sujeto_1 == 0], stimuli_para_sujeto_2[
                         stimuli_para_sujeto_2 == 0] = self.valores_faltantes, self.valores_faltantes  # cambio 0s
 
-            Sujeto_1[stimuli] = stimuli_para_sujeto_1
-            Sujeto_2[stimuli] = stimuli_para_sujeto_2
+            Sujeto_1[stimuli] = stimuli_para_sujeto_2
+            Sujeto_2[stimuli] = stimuli_para_sujeto_1
 
         Sesion = {'Sujeto_1': Sujeto_1, 'Sujeto_2': Sujeto_2}
 
@@ -619,7 +632,7 @@ def Estimulos(stim, Sujeto_1, Sujeto_2):
     dfinal_para_sujeto_2 = []
 
     for stimuli in stim.split('_'):
-        dfinal_para_sujeto_1.append(Sujeto_1[stimuli])
-        dfinal_para_sujeto_2.append(Sujeto_2[stimuli])
+        dfinal_para_sujeto_1.append(Sujeto_2[stimuli])
+        dfinal_para_sujeto_2.append(Sujeto_1[stimuli])
 
     return dfinal_para_sujeto_1, dfinal_para_sujeto_2

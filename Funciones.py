@@ -1,6 +1,17 @@
 import numpy as np
 import pandas as pd
 
+def maximo_comun_divisor(a, b):
+    temporal = 0
+    while b != 0:
+        temporal = b
+        b = a % b
+        a = temporal
+    return a
+
+def minimo_comun_multiplo(a, b):
+    return (a * b) / maximo_comun_divisor(a, b)
+
 def f_loss_Corr(x, stim, y, alpha):
     return -np.corrcoef(np.dot(stim,x), y)[0, 1] + alpha*sum(abs(x))
 

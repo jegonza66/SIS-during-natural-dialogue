@@ -71,7 +71,7 @@ def plot_alphas(alphas, correlaciones, best_alpha_overall, lista_Rmse, linea, fi
     plt.suptitle(titulo, fontsize=18)
 
 
-def plot_cabezas_canales(channel_names, info, sr, sesion, sujeto, Valores_promedio_abs, Display,
+def plot_cabezas_canales(channel_names, info, sesion, sujeto, Valores_promedio, Display,
                          n_canales, name, Save, Run_graficos_path, Canales_sobrevivientes):
     if Display:
         plt.ion()
@@ -81,9 +81,11 @@ def plot_cabezas_canales(channel_names, info, sr, sesion, sujeto, Valores_promed
     # Grafico cabezas Correlaciones
     if len(Canales_sobrevivientes):
         fig, axs = plt.subplots(1, 2)
-        plt.suptitle("Sesion{} Sujeto{}".format(sesion, sujeto))
-        im = mne.viz.plot_topomap(Valores_promedio_abs, info, axes=axs[0], show=False, sphere=0.07, cmap='Greys',
-                                  vmin=Valores_promedio_abs.min(), vmax=Valores_promedio_abs.max())
+        plt.suptitle("Sesion{} Sujeto{}".format(sesion, sujeto), fontsize=19)
+        plt.title('{} = {:.3f} +/- {:.3f}'.format(Valores_promedio.mean(), Valores_promedio.std()),
+                  fontsize=19)
+        im = mne.viz.plot_topomap(Valores_promedio, info, axes=axs[0], show=False, sphere=0.07, cmap='Greys',
+                                  vmin=Valores_promedio.min(), vmax=Valores_promedio.max())
         surviving_channels_names = [channel_names[j] for j in Canales_sobrevivientes]
         mask = []
         for j in range(len(channel_names)):
@@ -98,19 +100,19 @@ def plot_cabezas_canales(channel_names, info, sr, sesion, sujeto, Valores_promed
                                                                          markersize=4))
 
         plt.colorbar(im[0], ax=[axs[0], axs[1]], shrink=0.85, label=name, orientation='horizontal',
-                     boundaries=np.linspace(Valores_promedio_abs.min().round(decimals=3),
-                                            Valores_promedio_abs.max().round(decimals=3), 100),
-                     ticks=[np.linspace(Valores_promedio_abs.min(), Valores_promedio_abs.max(), 9).round(decimals=3)])
+                     boundaries=np.linspace(Valores_promedio.min().round(decimals=3),
+                                            Valores_promedio.max().round(decimals=3), 100),
+                     ticks=[np.linspace(Valores_promedio.min(), Valores_promedio.max(), 9).round(decimals=3)])
 
     else:
         fig, ax = plt.subplots()
         plt.suptitle("Sesion{} Sujeto{}".format(sesion, sujeto))
-        im = mne.viz.plot_topomap(Valores_promedio_abs, info, axes=ax, show=False, sphere=0.07, cmap='Greys',
-                                  vmin=Valores_promedio_abs.min(), vmax=Valores_promedio_abs.max())
+        im = mne.viz.plot_topomap(Valores_promedio, info, axes=ax, show=False, sphere=0.07, cmap='Greys',
+                                  vmin=Valores_promedio.min(), vmax=Valores_promedio.max())
         plt.colorbar(im[0], ax=ax, shrink=0.85, label=name, orientation='horizontal',
-                     boundaries=np.linspace(Valores_promedio_abs.min().round(decimals=3),
-                                            Valores_promedio_abs.max().round(decimals=3), 100),
-                     ticks=[np.linspace(Valores_promedio_abs.min(), Valores_promedio_abs.max(), 9).round(decimals=3)])
+                     boundaries=np.linspace(Valores_promedio.min().round(decimals=3),
+                                            Valores_promedio.max().round(decimals=3), 100),
+                     ticks=[np.linspace(Valores_promedio.min(), Valores_promedio.max(), 9).round(decimals=3)])
         fig.tight_layout()
     if Save:
         save_path_cabezas = Run_graficos_path + 'Cabezas_canales/'
@@ -191,7 +193,7 @@ def plot_grafico_pesos(Display, sesion, sujeto, best_alpha, Pesos_promedio,
             ax.grid()
             ax.set_title('{}'.format(Stims_Order[i]))
 
-    fig.tight_layout()
+    # fig.tight_layout()
 
     if Save:
         save_path_graficos = Run_graficos_path + 'Individual weights/'
@@ -443,9 +445,9 @@ def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, 
 
         fig, axs = plt.subplots(2, 1, sharex=True, figsize=(6, 8), gridspec_kw={'height_ratios': [1, 3]})
 
-        im = axs[1].pcolormesh(times * 1000, np.arange(info['nchan']), mean_coefs - mean_coefs.mean(0), cmap='RdBu_r',
-                               vmin=-(mean_coefs - mean_coefs.mean(0)).max(),
-                               vmax=(mean_coefs - mean_coefs.mean(0)).max(), shading='gouraud')
+        im = axs[1].pcolormesh(times * 1000, np.arange(info['nchan']), mean_coefs, cmap='RdBu_r',
+                               vmin=-(mean_coefs).max(),
+                               vmax=(mean_coefs).max(), shading='gouraud')
         axs[1].set(xlabel='Time (ms)', ylabel='Channel')
         fig.colorbar(im, ax=axs[1], orientation='horizontal')
 

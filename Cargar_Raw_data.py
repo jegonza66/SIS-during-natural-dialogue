@@ -10,6 +10,9 @@ import parselmouth
 import opensmile
 from parselmouth.praat import call
 import librosa
+
+import Funciones
+
 ## PARAMETROS
 s = 21
 trial = 1
@@ -28,7 +31,8 @@ delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
 Band = None
 l_freq_eeg, h_freq_eeg = Processing.band_freq(Band)
 
-eeg_fname = "Datos/EEG/S" + str(s) + "/s" + str(s) + "-" + str(channel) + "-Trial" + str(trial) + "-Deci-Filter-Trim-ICA-Pruned.set"
+eeg_fname = "Datos/EEG/S" + str(s) + "/s" + str(s) + "-" + str(channel) + "-Trial" + str(
+    trial) + "-Deci-Filter-Trim-ICA-Pruned.set"
 eeg = mne.io.read_raw_eeglab(eeg_fname)
 eeg_freq = eeg.info.get("sfreq")
 info = eeg.info
@@ -38,7 +42,7 @@ if Band: eeg = eeg.filter(l_freq=l_freq_eeg, h_freq=h_freq_eeg, phase='minimum')
 # eeg = eeg.to_data_frame()
 # eeg = np.array(eeg)[:, 1:129]  # paso a array y tomo tiro la primer columna de tiempos
 
-eeg = np.array(eeg._data*1e6).transpose() # 1e6 es por el factor de scaling del eeg.to_data_frame()
+eeg = np.array(eeg._data * 1e6).transpose()  # 1e6 es por el factor de scaling del eeg.to_data_frame()
 
 # Downsample
 eeg = Processing.subsamplear(eeg, int(eeg_freq / sr))
@@ -142,7 +146,7 @@ norm.normalize_01(no_nan_pitch)
 norm.normalize_11(no_nan_pitch_der)
 no_nan_pitch_der -= no_nan_pitch_der.mean()
 
-pitch[~np.isnan(pitch)] =  no_nan_pitch
+pitch[~np.isnan(pitch)] = no_nan_pitch
 pitch_der[~np.isnan(pitch_der)] = no_nan_pitch_der
 
 pitch = np.array(np.repeat(pitch, audio_sr * sampleStep), dtype=float)
@@ -156,6 +160,7 @@ wav -= wav.mean()
 
 ## Spectrogram
 import librosa.display
+
 n_fft = 125
 hop_length = 125
 n_mels = 16
@@ -164,7 +169,7 @@ S = librosa.feature.melspectrogram(wav, sr=audio_sr, n_fft=n_fft, hop_length=hop
 S_DB = librosa.power_to_db(S, ref=np.max)
 
 plt.figure()
-librosa.display.specshow(S_DB,sr=audio_sr, hop_length=hop_length, x_axis='time', y_axis='mel', )
+librosa.display.specshow(S_DB, sr=audio_sr, hop_length=hop_length, x_axis='time', y_axis='mel', )
 plt.colorbar(format='%+2.0f dB')
 
 S_DB = S_DB.ravel().flatten()
@@ -189,17 +194,20 @@ plt.legend()
 ## SHIMMER
 smile = opensmile.Smile(
     feature_set=opensmile.FeatureSet.eGeMAPSv02,
-    feature_level=opensmile.FeatureLevel.LowLevelDescriptors)
+    feature_level=opensmile.FeatureLevel.LowLevelDescriptors,
+    sampling_rate=16000)
 
 y = smile.process_file(wav_fname)
 y.index = y.index.droplevel(0)
 y.index = y.index.map(lambda x: x[0].total_seconds())
 
 shimmer = y['shimmerLocaldB_sma3nz']
-shimmer = np.repeat(shimmer, np.ceil(audio_sr/len(shimmer)))
-shimmer = Processing.subsamplear(shimmer, len(shimmer)/16000)
 
-plt.figure(figsize=(16,4))
+mcm = Funciones.minimo_comun_multiplo(len(shimmer), len(envelope))
+shimmer = np.repeat(shimmer, mcm/len(shimmer))
+shimmer = Processing.subsamplear(shimmer, mcm/len(envelope))
+
+plt.figure(figsize=(16, 4))
 y['shimmerLocaldB_sma3nz'].plot(rot=45)
 plt.title('Shimmer')
 
@@ -208,14 +216,18 @@ plt.title('Shimmer')
 smile = opensmile.Smile(
     feature_set=opensmile.FeatureSet.eGeMAPSv02,
     feature_level=opensmile.FeatureLevel.LowLevelDescriptors)
+
 y = smile.process_file(wav_fname)
 y.index = y.index.droplevel(0)
 y.index = y.index.map(lambda x: x[0].total_seconds())
-
 jitter = y['jitterLocal_sma3nz']
 
-plt.figure(figsize=(16,4))
-y['jitterLocal_sma3nz'].plot(rot=45)
+mcm = Funciones.minimo_comun_multiplo(len(jitter), len(envelope))
+jitter = np.repeat(jitter, mcm/len(jitter))
+jitter = Processing.subsamplear(jitter, mcm/len(envelope))
+
+plt.figure(figsize=(16, 4))
+plt.plot(jitter)
 plt.title('Jitter')
 
 ## CSSP
@@ -224,7 +236,7 @@ snd = parselmouth.Sound(wav_fname)
 
 data = []
 frame_length = 0.2
-hop_length = 1/128
+hop_length = 1 / 128
 t1s = np.arange(0, snd.duration - frame_length, hop_length)
 times = zip(t1s, t1s + frame_length)
 
@@ -234,7 +246,13 @@ for t1, t2 in times:
                 "Exponential decay", "Robust")
     data.append(cpps)
 
-plt.figure(figsize=(16,4))
-plt.plot(data)
-plt.title('CPPS')
+data = np.array(np.repeat(data, audio_sr * sampleStep))
+data = Processing.subsamplear(data, 125)
+data = Processing.matriz_shifteada(data, delays)
 
+cssp = np.array(data)
+print(cssp.shape)
+
+plt.figure(figsize=(16, 4))
+plt.plot(cssp[:,0])
+plt.title('CPPS')
