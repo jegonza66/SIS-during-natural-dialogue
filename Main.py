@@ -33,7 +33,7 @@ EEG_preprocess = 'Standarize'
 # Stimuli and EEG
 Stims_Order = ['Envelope', 'Pitch', 'Spectrogram', 'Phonemes']
 Stims = ['Envelope', 'Pitch', 'Envelope_Pitch']
-Stims = ['Jitter']
+Stims = ['Envelope_Spectrogram']
 Bands = ['Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All']
 Bands = ['Theta']
 
@@ -70,7 +70,6 @@ for Band in Bands:
 
         # Start Run
         sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
-        sesiones = [21]
         sujeto_total = 0
         for sesion in sesiones:
             print('Sesion {}'.format(sesion))
