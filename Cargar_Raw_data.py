@@ -6,6 +6,9 @@ import mne
 from scipy import signal as sgn
 import Processing
 from numpy.fft import fft, fftfreq
+import parselmouth
+import opensmile
+from parselmouth.praat import call
 import librosa
 ## PARAMETROS
 s = 21
@@ -71,6 +74,9 @@ stride = 125
 envelope = np.array(
     [np.mean(envelope[i:i + window_size]) for i in range(0, len(envelope), stride) if i + window_size <= len(envelope)])
 envelope = envelope.ravel().flatten()
+
+plt.figure()
+plt.plot(envelope)
 
 ## PLOT spectre
 sp = fft(envelope)
@@ -179,3 +185,56 @@ plt.xlabel('Time [s]')
 # plt.xlim([41,43])
 plt.title('Scaled audio features')
 plt.legend()
+
+## SHIMMER
+smile = opensmile.Smile(
+    feature_set=opensmile.FeatureSet.eGeMAPSv02,
+    feature_level=opensmile.FeatureLevel.LowLevelDescriptors)
+
+y = smile.process_file(wav_fname)
+y.index = y.index.droplevel(0)
+y.index = y.index.map(lambda x: x[0].total_seconds())
+
+shimmer = y['shimmerLocaldB_sma3nz']
+shimmer = np.repeat(shimmer, np.ceil(audio_sr/len(shimmer)))
+shimmer = Processing.subsamplear(shimmer, len(shimmer)/16000)
+
+plt.figure(figsize=(16,4))
+y['shimmerLocaldB_sma3nz'].plot(rot=45)
+plt.title('Shimmer')
+
+## JITTER
+
+smile = opensmile.Smile(
+    feature_set=opensmile.FeatureSet.eGeMAPSv02,
+    feature_level=opensmile.FeatureLevel.LowLevelDescriptors)
+y = smile.process_file(wav_fname)
+y.index = y.index.droplevel(0)
+y.index = y.index.map(lambda x: x[0].total_seconds())
+
+jitter = y['jitterLocal_sma3nz']
+
+plt.figure(figsize=(16,4))
+y['jitterLocal_sma3nz'].plot(rot=45)
+plt.title('Jitter')
+
+## CSSP
+
+snd = parselmouth.Sound(wav_fname)
+
+data = []
+frame_length = 0.2
+hop_length = 1/128
+t1s = np.arange(0, snd.duration - frame_length, hop_length)
+times = zip(t1s, t1s + frame_length)
+
+for t1, t2 in times:
+    powercepstrogram = call(snd.extract_part(t1, t2), "To PowerCepstrogram", 60, 0.0020001, 5000, 50)
+    cpps = call(powercepstrogram, "Get CPPS", "yes", 0.02, 0.0005, 60, 330, 0.05, "Parabolic", 0.001, 0,
+                "Exponential decay", "Robust")
+    data.append(cpps)
+
+plt.figure(figsize=(16,4))
+plt.plot(data)
+plt.title('CPPS')
+

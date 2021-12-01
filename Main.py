@@ -33,7 +33,7 @@ EEG_preprocess = 'Standarize'
 # Stimuli and EEG
 Stims_Order = ['Envelope', 'Pitch', 'Spectrogram', 'Phonemes']
 Stims = ['Envelope', 'Pitch', 'Envelope_Pitch']
-Stims = ['Envelope']
+Stims = ['Jitter']
 Bands = ['Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All']
 Bands = ['Theta']
 
@@ -63,25 +63,27 @@ for Band in Bands:
         procesed_data_path = 'saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
         Run_graficos_path = 'gráficos/Ridge/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
             Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
+        Path_origial = 'saves/Ridge/Original/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
+            Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
         Path_it = 'saves/Ridge/Fake_it/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
             Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
 
         # Start Run
         sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
+        sesiones = [21]
         sujeto_total = 0
         for sesion in sesiones:
             print('Sesion {}'.format(sesion))
 
-            # LOAD DATA BY SUBJECT
-            Sujeto_1, Sujeto_2 = Load.Load_Data(sesion=sesion, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
-                                                procesed_data_path=procesed_data_path)
 
+            # LOAD DATA BY SUBJECT
+            Sujeto_1, Sujeto_2 = Load.Load_Data(sesion=sesion, stim=stim, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
+                                                procesed_data_path=procesed_data_path)
             # LOAD EEG BY SUBJECT
-            eeg_sujeto_1, eeg_sujeto_2 = Sujeto_1['EEG'], Sujeto_2['EEG']
+            eeg_sujeto_1, eeg_sujeto_2, info = Sujeto_1['EEG'], Sujeto_2['EEG'], Sujeto_1['info']
 
             # LOAD STIMULUS BY SUBJECT
-            dstims_para_sujeto_1, dstims_para_sujeto_2, info = Load.Estimulos(stim=stim, Sujeto_1=Sujeto_1,
-                                                                              Sujeto_2=Sujeto_2)
+            dstims_para_sujeto_1, dstims_para_sujeto_2 = Load.Estimulos(stim=stim, Sujeto_1=Sujeto_1, Sujeto_2=Sujeto_2)
             Len_Estimulos = [len(dstims_para_sujeto_1[i][0]) for i in range(len(dstims_para_sujeto_1))]
 
             for sujeto, eeg, dstims in zip((1, 2), (eeg_sujeto_1, eeg_sujeto_2),
@@ -90,26 +92,26 @@ for Band in Bands:
                 print('Sujeto {}'.format(sujeto))
                 # Separo los datos en 5 y tomo test set de 20% de datos con kfold (5 iteraciones)
                 Predicciones = {}
-                n_splits = 5
-                iteraciones = 3000
+                n_folds = 5
+                iteraciones = 1000
 
                 # Defino variables donde voy a guardar mil cosas
-                Pesos_ronda_canales = np.zeros((n_splits, info['nchan'], sum(Len_Estimulos)), dtype=np.float16)
+                Pesos_ronda_canales = np.zeros((n_folds, info['nchan'], sum(Len_Estimulos)), dtype=np.float16)
+                Corr_buenas_ronda_canal = np.zeros((n_folds, info['nchan']))
+                Rmse_buenos_ronda_canal = np.zeros((n_folds, info['nchan']))
 
-                Prob_Corr_ronda_canales = np.ones((n_splits, info['nchan']))
-                Prob_Rmse_ronda_canales = np.ones((n_splits, info['nchan']))
+                Pesos_fake = np.zeros((n_folds, iteraciones, info['nchan'], sum(Len_Estimulos)), dtype=np.float16)
+                Correlaciones_fake = np.zeros((n_folds, iteraciones, info['nchan']))
+                Errores_fake = np.zeros((n_folds, iteraciones, info['nchan']))
 
-                Correlaciones_fake = np.zeros((n_splits, iteraciones, info['nchan']))
-                Errores_fake = np.zeros((n_splits, iteraciones, info['nchan']))
-
-                Corr_buenas_ronda_canal = np.zeros((n_splits, info['nchan']))
-                Rmse_buenos_ronda_canal = np.zeros((n_splits, info['nchan']))
+                Prob_Corr_ronda_canales = np.ones((n_folds, info['nchan']))
+                Prob_Rmse_ronda_canales = np.ones((n_folds, info['nchan']))
 
                 Canales_repetidos_corr_sujeto = np.zeros(info['nchan'])
                 Canales_repetidos_rmse_sujeto = np.zeros(info['nchan'])
 
                 # Empiezo el KFold de test
-                kf_test = KFold(n_splits, shuffle=False)
+                kf_test = KFold(n_folds, shuffle=False)
                 for fold, (train_val_index, test_index) in enumerate(kf_test.split(eeg)):
                     eeg_train_val, eeg_test = eeg[train_val_index], eeg[test_index]
 
@@ -153,15 +155,16 @@ for Band in Bands:
                     if Statistical_test:
                         try:
                             f = open(
-                                Path_it + 'Pesos_fake_ronda_it_canal_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto),
+                                Path_it + 'Corr_Rmse_fake_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto),
                                 'rb')
-                            Pesos_fake = pickle.load(f)
+                            Correlaciones_fake, Errores_fake = pickle.load(f)
                             f.close()
                         except:
                             if Run_permutations:
-                                Simulation.simular_iteraciones_Ridge(alpha, iteraciones, sesion, sujeto, fold,
-                                                                     dstims_train_val, eeg_train_val, dstims_test, eeg_test,
-                                                                     Pesos_fake, Correlaciones_fake, Errores_fake)
+                                Pesos_fake, Correlaciones_fake, Errores_fake = \
+                                    Simulation.simular_iteraciones_Ridge(alpha, iteraciones, sesion, sujeto, fold,
+                                    dstims_train_val, eeg_train_val, dstims_test, eeg_test,
+                                    Pesos_fake, Correlaciones_fake, Errores_fake)
                             else:
                                 Statistical_test = False
 
@@ -173,9 +176,36 @@ for Band in Bands:
                         p_rmse = ((Rmse_fake < Rmse).sum(0) + 1) / (iteraciones + 1)
 
                         # Umbral de 5% y aplico Bonferroni (/128 Divido el umbral por el numero de intentos)
-                        umbral = 0.05 / 128
+                        umbral = 0.001
                         Prob_Corr_ronda_canales[fold][p_corr < umbral] = p_corr[p_corr < umbral]
                         Prob_Rmse_ronda_canales[fold][p_rmse < umbral] = p_rmse[p_rmse < umbral]
+
+                # Save permutations
+                if Run_permutations:
+                    try:
+                        os.makedirs(Path_it)
+                    except:
+                        pass
+                    f = open(Path_it + 'Corr_Rmse_fake_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto), 'wb')
+                    pickle.dump([Correlaciones_fake, Errores_fake], f)
+                    f.close()
+
+                    f = open(Path_it + 'Pesos_fake_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto), 'wb')
+                    pickle.dump(Pesos_fake.mean(0), f)
+                    f.close()
+
+                # Save Model Weights and Correlations
+                try:
+                    os.makedirs(Path_origial)
+                except:
+                    pass
+                f = open(Path_origial + 'Corr_Rmse_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto), 'wb')
+                pickle.dump([Corr_buenas_ronda_canal, Rmse_buenos_ronda_canal], f)
+                f.close()
+
+                f = open(Path_origial + 'Pesos_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto), 'wb')
+                pickle.dump(Pesos_ronda_canales.mean(0), f)
+                f.close()
 
                 # Tomo promedio de pesos Corr y Rmse entre los folds para todos los canales
                 Pesos_promedio = Pesos_ronda_canales.mean(0)

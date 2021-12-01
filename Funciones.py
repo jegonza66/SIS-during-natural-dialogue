@@ -1,6 +1,12 @@
 import numpy as np
 import pandas as pd
 
+def f_loss_Corr(x, stim, y, alpha):
+    return -np.corrcoef(np.dot(stim,x), y)[0, 1] + alpha*sum(abs(x))
+
+def f_loss_Corr_ridge(x, stim, y):
+    return -np.corrcoef(np.dot(stim,x), y)[0, 1]
+
 def consecutive(data, stepsize=1):
     return np.split(data, np.where(np.diff(data) > stepsize)[0]+1)
 

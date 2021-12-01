@@ -30,7 +30,7 @@ EEG_preprocess = 'Standarize'
 # Stimuli and EEG
 Stims_Order = ['Envelope', 'Pitch', 'Spectrogram', 'Phonemes']
 Stims = ['Envelope', 'Pitch', 'Envelope_Pitch']
-Stims = ['Envelope_Envelope']
+Stims = ['Envelope']
 Bands = ['Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All']
 Bands = ['Theta']
 
@@ -97,14 +97,12 @@ for Band in Bands:
                     print('\n\nFOLD {}'.format(fold))
                     eeg_train_val, eeg_test = eeg[train_val_index], eeg[test_index]
 
-                    predicted = np.zeros(eeg_train_val.shape)
-
                     # ENTRENO
                     for i, stim in enumerate(list(dstims)):
                         stim_train = [stim[train_val_index]]
                         stim_test = [stim[test_index]]
 
-                        eeg_train_val = eeg_train_val - predicted
+                        eeg_train_val = eeg_train_val
 
                         axis = 0
                         porcent = 5
@@ -164,14 +162,16 @@ for Band in Bands:
                         # plt.plot(eeg_test[:,0])
                         # plt.plot(predicted_final[:,0])
 
-                        Rcorr = np.array(
-                            [np.corrcoef(eeg_test[:, ii].ravel(), np.array(predicted_final[:, ii]).ravel())[0, 1] for ii
-                             in range(eeg_test.shape[1])])
-                        # Corr_buenas_ronda_canal[fold] = Rcorr
+                    predicted_final /= len(dstims_para_sujeto_1)
 
-                        # Calculo Error y guardo
-                        Rmse = np.array(np.sqrt(np.power((predicted_final - eeg_test), 2).mean(0)))
-                        # Rmse_buenos_ronda_canal[fold] = Rmse
+                    Rcorr = np.array(
+                        [np.corrcoef(eeg_test[:, ii].ravel(), np.array(predicted_final[:, ii]).ravel())[0, 1] for ii
+                         in range(eeg_test.shape[1])])
+                    # Corr_buenas_ronda_canal[fold] = Rcorr
 
-                        print('\n\nCorrelacion')
-                        print(np.mean(Rcorr))
+                    # Calculo Error y guardo
+                    Rmse = np.array(np.sqrt(np.power((predicted_final - eeg_test), 2).mean(0)))
+                    # Rmse_buenos_ronda_canal[fold] = Rmse
+
+                    print('\n\nCorrelacion')
+                    print(np.mean(Rcorr))

@@ -8,6 +8,9 @@ import scipy.io.wavfile as wavfile
 from scipy import signal as sgn
 import platform
 from praatio import pitch_and_intensity
+import opensmile
+import parselmouth
+from parselmouth.praat import call
 import Processing
 import Funciones
 
@@ -16,7 +19,7 @@ class Trial_channel:
 
     def __init__(
             self, s=21, trial=1, channel=1, Band='All',
-            sr=128, tmin=-0.6, tmax=-0.003, valores_faltantes_pitch=0,
+            sr=128, tmin=-0.6, tmax=-0.003, valores_faltantes=0,
             Causal_filter_EEG=True, Env_Filter=False
     ):
 
@@ -29,7 +32,7 @@ class Trial_channel:
         self.audio_sr = 16000
         self.tmin, self.tmax = tmin, tmax
         self.delays = - np.arange(np.floor(tmin * self.sr), np.ceil(tmax * self.sr), dtype=int)
-        self.valores_faltantes_pitch = valores_faltantes_pitch
+        self.valores_faltantes = valores_faltantes
         self.sex = sex_list[(s - 21) * 2 + channel - 1]
         self.Causal_filter_EEG = Causal_filter_EEG
         self.Env_Filter = Env_Filter
@@ -116,12 +119,12 @@ class Trial_channel:
     def load_pitch(self):
         read_file = pd.read_csv(self.pitch_fname)
 
-        time = np.array(read_file['time'])
+        # time = np.array(read_file['time'])
         pitch = np.array(read_file['pitch'])
-        intensity = np.array(read_file['intensity'])
+        # intensity = np.array(read_file['intensity'])
 
         pitch[pitch == '--undefined--'] = np.nan
-        pitch = np.array(pitch, dtype=float)
+        pitch = np.array(pitch, dtype=np.float32)
 
         pitch_der = []
         for i in range(len(pitch) - 1):
@@ -131,26 +134,77 @@ class Trial_channel:
             except:
                 pitch_der.append(None)
         pitch_der.append(None)
-        pitch_der = np.array(pitch_der, dtype=float)
+        pitch_der = np.array(pitch_der, dtype=np.float32)
 
-        if self.valores_faltantes_pitch == None:
+        if self.valores_faltantes == None:
             pitch = pitch[~np.isnan(pitch)]
             pitch_der = pitch_der[~np.isnan(pitch_der)]
-        elif np.isfinite(self.valores_faltantes_pitch):
-            pitch[np.isnan(pitch)] = np.float(self.valores_faltantes_pitch)
-            pitch_der[np.isnan(pitch_der)] = np.float(self.valores_faltantes_pitch)
+        elif np.isfinite(self.valores_faltantes):
+            pitch[np.isnan(pitch)] = np.float(self.valores_faltantes)
+            pitch_der[np.isnan(pitch_der)] = np.float(self.valores_faltantes)
         else:
-            print('Invalid missing value for pitch {}'.format(self.valores_faltantes_pitch) + '\nMust be finite.')
+            print('Invalid missing value for pitch {}'.format(self.valores_faltantes) + '\nMust be finite.')
 
-        pitch = np.array(np.repeat(pitch, self.audio_sr * self.sampleStep), dtype=float)
+        pitch = np.array(np.repeat(pitch, self.audio_sr * self.sampleStep), dtype=np.float32)
         pitch = Processing.subsamplear(pitch, 125)
         pitch = Processing.matriz_shifteada(pitch, self.delays)
 
-        pitch_der = np.array(np.repeat(pitch_der, self.audio_sr * self.sampleStep), dtype=float)
+        pitch_der = np.array(np.repeat(pitch_der, self.audio_sr * self.sampleStep), dtype=np.float32)
         pitch_der = Processing.subsamplear(pitch_der, 125)
         pitch_der = Processing.matriz_shifteada(pitch_der, self.delays)
 
         return np.array(pitch), np.array(pitch_der)
+
+    def f_shimmer(self):
+        smile = opensmile.Smile(
+            feature_set=opensmile.FeatureSet.eGeMAPSv02,
+            feature_level=opensmile.FeatureLevel.LowLevelDescriptors)
+
+        y = smile.process_file(self.wav_fname)
+        y.index = y.index.droplevel(0)
+        y.index = y.index.map(lambda x: x[0].total_seconds())
+
+        shimmer = y['shimmerLocaldB_sma3nz']
+        shimmer = np.array(np.repeat(shimmer, self.audio_sr * self.sampleStep))
+        shimmer = Processing.subsamplear(shimmer, 125)
+        shimmer = Processing.matriz_shifteada(shimmer, self.delays)
+        return shimmer
+
+    def f_jitter(self):
+        smile = opensmile.Smile(
+            feature_set=opensmile.FeatureSet.eGeMAPSv02,
+            feature_level=opensmile.FeatureLevel.LowLevelDescriptors)
+        y = smile.process_file(self.wav_fname)
+        y.index = y.index.droplevel(0)
+        y.index = y.index.map(lambda x: x[0].total_seconds())
+
+        jitter = y['jitterLocal_sma3nz']
+        jitter = np.array(np.repeat(jitter, self.audio_sr * self.sampleStep))
+        jitter = Processing.subsamplear(jitter, 125)
+        jitter = Processing.matriz_shifteada(jitter, self.delays)
+
+        return jitter
+
+    def f_cssp(self):
+        snd = parselmouth.Sound(self.wav_fname)
+
+        data = []
+        frame_length = 0.2
+        hop_length = 1/128
+        t1s = np.arange(0, snd.duration - frame_length, hop_length)
+        times = zip(t1s, t1s + frame_length)
+
+        for t1, t2 in times:
+            powercepstrogram = call(snd.extract_part(t1, t2), "To PowerCepstrogram", 60, 0.0020001, 5000, 50)
+            cpps = call(powercepstrogram, "Get CPPS", "yes", 0.02, 0.0005, 60, 330, 0.05, "Parabolic", 0.001, 0,
+                        "Exponential decay", "Robust")
+            data.append(cpps)
+
+        data = np.array(np.repeat(data, self.audio_sr * self.sampleStep))
+        data = Processing.subsamplear(data, 125)
+        data = Processing.matriz_shifteada(data, self.delays)
+
+        return data
 
     def f_spectrogram(self):
         wav = wavfile.read(self.wav_fname)[1]
@@ -177,24 +231,28 @@ class Trial_channel:
         channel['envelope'] = self.f_envelope()
         channel['pitch'], channel['pitch_der'] = self.load_pitch()
         channel['spectrogram'] = self.f_spectrogram()
+        channel['jitter'] = self.f_jitter()
+        channel['shimmer'] = self.f_shimmer()
+        channel['cssp'] = self.f_cssp()
         return channel
 
 
 class Sesion_class:
-    def __init__(self, sesion=21, Band='All', sr=128, tmin=-0.53, tmax=-0.003,
-                 valores_faltantes_pitch=0, Causal_filter_EEG=True, Env_Filter=False,
+    def __init__(self, sesion=21, stim='Envelope', Band='All', sr=128, tmin=-0.6, tmax=-0.003,
+                 valores_faltantes=0, Causal_filter_EEG=True, Env_Filter=False,
                  situacion='Escucha', Calculate_pitch=False,
-                 procesed_data_path='saves/Preprocesed_Data/'
+                 procesed_data_path='saves/Preprocesed_Data/tmin{}_tmax{}/'.format(-0.6, -0.003)
                  ):
 
         self.sesion = sesion
+        self.stim = stim
         self.Band = Band
         self.l_freq_eeg, self.h_freq_eeg = Processing.band_freq(Band)
         self.sr = sr
         self.tmin, self.tmax = tmin, tmax
         self.delays = - np.arange(np.floor(tmin * self.sr), np.ceil(tmax * self.sr), dtype=int)
         self.l_freq_eeg, self.h_freq_eeg = Processing.band_freq(Band)
-        self.valores_faltantes_pitch = valores_faltantes_pitch
+        self.valores_faltantes = valores_faltantes
         self.Causal_filter_EEG = Causal_filter_EEG
         self.Env_Filter = Env_Filter
         self.situacion = situacion
@@ -208,12 +266,18 @@ class Sesion_class:
         pitch_para_sujeto_1 = pd.DataFrame()
         pitch_der_para_sujeto_1 = pd.DataFrame()
         spectrogram_para_sujeto_1 = pd.DataFrame()
+        jitter_para_sujeto_1 = pd.DataFrame()
+        shimmer_para_sujeto_1 = pd.DataFrame()
+        cssp_para_sujeto_1 = pd.DataFrame()
 
         eeg_sujeto_2 = pd.DataFrame()
         envelope_para_sujeto_2 = pd.DataFrame()
         pitch_para_sujeto_2 = pd.DataFrame()
         pitch_der_para_sujeto_2 = pd.DataFrame()
         spectrogram_para_sujeto_2 = pd.DataFrame()
+        jitter_para_sujeto_2 = pd.DataFrame()
+        shimmer_para_sujeto_2 = pd.DataFrame()
+        cssp_para_sujeto_2 = pd.DataFrame()
 
         run = True
         trial = 1
@@ -223,37 +287,43 @@ class Sesion_class:
                 if self.Calculate_pitch:
                     Trial_channel(s=self.sesion, trial=trial, channel=1,
                                   Band=self.Band, sr=self.sr, tmin=self.tmin, tmax=self.tmax,
-                                  valores_faltantes_pitch=self.valores_faltantes_pitch,
+                                  valores_faltantes=self.valores_faltantes,
                                   Causal_filter_EEG=self.Causal_filter_EEG,
                                   Env_Filter=self.Env_Filter).f_calculate_pitch()
                     Trial_channel(s=self.sesion, trial=trial, channel=2,
                                   Band=self.Band, sr=self.sr, tmin=self.tmin, tmax=self.tmax,
-                                  valores_faltantes_pitch=self.valores_faltantes_pitch,
+                                  valores_faltantes=self.valores_faltantes,
                                   Causal_filter_EEG=self.Causal_filter_EEG,
                                   Env_Filter=self.Env_Filter).f_calculate_pitch()
 
                 Trial_channel_1 = Trial_channel(s=self.sesion, trial=trial, channel=1,
                                                 Band=self.Band, sr=self.sr, tmin=self.tmin, tmax=self.tmax,
-                                                valores_faltantes_pitch=self.valores_faltantes_pitch,
+                                                valores_faltantes=self.valores_faltantes,
                                                 Causal_filter_EEG=self.Causal_filter_EEG,
                                                 Env_Filter=self.Env_Filter).load_trial()
 
                 Trial_channel_2 = Trial_channel(s=self.sesion, trial=trial, channel=2,
                                                 Band=self.Band, sr=self.sr, tmin=self.tmin, tmax=self.tmax,
-                                                valores_faltantes_pitch=self.valores_faltantes_pitch,
+                                                valores_faltantes=self.valores_faltantes,
                                                 Causal_filter_EEG=self.Causal_filter_EEG,
                                                 Env_Filter=self.Env_Filter).load_trial()
 
                 # Cargo data
                 eeg_trial_sujeto_1, envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1, \
-                pitch_der_trial_para_sujeto_1, spectrogram_trial_para_sujeto_1 = \
+                pitch_der_trial_para_sujeto_1, spectrogram_trial_para_sujeto_1, jitter_trial_para_sujeto_1,\
+                shimmer_trial_para_sujeto_1, cssp_trial_para_sujeto_1 \
+                    = \
                     Trial_channel_1['eeg'], Trial_channel_2['envelope'], Trial_channel_2['pitch'], \
-                    Trial_channel_2['pitch_der'], Trial_channel_2['spectrogram']
+                    Trial_channel_2['pitch_der'], Trial_channel_2['spectrogram'], Trial_channel_2['jitter'],\
+                    Trial_channel_2['shimmer'], Trial_channel_2['cssp']
 
                 eeg_trial_sujeto_2, envelope_trial_para_sujeto_2, pitch_trial_para_sujeto_2, \
-                pitch_der_trial_para_sujeto_2, spectrogram_trial_para_sujeto_2 = \
+                pitch_der_trial_para_sujeto_2, spectrogram_trial_para_sujeto_2, jitter_trial_para_sujeto_2,\
+                shimmer_trial_para_sujeto_2, cssp_trial_para_sujeto_2 \
+                    = \
                     Trial_channel_2['eeg'], Trial_channel_1['envelope'], Trial_channel_1['pitch'], \
-                    Trial_channel_1['pitch_der'], Trial_channel_1['spectrogram']
+                    Trial_channel_1['pitch_der'], Trial_channel_1['spectrogram'], Trial_channel_1['jitter'],\
+                    Trial_channel_1['shimmer'], Trial_channel_1['cssp']
 
                 momentos_sujeto_1_trial = Processing.labeling(self.sesion, trial, canal_hablante=2, sr=self.sr)
                 momentos_sujeto_2_trial = Processing.labeling(self.sesion, trial, canal_hablante=1, sr=self.sr)
@@ -264,38 +334,53 @@ class Sesion_class:
             if run:
                 # Igualar largos
                 eeg_trial_sujeto_1, envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1, \
-                pitch_der_trial_para_sujeto_1, spectrogram_trial_para_sujeto_1, \
-                momentos_sujeto_1_trial = Funciones.igualar_largos(
-                    eeg_trial_sujeto_1, envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1,
-                    pitch_der_trial_para_sujeto_1, spectrogram_trial_para_sujeto_1, momentos_sujeto_1_trial)
+                pitch_der_trial_para_sujeto_1, spectrogram_trial_para_sujeto_1, jitter_trial_para_sujeto_1,\
+                shimmer_trial_para_sujeto_1, cssp_trial_para_sujeto_1, momentos_sujeto_1_trial \
+                    = Funciones.igualar_largos(eeg_trial_sujeto_1, envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1,
+                    pitch_der_trial_para_sujeto_1, spectrogram_trial_para_sujeto_1, jitter_trial_para_sujeto_1,\
+                    shimmer_trial_para_sujeto_1, cssp_trial_para_sujeto_1,momentos_sujeto_1_trial)
 
                 eeg_trial_sujeto_2, envelope_trial_para_sujeto_2, pitch_trial_para_sujeto_2, \
-                pitch_der_trial_para_sujeto_2, spectrogram_trial_para_sujeto_2, \
-                momentos_sujeto_2_trial = Funciones.igualar_largos(
+                pitch_der_trial_para_sujeto_2, spectrogram_trial_para_sujeto_2, jitter_trial_para_sujeto_2,\
+                shimmer_trial_para_sujeto_2, cssp_trial_para_sujeto_2, momentos_sujeto_2_trial \
+                    = Funciones.igualar_largos(
                     eeg_trial_sujeto_2, envelope_trial_para_sujeto_2, pitch_trial_para_sujeto_2,
-                    pitch_der_trial_para_sujeto_2, spectrogram_trial_para_sujeto_2, momentos_sujeto_2_trial)
+                    pitch_der_trial_para_sujeto_2, spectrogram_trial_para_sujeto_2, jitter_trial_para_sujeto_2,\
+                    shimmer_trial_para_sujeto_2, cssp_trial_para_sujeto_2, momentos_sujeto_2_trial)
 
                 # Preprocesamiento
                 eeg_trial_sujeto_1, envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1, \
-                pitch_der_trial_para_sujeto_1, spectrogram_trial_para_sujeto_1 = Processing.preproc(
+                pitch_der_trial_para_sujeto_1, spectrogram_trial_para_sujeto_1, jitter_trial_para_sujeto_1,\
+                    shimmer_trial_para_sujeto_1, cssp_trial_para_sujeto_1 \
+                    = Processing.preproc(
                     momentos_sujeto_1_trial, self.delays, self.situacion, eeg_trial_sujeto_1,
                     envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1, pitch_der_trial_para_sujeto_1,
-                    spectrogram_trial_para_sujeto_1)
+                    spectrogram_trial_para_sujeto_1, jitter_trial_para_sujeto_1, shimmer_trial_para_sujeto_1,
+                    cssp_trial_para_sujeto_1)
+
                 eeg_trial_sujeto_2, envelope_trial_para_sujeto_2, pitch_trial_para_sujeto_2, \
-                pitch_der_trial_para_sujeto_2, spectrogram_trial_para_sujeto_2 = Processing.preproc(
+                pitch_der_trial_para_sujeto_2, spectrogram_trial_para_sujeto_2, jitter_trial_para_sujeto_2,\
+                shimmer_trial_para_sujeto_2, cssp_trial_para_sujeto_2 \
+                    = Processing.preproc(
                     momentos_sujeto_2_trial, self.delays, self.situacion, eeg_trial_sujeto_2,
                     envelope_trial_para_sujeto_2, pitch_trial_para_sujeto_2, pitch_der_trial_para_sujeto_2,
-                    spectrogram_trial_para_sujeto_2)
+                    spectrogram_trial_para_sujeto_2, jitter_trial_para_sujeto_2, shimmer_trial_para_sujeto_2,
+                    cssp_trial_para_sujeto_2)
 
                 # Convierto a DF
                 eeg_trial_sujeto_1, envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1, \
-                pitch_der_trial_para_sujeto_1, spectrogram_trial_para_sujeto_1, eeg_trial_sujeto_2, \
+                pitch_der_trial_para_sujeto_1, spectrogram_trial_para_sujeto_1, jitter_trial_para_sujeto_1,\
+                shimmer_trial_para_sujeto_1, cssp_trial_para_sujeto_1, eeg_trial_sujeto_2, \
                 envelope_trial_para_sujeto_2, pitch_trial_para_sujeto_2, pitch_der_trial_para_sujeto_2, \
-                spectrogram_trial_para_sujeto_2 = Funciones.make_df(
+                spectrogram_trial_para_sujeto_2, jitter_trial_para_sujeto_2, shimmer_trial_para_sujeto_2, \
+                cssp_trial_para_sujeto_2 \
+                    = Funciones.make_df(
                     eeg_trial_sujeto_1, envelope_trial_para_sujeto_1, pitch_trial_para_sujeto_1,
-                    pitch_der_trial_para_sujeto_1, spectrogram_trial_para_sujeto_1, eeg_trial_sujeto_2,
+                    pitch_der_trial_para_sujeto_1, spectrogram_trial_para_sujeto_1, jitter_trial_para_sujeto_1,\
+                    shimmer_trial_para_sujeto_1, cssp_trial_para_sujeto_1, eeg_trial_sujeto_2,
                     envelope_trial_para_sujeto_2, pitch_trial_para_sujeto_2, pitch_der_trial_para_sujeto_2,
-                    spectrogram_trial_para_sujeto_2)
+                    spectrogram_trial_para_sujeto_2, jitter_trial_para_sujeto_2, shimmer_trial_para_sujeto_2,
+                    cssp_trial_para_sujeto_2)
 
                 # Adjunto a datos de sujeto
                 if len(eeg_trial_sujeto_1):
@@ -304,22 +389,33 @@ class Sesion_class:
                     pitch_para_sujeto_1 = pitch_para_sujeto_1.append(pitch_trial_para_sujeto_1)
                     pitch_der_para_sujeto_1 = pitch_der_para_sujeto_1.append(pitch_der_trial_para_sujeto_1)
                     spectrogram_para_sujeto_1 = spectrogram_para_sujeto_1.append(spectrogram_trial_para_sujeto_1)
+                    jitter_para_sujeto_1 = jitter_para_sujeto_1.append(jitter_trial_para_sujeto_1)
+                    shimmer_para_sujeto_1 = shimmer_para_sujeto_1.append(shimmer_trial_para_sujeto_1)
+                    cssp_para_sujeto_1 = cssp_para_sujeto_1.append(cssp_trial_para_sujeto_1)
+
                 if len(eeg_trial_sujeto_2):
                     eeg_sujeto_2 = eeg_sujeto_2.append(eeg_trial_sujeto_2)
                     envelope_para_sujeto_2 = envelope_para_sujeto_2.append(envelope_trial_para_sujeto_2)
                     pitch_para_sujeto_2 = pitch_para_sujeto_2.append(pitch_trial_para_sujeto_2)
                     pitch_der_para_sujeto_2 = pitch_der_para_sujeto_2.append(pitch_der_trial_para_sujeto_2)
                     spectrogram_para_sujeto_2 = spectrogram_para_sujeto_2.append(spectrogram_trial_para_sujeto_2)
+                    jitter_para_sujeto_2 = jitter_para_sujeto_2.append(jitter_trial_para_sujeto_2)
+                    shimmer_para_sujeto_2 = shimmer_para_sujeto_2.append(shimmer_trial_para_sujeto_2)
+                    cssp_para_sujeto_2 = cssp_para_sujeto_2.append(cssp_trial_para_sujeto_2)
 
                 trial += 1
         info = Trial_channel_1['info']
 
         # Convierto a array
         eeg_sujeto_1, envelope_para_sujeto_1, pitch_para_sujeto_1, pitch_der_para_sujeto_1, spectrogram_para_sujeto_1, \
-        eeg_sujeto_2, envelope_para_sujeto_2, pitch_para_sujeto_2, pitch_der_para_sujeto_2, spectrogram_para_sujeto_2 \
-            = Funciones.make_array(eeg_sujeto_1, envelope_para_sujeto_1, pitch_para_sujeto_1, pitch_der_para_sujeto_1,
-                                   spectrogram_para_sujeto_1, eeg_sujeto_2, envelope_para_sujeto_2, pitch_para_sujeto_2,
-                                   pitch_der_para_sujeto_2, spectrogram_para_sujeto_2)
+        jitter_para_sujeto_1, shimmer_para_sujeto_1, cssp_para_sujeto_1, \
+        eeg_sujeto_2, envelope_para_sujeto_2, pitch_para_sujeto_2, pitch_der_para_sujeto_2, spectrogram_para_sujeto_2, \
+        jitter_para_sujeto_2, shimmer_para_sujeto_2, cssp_para_sujeto_2 \
+            = Funciones.make_array(
+            eeg_sujeto_1, envelope_para_sujeto_1, pitch_para_sujeto_1, pitch_der_para_sujeto_1,
+            spectrogram_para_sujeto_1, jitter_para_sujeto_1, shimmer_para_sujeto_1, cssp_para_sujeto_1,
+            eeg_sujeto_2, envelope_para_sujeto_2, pitch_para_sujeto_2, pitch_der_para_sujeto_2,
+            spectrogram_para_sujeto_2, jitter_para_sujeto_2, shimmer_para_sujeto_2, cssp_para_sujeto_2)
 
         # Save_Preprocesed
         EEG_path = self.procesed_data_path + 'EEG/'
@@ -329,12 +425,20 @@ class Sesion_class:
         EEG_path += 'Sit_{}_Band_{}/'.format(self.situacion, self.Band)
         Envelope_path += 'Sit_{}/'.format(self.situacion)
         Pitch_path = self.procesed_data_path + 'Pitch/Sit_{}_Faltantes_{}/'.format(self.situacion,
-                                                                                   self.valores_faltantes_pitch)
+                                                                                   self.valores_faltantes)
         Pitch_der_path = self.procesed_data_path + 'Pitch_der/Sit_{}_Faltantes_{}/'.format(self.situacion,
-                                                                                           self.valores_faltantes_pitch)
+                                                                                           self.valores_faltantes)
         Spectrogram_path = self.procesed_data_path + 'Spectrogram/Sit_{}/'.format(self.situacion)
 
-        for path in [EEG_path, Envelope_path, Pitch_path, Pitch_der_path, Spectrogram_path]:
+        Jitter_path = self.procesed_data_path + 'Jitter/Sit_{}_Faltantes_{}/'.format(self.situacion,
+                                                                                   self.valores_faltantes)
+        Shimmer_path = self.procesed_data_path + 'Shimmer/Sit_{}_Faltantes_{}/'.format(self.situacion,
+                                                                                   self.valores_faltantes)
+        Cssp_path = self.procesed_data_path + 'Cssp/Sit_{}_Faltantes_{}/'.format(self.situacion,
+                                                                                   self.valores_faltantes)
+
+        for path in [EEG_path, Envelope_path, Pitch_path, Pitch_der_path, Spectrogram_path, Jitter_path, Shimmer_path,
+                     Cssp_path]:
             try:
                 os.makedirs(path)
             except:
@@ -360,75 +464,141 @@ class Sesion_class:
         pickle.dump([spectrogram_para_sujeto_1, spectrogram_para_sujeto_2], f)
         f.close()
 
+        f = open(Jitter_path + 'Sesion{}.pkl'.format(self.sesion), 'wb')
+        pickle.dump([jitter_para_sujeto_1, jitter_para_sujeto_2], f)
+        f.close()
+
+        f = open(Shimmer_path + 'Sesion{}.pkl'.format(self.sesion), 'wb')
+        pickle.dump([shimmer_para_sujeto_1, shimmer_para_sujeto_2], f)
+        f.close()
+
+        f = open(Cssp_path + 'Sesion{}.pkl'.format(self.sesion), 'wb')
+        pickle.dump([cssp_para_sujeto_1, cssp_para_sujeto_2], f)
+        f.close()
+
         f = open(self.procesed_data_path + 'EEG/info.pkl', 'wb')
         pickle.dump(info, f)
         f.close()
 
         Sujeto_1 = {'EEG': eeg_sujeto_1, 'Envelope': envelope_para_sujeto_2, 'Pitch': pitch_para_sujeto_2,
-                    'Pitch_der': pitch_der_para_sujeto_2, 'Spectrogram': spectrogram_para_sujeto_2, 'info': info}
+                    'Pitch_der': pitch_der_para_sujeto_2, 'Spectrogram': spectrogram_para_sujeto_2,
+                    'Jitter': jitter_para_sujeto_2, 'Shimmer': shimmer_para_sujeto_2, 'Cssp': cssp_para_sujeto_2, 'info': info}
         Sujeto_2 = {'EEG': eeg_sujeto_2, 'Envelope': envelope_para_sujeto_1, 'Pitch': pitch_para_sujeto_1,
-                    'Pitch_der': pitch_der_para_sujeto_1, 'Spectrogram': spectrogram_para_sujeto_1, 'info': info}
+                    'Pitch_der': pitch_der_para_sujeto_1, 'Spectrogram': spectrogram_para_sujeto_1,
+                    'Jitter': jitter_para_sujeto_1, 'Shimmer': shimmer_para_sujeto_1, 'Cssp': cssp_para_sujeto_1, 'info': info}
         Sesion = {'Sujeto_1': Sujeto_1, 'Sujeto_2': Sujeto_2}
 
         return Sesion
 
     def load_procesed(self):
+
         EEG_path = self.procesed_data_path + 'EEG/'
-        Envelope_path = self.procesed_data_path + 'Envelope/'
         if self.Band and self.Causal_filter_EEG: EEG_path += 'Causal_'
-        if self.Env_Filter: Envelope_path += self.Env_Filter + '_'
-        Envelope_path += 'Sit_{}/Sesion{}.pkl'.format(self.situacion, self.sesion)
         EEG_path += 'Sit_{}_Band_{}/Sesion{}.pkl'.format(self.situacion, self.Band, self.sesion)
 
         f = open(EEG_path, 'rb')
         eeg_sujeto_1, eeg_sujeto_2 = pickle.load(f)
         f.close()
 
-        f = open(Envelope_path, 'rb')
-        envelope_para_sujeto_1, envelope_para_sujeto_2 = pickle.load(f)
-        f.close()
-
-        f = open(self.procesed_data_path + 'Pitch/Sit_{}_Faltantes_{}/Sesion{}.pkl' \
-                 .format(self.situacion, self.valores_faltantes_pitch, self.sesion), 'rb')
-        pitch_para_sujeto_1, pitch_para_sujeto_2 = pickle.load(f)
-        f.close()
-
-        f = open(self.procesed_data_path + 'Pitch_der/Sit_{}_Faltantes_{}/Sesion{}.pkl' \
-                 .format(self.situacion, self.valores_faltantes_pitch, self.sesion), 'rb')
-        pitch_der_para_sujeto_1, pitch_der_para_sujeto_2 = pickle.load(f)
-        f.close()
-
-        f = open(self.procesed_data_path + 'Spectrogram/Sit_{}/Sesion{}.pkl'.format(self.situacion, self.sesion), 'rb')
-        spectrogram_para_sujeto_1, spectrogram_para_sujeto_2 = pickle.load(f)
-        f.close()
-
         f = open(self.procesed_data_path + 'EEG/info.pkl', 'rb')
         info = pickle.load(f)
         f.close()
 
-        if self.valores_faltantes_pitch == None:
-            pitch_para_sujeto_1, pitch_para_sujeto_2 = pitch_para_sujeto_1[pitch_para_sujeto_1 != 0], \
-                                                       pitch_para_sujeto_2[pitch_para_sujeto_2 != 0]  # saco 0s
-        elif not np.isfinite(self.valores_faltantes_pitch) and self.valores_faltantes_pitch:
-            pitch_para_sujeto_1[pitch_para_sujeto_1 == 0], pitch_para_sujeto_2[
-                pitch_para_sujeto_2 == 0] = self.valores_faltantes_pitch, self.valores_faltantes_pitch  # cambio 0s
-        elif np.isfinite(self.valores_faltantes_pitch) and self.valores_faltantes_pitch:
-            pitch_para_sujeto_1[pitch_para_sujeto_1 == 0], pitch_para_sujeto_2[
-                pitch_para_sujeto_2 == 0] = self.valores_faltantes_pitch, self.valores_faltantes_pitch  # cambio 0s
+        Sujeto_1 = {'EEG': eeg_sujeto_1, 'info': info}
+        Sujeto_2 = {'EEG': eeg_sujeto_2, 'info': info}
 
-        Sujeto_1 = {'EEG': eeg_sujeto_1, 'Envelope': envelope_para_sujeto_2, 'Pitch': pitch_para_sujeto_2,
-                    'Pitch_der': pitch_der_para_sujeto_2, 'Spectrogram': spectrogram_para_sujeto_2, 'info': info}
-        Sujeto_2 = {'EEG': eeg_sujeto_2, 'Envelope': envelope_para_sujeto_1, 'Pitch': pitch_para_sujeto_1,
-                    'Pitch_der': pitch_der_para_sujeto_1, 'Spectrogram': spectrogram_para_sujeto_1, 'info': info}
+        for stimuli in self.stim.split('_'):
+            if stimuli == 'Envelope':
+                Envelope_path = self.procesed_data_path + 'Envelope/'
+                if self.Env_Filter: Envelope_path += self.Env_Filter + '_'
+                Envelope_path += 'Sit_{}/Sesion{}.pkl'.format(self.situacion, self.sesion)
+
+                f = open(Envelope_path, 'rb')
+                stimuli_para_sujeto_1, stimuli_para_sujeto_2 = pickle.load(f)
+                f.close()
+
+            if stimuli == 'Pitch':
+                f = open(self.procesed_data_path + 'Pitch/Sit_{}_Faltantes_{}/Sesion{}.pkl' \
+                         .format(self.situacion, self.valores_faltantes, self.sesion), 'rb')
+                stimuli_para_sujeto_1, stimuli_para_sujeto_2 = pickle.load(f)
+                f.close()
+
+                if self.valores_faltantes == None:
+                    stimuli_para_sujeto_1, stimuli_para_sujeto_2 = stimuli_para_sujeto_1[stimuli_para_sujeto_1 != 0], \
+                                                               stimuli_para_sujeto_2[stimuli_para_sujeto_2 != 0]  # saco 0s
+                elif self.valores_faltantes:
+                    stimuli_para_sujeto_1[stimuli_para_sujeto_1 == 0], stimuli_para_sujeto_2[
+                        stimuli_para_sujeto_2 == 0] = self.valores_faltantes, self.valores_faltantes  # cambio 0s
+
+            if stimuli == 'Pitch_der':
+                f = open(self.procesed_data_path + 'Pitch_der/Sit_{}_Faltantes_{}/Sesion{}.pkl' \
+                         .format(self.situacion, self.valores_faltantes, self.sesion), 'rb')
+                stimuli_para_sujeto_1, stimuli_para_sujeto_2 = pickle.load(f)
+                f.close()
+
+                if self.valores_faltantes == None:
+                    stimuli_para_sujeto_1, stimuli_para_sujeto_2 = stimuli_para_sujeto_1[stimuli_para_sujeto_1 != 0], \
+                                                                   stimuli_para_sujeto_2[stimuli_para_sujeto_2 != 0]  # saco 0s
+                elif self.valores_faltantes:
+                    stimuli_para_sujeto_1[stimuli_para_sujeto_1 == 0], stimuli_para_sujeto_2[
+                        stimuli_para_sujeto_2 == 0] = self.valores_faltantes, self.valores_faltantes  # cambio 0s
+
+            if stimuli == 'Spectrogram':
+                f = open(self.procesed_data_path + 'Spectrogram/Sit_{}/Sesion{}.pkl'.format(self.situacion, self.sesion), 'rb')
+                stimuli_para_sujeto_1, stimuli_para_sujeto_2 = pickle.load(f)
+                f.close()
+
+            if stimuli == 'Jitter':
+                f = open(self.procesed_data_path + 'Jitter/Sit_{}_Faltantes_{}/Sesion{}.pkl' \
+                         .format(self.situacion, self.valores_faltantes, self.sesion), 'rb')
+                stimuli_para_sujeto_1, stimuli_para_sujeto_2 = pickle.load(f)
+                f.close()
+
+                if self.valores_faltantes == None:
+                    stimuli_para_sujeto_1, stimuli_para_sujeto_2 = stimuli_para_sujeto_1[stimuli_para_sujeto_1 != 0], \
+                                                               stimuli_para_sujeto_2[stimuli_para_sujeto_2 != 0]  # saco 0s
+                elif self.valores_faltantes:
+                    stimuli_para_sujeto_1[stimuli_para_sujeto_1 == 0], stimuli_para_sujeto_2[
+                        stimuli_para_sujeto_2 == 0] = self.valores_faltantes, self.valores_faltantes  # cambio 0s
+
+            if stimuli == 'Shimmer':
+                f = open(self.procesed_data_path + 'Shimmer/Sit_{}_Faltantes_{}/Sesion{}.pkl' \
+                         .format(self.situacion, self.valores_faltantes, self.sesion), 'rb')
+                stimuli_para_sujeto_1, stimuli_para_sujeto_2 = pickle.load(f)
+                f.close()
+
+                if self.valores_faltantes == None:
+                    stimuli_para_sujeto_1, stimuli_para_sujeto_2 = stimuli_para_sujeto_1[stimuli_para_sujeto_1 != 0], \
+                                                               stimuli_para_sujeto_2[stimuli_para_sujeto_2 != 0]  # saco 0s
+                elif self.valores_faltantes:
+                    stimuli_para_sujeto_1[stimuli_para_sujeto_1 == 0], stimuli_para_sujeto_2[
+                        stimuli_para_sujeto_2 == 0] = self.valores_faltantes, self.valores_faltantes  # cambio 0s
+
+            if stimuli == 'Cssp':
+                f = open(self.procesed_data_path + 'Cssp/Sit_{}_Faltantes_{}/Sesion{}.pkl' \
+                         .format(self.situacion, self.valores_faltantes, self.sesion), 'rb')
+                stimuli_para_sujeto_1, stimuli_para_sujeto_2 = pickle.load(f)
+                f.close()
+
+                if self.valores_faltantes == None:
+                    stimuli_para_sujeto_1, stimuli_para_sujeto_2 = stimuli_para_sujeto_1[stimuli_para_sujeto_1 != 0], \
+                                                               stimuli_para_sujeto_2[stimuli_para_sujeto_2 != 0]  # saco 0s
+                elif self.valores_faltantes:
+                    stimuli_para_sujeto_1[stimuli_para_sujeto_1 == 0], stimuli_para_sujeto_2[
+                        stimuli_para_sujeto_2 == 0] = self.valores_faltantes, self.valores_faltantes  # cambio 0s
+
+            Sujeto_1[stimuli] = stimuli_para_sujeto_1
+            Sujeto_2[stimuli] = stimuli_para_sujeto_2
+
         Sesion = {'Sujeto_1': Sujeto_1, 'Sujeto_2': Sujeto_2}
 
         return Sesion
 
 
-def Load_Data(sesion, Band, sr, tmin, tmax, procesed_data_path, situacion='Escucha', Causal_filter_EEG=True,
-              Env_Filter=False, valores_faltantes_pitch=0, Calculate_pitch=False):
-    Sesion_obj = Sesion_class(sesion=sesion, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
-                              valores_faltantes_pitch=valores_faltantes_pitch, Causal_filter_EEG=Causal_filter_EEG,
+def Load_Data(sesion, stim, Band, sr, tmin, tmax, procesed_data_path, situacion='Escucha', Causal_filter_EEG=True,
+              Env_Filter=False, valores_faltantes=0, Calculate_pitch=False):
+    Sesion_obj = Sesion_class(sesion=sesion, stim=stim, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
+                              valores_faltantes=valores_faltantes, Causal_filter_EEG=Causal_filter_EEG,
                               Env_Filter=Env_Filter, situacion=situacion, Calculate_pitch=Calculate_pitch,
                               procesed_data_path=procesed_data_path)
 
@@ -445,26 +615,11 @@ def Load_Data(sesion, Band, sr, tmin, tmax, procesed_data_path, situacion='Escuc
 
 
 def Estimulos(stim, Sujeto_1, Sujeto_2):
-    envelope_para_sujeto_1, pitch_para_sujeto_1, pitch_der_para_sujeto_1, spectrogram_para_sujeto_1 = \
-        Sujeto_2['Envelope'], Sujeto_2['Pitch'], Sujeto_2['Pitch_der'], Sujeto_2['Spectrogram']
-    envelope_para_sujeto_2, pitch_para_sujeto_2, pitch_der_para_sujeto_2, spectrogram_para_sujeto_2 = \
-        Sujeto_1['Envelope'], Sujeto_1['Pitch'], Sujeto_1['Pitch_der'], Sujeto_1['Spectrogram']
-    info = Sujeto_1['info']
-
     dfinal_para_sujeto_1 = []
     dfinal_para_sujeto_2 = []
 
     for stimuli in stim.split('_'):
-        if stimuli == 'Envelope':
-            dstims_para_sujeto_1, dstims_para_sujeto_2 = envelope_para_sujeto_1, envelope_para_sujeto_2
-        elif stimuli == 'Pitch':
-            dstims_para_sujeto_1, dstims_para_sujeto_2 = pitch_para_sujeto_1, pitch_para_sujeto_2
-        elif stimuli == 'Pitch_der':
-            dstims_para_sujeto_1, dstims_para_sujeto_2 = pitch_der_para_sujeto_1, pitch_der_para_sujeto_2
-        elif stimuli == 'Spectrogram':
-            dstims_para_sujeto_1, dstims_para_sujeto_2 = spectrogram_para_sujeto_1, spectrogram_para_sujeto_2
+        dfinal_para_sujeto_1.append(Sujeto_1[stimuli])
+        dfinal_para_sujeto_2.append(Sujeto_2[stimuli])
 
-        dfinal_para_sujeto_1.append(dstims_para_sujeto_1)
-        dfinal_para_sujeto_2.append(dstims_para_sujeto_2)
-
-    return dfinal_para_sujeto_1, dfinal_para_sujeto_2, info
+    return dfinal_para_sujeto_1, dfinal_para_sujeto_2
