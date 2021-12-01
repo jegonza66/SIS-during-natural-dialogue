@@ -7,7 +7,7 @@ import Load
 import Models
 import Plot
 import Processing
-import Simulation
+import Permutations
 
 from datetime import datetime
 startTime = datetime.now()
@@ -161,7 +161,7 @@ for Band in Bands:
                         except:
                             if Run_permutations:
                                 Pesos_fake, Correlaciones_fake, Errores_fake = \
-                                    Simulation.simular_iteraciones_Ridge(alpha, iteraciones, sesion, sujeto, fold,
+                                    Permutations.simular_iteraciones_Ridge(alpha, iteraciones, sesion, sujeto, fold,
                                     dstims_train_val, eeg_train_val, dstims_test, eeg_test,
                                     Pesos_fake, Correlaciones_fake, Errores_fake)
                             else:
