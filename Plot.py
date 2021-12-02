@@ -155,14 +155,14 @@ def plot_grafico_pesos(Display, sesion, sujeto, best_alpha, Pesos_promedio,
             spectrogram_weights = Pesos_promedio[:, sum(Len_Estimulos[j] for j in range(i)):sum(
                 Len_Estimulos[j] for j in range(i + 1))].mean(0)
             spectrogram_weights = spectrogram_weights.reshape(16, len(times))
-
+            
             im = ax.pcolormesh(times * 1000, np.arange(16), spectrogram_weights, cmap='RdBu_r',
                                vmin=-spectrogram_weights.max(), vmax=spectrogram_weights.max(), shading='gouraud')
 
-            Bands_center = librosa.mel_frequencies(n_mels=16, fmin=62, fmax=8000)
+            Bands_center = librosa.mel_frequencies(n_mels=18, fmin=62, fmax=8000)[1:-1]
             ax.set(xlabel='Time (ms)', ylabel='Hz')
             ticks_positions = np.arange(0, 16, 2)
-            ticks_labels = [int(Bands_center[i]) for i in np.arange(0, len(Bands_center), 2)]
+            ticks_labels = [int(Bands_center[i+1]) for i in np.arange(0, len(Bands_center-1), 2)]
             ax.set_yticks(ticks_positions)
             ax.set_yticklabels(ticks_labels)
 
@@ -363,11 +363,12 @@ def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display
                                       Len_Estimulos[j] for j in range(i + 1))].mean(0)
             spectrogram_weights = spectrogram_weights.reshape(16, len(times))
 
+
             im = ax.pcolormesh(times * 1000, np.arange(16), spectrogram_weights, cmap='RdBu_r',
                                vmin=-spectrogram_weights.max(), vmax=spectrogram_weights.max(), shading='gouraud')
-
-            Bands_center = librosa.mel_frequencies(n_mels=16, fmin=62, fmax=8000)
             ax.set(xlabel='Time (ms)', ylabel='Hz')
+
+            Bands_center = librosa.mel_frequencies(n_mels=18, fmin=62, fmax=8000)[1:-1]
             ticks_positions = np.arange(0,16,2)
             ticks_labels = [int(Bands_center[i]) for i in np.arange(0,len(Bands_center), 2)]
             ax.set_yticks(ticks_positions)

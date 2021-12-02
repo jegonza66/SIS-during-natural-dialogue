@@ -12,7 +12,7 @@ tmin, tmax = -0.6, -0.003
 Run_graficos_path = 'gráficos/Model_Comparison/tmin{}_tmax{}/'.format(tmin, tmax)
 Save_fig = True
 
-Stims_Order = ['Envelope', 'Pitch', 'Pitch_der', 'Spectrogram', 'Phonemes']
+Stims_Order = ['Envelope', 'Pitch', 'Spectrogram']
 Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All']
 Bands = ['Theta']
 for Band in Bands:
@@ -26,33 +26,34 @@ for Band in Bands:
     f.close()
 
     f = open(
-        'saves/Ridge/Final_Correlation/tmin{}_tmax{}/Envelope_Pitch_Pitch_der_EEG_{}.pkl'.format(tmin, tmax, Band),
-        'rb')
-    Corr_Envelope_Pitch_Pitch_der, Pass_Envelope_Pitch_Pitch_der = pickle.load(f)
+        'saves/Ridge/Final_Correlation/tmin{}_tmax{}/Spectrogram_EEG_{}.pkl'.format(tmin, tmax, Band), 'rb')
+    Corr_Spectrogram, Pass_Spectrogram = pickle.load(f)
     f.close()
 
     f = open(
-        'saves/Ridge/Final_Correlation/tmin{}_tmax{}/Pitch_der_EEG_{}.pkl'.format(tmin, tmax, Band), 'rb')
-    Corr_Pitch_der, Pass_Pitch_der = pickle.load(f)
+        'saves/Ridge/Final_Correlation/tmin{}_tmax{}/Envelope_Pitch_Spectrogram_EEG_{}.pkl'.format(tmin, tmax, Band),
+        'rb')
+    Corr_Envelope_Pitch_Spectrogram, Pass_Envelope_Pitch_Spectrogram = pickle.load(f)
     f.close()
+
 
     Corr_Envelope = Corr_Envelope.ravel()
     Corr_Pitch = Corr_Pitch.ravel()
-    Corr_Pitch_der = Corr_Pitch_der.ravel()
-    Corr_Envelope_Pitch_Pitch_der = Corr_Envelope_Pitch_Pitch_der.ravel()
+    Corr_Spectrogram = Corr_Spectrogram.ravel()
+    Corr_Envelope_Pitch_Spectrogram = Corr_Envelope_Pitch_Spectrogram.ravel()
 
     Pass_Envelope = Pass_Envelope.ravel()
     Pass_Pitch = Pass_Pitch.ravel()
-    Pass_Pitch_der = Pass_Pitch_der.ravel()
-    Pass_Envelope_Pitch_Pitch_der = Pass_Envelope_Pitch_Pitch_der.ravel()
+    Pass_Spectrogram = Pass_Spectrogram.ravel()
+    Pass_Envelope_Pitch_Spectrogram = Pass_Envelope_Pitch_Spectrogram.ravel()
 
-    Envelope_points = np.array([Corr_Envelope_Pitch_Pitch_der, Corr_Envelope]).transpose()
-    Pitch_points = np.array([Corr_Envelope_Pitch_Pitch_der, Corr_Pitch]).transpose()
-    Pitch_der_points = np.array([Corr_Envelope_Pitch_Pitch_der, Corr_Pitch_der]).transpose()
+    Envelope_points = np.array([Corr_Envelope_Pitch_Spectrogram, Corr_Envelope]).transpose()
+    Pitch_points = np.array([Corr_Envelope_Pitch_Spectrogram, Corr_Pitch]).transpose()
+    Spectrogram_points = np.array([Corr_Envelope_Pitch_Spectrogram, Corr_Spectrogram]).transpose()
 
     Envelope_hull = ConvexHull(Envelope_points)
     Pitch_hull = ConvexHull(Pitch_points)
-    Pitch_der_hull = ConvexHull(Pitch_der_points)
+    Spectrogram_hull = ConvexHull(Spectrogram_points)
 
     # PLOT
     plt.ion()
@@ -60,29 +61,29 @@ for Band in Bands:
     plt.title(Band)
 
     # Plot surviving
-    plt.plot(Corr_Envelope_Pitch_Pitch_der[Pass_Envelope != 0], Corr_Envelope[Pass_Envelope != 0], '.', color='C0',
+    plt.plot(Corr_Envelope_Pitch_Spectrogram[Pass_Envelope != 0], Corr_Envelope[Pass_Envelope != 0], '.', color='C0',
              label='Envelope', ms=2.5)
-    plt.plot(Corr_Envelope_Pitch_Pitch_der[Pass_Pitch != 0], Corr_Pitch[Pass_Pitch != 0], '.', color='C1', label='Pitch'
+    plt.plot(Corr_Envelope_Pitch_Spectrogram[Pass_Pitch != 0], Corr_Pitch[Pass_Pitch != 0], '.', color='C1', label='Pitch'
              , ms=2.5)
-    plt.plot(Corr_Envelope_Pitch_Pitch_der[Pass_Pitch_der != 0], Corr_Pitch_der[Pass_Pitch_der != 0], '.', color='C2',
-             label='Pitch derivate', ms=2.5)
+    plt.plot(Corr_Envelope_Pitch_Spectrogram[Pass_Spectrogram != 0], Corr_Spectrogram[Pass_Spectrogram != 0], '.', color='C2',
+             label='Spectrogram', ms=2.5)
 
     # Plot dead
-    plt.plot(Corr_Envelope_Pitch_Pitch_der[Pass_Envelope == 0], Corr_Envelope[Pass_Envelope == 0], '.', color='grey',
+    plt.plot(Corr_Envelope_Pitch_Spectrogram[Pass_Envelope == 0], Corr_Envelope[Pass_Envelope == 0], '.', color='grey',
              alpha=0.5, label='Perm. test failed', ms=2)
-    plt.plot(Corr_Envelope_Pitch_Pitch_der[Pass_Pitch == 0], Corr_Pitch[Pass_Pitch == 0], '.', color='grey', alpha=0.5,
+    plt.plot(Corr_Envelope_Pitch_Spectrogram[Pass_Pitch == 0], Corr_Pitch[Pass_Pitch == 0], '.', color='grey', alpha=0.5,
              label='Perm. test failed', ms=2)
-    plt.plot(Corr_Envelope_Pitch_Pitch_der[Pass_Pitch_der == 0], Corr_Pitch_der[Pass_Pitch_der == 0], '.', color='grey',
+    plt.plot(Corr_Envelope_Pitch_Spectrogram[Pass_Spectrogram == 0], Corr_Spectrogram[Pass_Spectrogram == 0], '.', color='grey',
              alpha=0.5, label='Perm. test failed', ms=2)
 
     plt.fill(Envelope_points[Envelope_hull.vertices, 0], Envelope_points[Envelope_hull.vertices, 1], color='C0',
              alpha=0.3, lw=0)
     plt.fill(Pitch_points[Pitch_hull.vertices, 0], Pitch_points[Pitch_hull.vertices, 1], color='C1', alpha=0.3, lw=0)
-    plt.fill(Pitch_der_points[Pitch_der_hull.vertices, 0], Pitch_der_points[Pitch_der_hull.vertices, 1], color='C2',
+    plt.fill(Spectrogram_points[Spectrogram_hull.vertices, 0], Spectrogram_points[Spectrogram_hull.vertices, 1], color='C2',
              alpha=0.3, lw=0)
 
     # Lines
-    plt.plot([plt.xlim()[0], 0.55], [plt.xlim()[0], 0.55], 'k--')
+    plt.plot([plt.xlim()[0], 0.7], [plt.xlim()[0], 0.7], 'k--', zorder = 0)
     xlimit, ylimit = plt.xlim(), plt.ylim()
     plt.hlines(0, xlimit[0], xlimit[1], color='grey', linestyle='dashed')
     plt.vlines(0, ylimit[0], ylimit[1], color='grey', linestyle='dashed')
@@ -141,13 +142,12 @@ ax.set_xticklabels(['All\n(0.1 - 40 Hz)', 'Delta\n(1 - 4 Hz)', 'Theta\n(4 - 8 Hz
 plt.tight_layout()
 
 if Save_fig:
-    save_path_graficos = Run_graficos_path
     try:
         os.makedirs(save_path_graficos)
     except:
         pass
-    plt.savefig(save_path_graficos + '{}.png'.format(stim))
-    plt.savefig(save_path_graficos + '{}.svg'.format(stim))
+    plt.savefig(Run_graficos_path + '{}.png'.format(stim))
+    plt.savefig(Run_graficos_path + '{}.svg'.format(stim))
 
 ## Venn Diagrams
 from matplotlib_venn import venn2, venn2_circles, venn2_unweighted
@@ -155,6 +155,9 @@ from matplotlib_venn import venn3, venn3_circles
 from matplotlib import pyplot as plt
 
 tmin, tmax = -0.6, -0.003
+
+Run_graficos_path = 'gráficos/Model_Comparison/tmin{}_tmax{}/Venn_Diagram'.format(tmin, tmax)
+Save_fig = True
 
 f = open('saves/Ridge/Final_Correlation/tmin{}_tmax{}/Mean_Correlations.pkl'.format(tmin, tmax), 'rb')
 Mean_Correlations = pickle.load(f)
@@ -168,23 +171,37 @@ stims.append('{}_{}'.format(stims[0], stims[2]))
 stims.append('{}_{}'.format(stims[1], stims[2]))
 stims.append('{}_{}_{}'.format(stims[0], stims[1], stims[2]))
 
-r2_1 = Mean_Correlations[Band][stims[0]][0]
-r2_2 = Mean_Correlations[Band][stims[1]][0]
-r2_3 = Mean_Correlations[Band][stims[2]][0]
-r2_12 = Mean_Correlations[Band][stims[3]][0]
-r2_13 = Mean_Correlations[Band][stims[4]][0]
-r2_23 = Mean_Correlations[Band][stims[5]][0]
-r2_123 = Mean_Correlations[Band][stims[6]][0]
+r2_1 = Mean_Correlations[Band][stims[0]][0]**2
+r2_2 = Mean_Correlations[Band][stims[1]][0]**2
+r2_3 = Mean_Correlations[Band][stims[2]][0]**2
+r2_12 = Mean_Correlations[Band][stims[3]][0]**2
+r2_13 = Mean_Correlations[Band][stims[4]][0]**2
+r2_23 = Mean_Correlations[Band][stims[5]][0]**2
+r2_123 = Mean_Correlations[Band][stims[6]][0]**2
 
-r2_int_12 = r2_1 + r2_2 - r2_12
-r2_int_13 = r2_1 + r2_3 - r2_13
-r2_int_23 = r2_2 + r2_3 - r2_23
 r2_int_123 = r2_123 + r2_1 + r2_2 + r2_3 - r2_12 - r2_13 - r2_23
+r2_int_12 = r2_1 + r2_2 - r2_12 - r2_int_123
+r2_int_13 = r2_1 + r2_3 - r2_13 - r2_int_123
+r2_int_23 = r2_2 + r2_3 - r2_23 - r2_int_123
+
+r2_1 = Mean_Correlations[Band][stims[0]][0]**2 - r2_int_123 - r2_int_12 - r2_int_13
+r2_2 = Mean_Correlations[Band][stims[1]][0]**2 - r2_int_123 - r2_int_12 - r2_int_23
+r2_3 = Mean_Correlations[Band][stims[2]][0]**2 - r2_int_123 - r2_int_13 - r2_int_23
+
 
 plt.figure()
-venn3(subsets=(r2_1, r2_2, r2_12, r2_3, r2_13, r2_23, r2_123), set_labels=(stims[0], stims[1], stims[2]),
-      set_colors=('purple', 'skyblue', 'pink'), alpha=0.5)
+venn3(subsets=(r2_1.round(2), r2_2.round(2), r2_int_12.round(2), r2_3.round(2), r2_int_13.round(2), r2_int_23.round(2),
+               r2_int_123.round(2)), set_labels=(stims[0], stims[1], stims[2]),
+      set_colors=('purple', 'skyblue', 'red'), alpha=0.5)
 
+plt.tight_layout()
+if Save_fig:
+    try:
+        os.makedirs(save_path_graficos)
+    except:
+        pass
+    plt.savefig(Run_graficos_path + '{}.png'.format(Band))
+    plt.savefig(Run_graficos_path + '{}.svg'.format(Band))
 ## Plot por subjects
 
 montage = mne.channels.make_standard_montage('biosemi128')
@@ -210,14 +227,14 @@ for Band in Bands:
     f.close()
 
     f = open(
-        'saves/Ridge/Final_Correlation/tmin{}_tmax{}/Envelope_Pitch_Pitch_der_EEG_{}.pkl'.format(tmin, tmax, Band),
+        'saves/Ridge/Final_Correlation/tmin{}_tmax{}/Envelope_Pitch_Spectrogram_EEG_{}.pkl'.format(tmin, tmax, Band),
         'rb')
-    Corr_Envelope_Pitch_Pitch_der, Pass_Envelope_Pitch_Pitch_der = pickle.load(f)
+    Corr_Envelope_Pitch_Spectrogram, Pass_Envelope_Pitch_Spectrogram = pickle.load(f)
     f.close()
 
     f = open(
-        'saves/Ridge/Final_Correlation/tmin{}_tmax{}/Pitch_der_EEG_{}.pkl'.format(tmin, tmax, Band), 'rb')
-    Corr_Pitch_der, Pass_Pitch_der = pickle.load(f)
+        'saves/Ridge/Final_Correlation/tmin{}_tmax{}/Spectrogram_EEG_{}.pkl'.format(tmin, tmax, Band), 'rb')
+    Corr_Spectrogram, Pass_Spectrogram = pickle.load(f)
     f.close()
 
     plt.ion()

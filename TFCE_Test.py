@@ -43,43 +43,44 @@ Len_Estimulos = [len(dstims_para_sujeto_1[i][0]) for i in range(len(dstims_para_
 permutations_folders_path_str = 'saves/Ridge/Fake_it/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}'.format(
     Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
 permutations_folders_path = pathlib.Path(permutations_folders_path_str)
-permutations_files = list(permutations_folders_path.glob('*'))
+permutations_files = list(permutations_folders_path.glob('Pesos*'))
 
 original_folders_path_str = 'saves/Ridge/Original/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}'.format(
     Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
 original_folders_path = pathlib.Path(original_folders_path_str)
-original_files = list(original_folders_path.glob('*'))
+original_files = list(original_folders_path.glob('Pesos*'))
 
 
-original_weights = np.zeros((len(permutations_files), info['chan'], sum(Len_Estimulos)))
-permutations_weights = np.zeros((len(permutations_files), info['chan'], sum(Len_Estimulos)))
+original_weights = np.zeros((len(original_files), info['nchan'], sum(Len_Estimulos)))
+permutations_weights = np.zeros((len(permutations_files), info['nchan'], sum(Len_Estimulos)))
 
 # Armo las matrices enteras para testear
 for subject, file in enumerate(original_files):
     f = open(file, 'rb')
     original_weights_subject = pickle.load(f)
-    original_weights[subject] = original_weights_subject
     f.close()
+    original_weights[subject] = original_weights_subject
+
 
 for subject, file in enumerate(permutations_files):
     f = open(file, 'rb')
     permutations_weights_subject = pickle.load(f)
-    permutations_weights[subject] = permutations_weights_subject
     f.close()
+    permutations_weights[subject] = permutations_weights_subject
 
 
 # Armo las matrices de t valores (Testeo)
-tt_original = np.zeros((info['chan'], sum(Len_Estimulos)))
-tt_permutations = np.zeros((n_iterations, info['chan'], sum(Len_Estimulos)))
+tt_original = np.zeros((info['nchan'], sum(Len_Estimulos)))
+tt_permutations = np.zeros((n_iterations, info['nchan'], sum(Len_Estimulos)))
 
 for channel in range(128):
     for delay in range(sum(Len_Estimulos)):
-        tt_original[channel, delay] = scipy.stats.ttest_1samp(original_weights[:, channel, delay], 0.0)
+        tt_original[channel, delay] = scipy.stats.ttest_1samp(original_weights[:, channel, delay], 0.0)[0]
 
 for permutation in n_iterations:
     for channel in range(128):
         for delay in range(sum(Len_Estimulos)):
-            tt_permutations[permutation, channel, delay] = scipy.stats.ttest_1samp(permutations_weights[:, channel, delay], 0.0)
+            tt_permutations[permutation, channel, delay] = scipy.stats.ttest_1samp(permutations_weights[:, channel, delay], 0.0)[0]
 
 
 ## TFCE TEST

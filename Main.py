@@ -21,7 +21,7 @@ times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.
 
 # Stimuli and EEG
 Stims_Order = ['Envelope', 'Pitch', 'Spectrogram', 'Phonemes']
-Stims = ['Envelope', 'Pitch', 'Envelope_Pitch']
+Stims = ['Spectrogram', 'Envelope_Pitch', 'Envelope_Spectrogram', 'Pitch_Spectrogram', 'Envelope_Pitch_Spectrogram']
 Stims = ['Envelope']
 Bands = ['Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All']
 Bands = ['Theta']
@@ -36,12 +36,12 @@ Run_permutations = False
 
 # Figures
 Display_Ind_Figures = False
-Display_Total_Figures = False
+Display_Total_Figures = True
 
-Save_Ind_Figures = True
-Save_Total_Figures = True
+Save_Ind_Figures = False
+Save_Total_Figures = False
 
-Save_Final_Correlation = True
+Save_Final_Correlation = False
 
 # Files
 alphas_fname = 'saves/Alphas/Alphas_Trace{:.1f}_Corr0.025.pkl'.format(2 / 3)
