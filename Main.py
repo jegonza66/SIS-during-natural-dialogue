@@ -285,8 +285,8 @@ for Band in Bands:
         # Armo cabecita con correlaciones promedio entre sujetos
         Mean_Correlations_Band[stim] = Plot.Cabezas_corr_promedio(Correlaciones_totales_sujetos, info, Display_Total_Figures, Save_Total_Figures,
                                    Run_graficos_path, title='Correlation')
-        if Display_Total_Figures: Plot.Cabezas_3d(Correlaciones_totales_sujetos, info, Display_Total_Figures, Save_Total_Figures,
-                                   Run_graficos_path, title='Correlation 3D')
+        Plot.Cabezas_3d(Correlaciones_totales_sujetos, info, Display_Total_Figures, Save_Total_Figures,
+                        Run_graficos_path, title='Correlation 3D')
         Plot.Cabezas_corr_promedio(Rmse_totales_sujetos, info, Display_Total_Figures, Save_Total_Figures,
                                    Run_graficos_path,
                                    title='Rmse')

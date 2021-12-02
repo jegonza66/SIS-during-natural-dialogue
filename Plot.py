@@ -340,8 +340,8 @@ def Cabezas_3d(Correlaciones_totales_sujetos, info, Display, Save, Run_graficos_
             os.makedirs(Run_graficos_path)
         except:
             pass
-        fig.savefig(Run_graficos_path + '{}_promedio.svg'.format(title))
-        fig.savefig(Run_graficos_path + '{}_promedio.png'.format(title))
+        fig.savefig(Run_graficos_path + '{}.svg'.format(title))
+        fig.savefig(Run_graficos_path + '{}.png'.format(title))
 
     return Correlaciones_promedio.mean(), Correlaciones_promedio.std()
 
