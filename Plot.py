@@ -6,6 +6,7 @@ from scipy import stats
 import scipy.signal as sgn
 import os
 import seaborn as sn
+import mne
 import pickle
 import Funciones
 import librosa
@@ -81,9 +82,8 @@ def plot_cabezas_canales(channel_names, info, sesion, sujeto, Valores_promedio, 
     # Grafico cabezas Correlaciones
     if len(Canales_sobrevivientes):
         fig, axs = plt.subplots(1, 2)
-        plt.suptitle("Sesion{} Sujeto{}".format(sesion, sujeto), fontsize=19)
-        plt.title('{} = {:.3f} +/- {:.3f}'.format(Valores_promedio.mean(), Valores_promedio.std()),
-                  fontsize=19)
+        plt.suptitle("Sesion{} Sujeto{}\n{} = {:.3f} +/- {:.3f}".format(sesion, sujeto, name, Valores_promedio.mean(),
+                                                                        Valores_promedio.std()), fontsize=19)
         im = mne.viz.plot_topomap(Valores_promedio, info, axes=axs[0], show=False, sphere=0.07, cmap='Greys',
                                   vmin=Valores_promedio.min(), vmax=Valores_promedio.max())
         surviving_channels_names = [channel_names[j] for j in Canales_sobrevivientes]
@@ -106,7 +106,8 @@ def plot_cabezas_canales(channel_names, info, sesion, sujeto, Valores_promedio, 
 
     else:
         fig, ax = plt.subplots()
-        plt.suptitle("Sesion{} Sujeto{}".format(sesion, sujeto))
+        plt.suptitle("Sesion{} Sujeto{}\n{} = {:.3f} +/- {:.3f}".format(sesion, sujeto, name, Valores_promedio.mean(),
+                                                                        Valores_promedio.std()), fontsize=19)
         im = mne.viz.plot_topomap(Valores_promedio, info, axes=ax, show=False, sphere=0.07, cmap='Greys',
                                   vmin=Valores_promedio.min(), vmax=Valores_promedio.max())
         plt.colorbar(im[0], ax=ax, shrink=0.85, label=name, orientation='horizontal',
@@ -310,6 +311,39 @@ def Cabezas_corr_promedio(Correlaciones_totales_sujetos, info, Display, Save, Ru
 
     return Correlaciones_promedio.mean(), Correlaciones_promedio.std()
 
+def Cabezas_3d(Correlaciones_totales_sujetos, info, Display, Save, Run_graficos_path, title):
+    Correlaciones_promedio = Correlaciones_totales_sujetos.mean(0)
+
+    if Display:
+        plt.ion()
+    else:
+        plt.ioff()
+
+    sample_data_folder = mne.datasets.sample.data_path()
+    subjects_dir = os.path.join(sample_data_folder, 'subjects')
+    sample_data_trans_file = os.path.join(sample_data_folder, 'MEG', 'sample',
+                                          'sample_audvis_raw-trans.fif')
+
+    evoked = mne.EvokedArray(np.array([Correlaciones_promedio, ]).transpose(), info)
+    field_map = mne.make_field_map(evoked, trans=sample_data_trans_file,
+                              subject='sample', subjects_dir=subjects_dir, ch_type='eeg',
+                              meg_surf='head')
+
+    fig = evoked.plot_field(field_map, time=0)
+    xy, im = mne.viz.snapshot_brain_montage(fig, info)
+    fig, ax = plt.subplots(figsize=(15, 10))
+    ax.set_title('Correlation', size='large')
+    ax.imshow(im)
+
+    if Save:
+        try:
+            os.makedirs(Run_graficos_path)
+        except:
+            pass
+        fig.savefig(Run_graficos_path + '{}_promedio.svg'.format(title))
+        fig.savefig(Run_graficos_path + '{}_promedio.png'.format(title))
+
+    return Correlaciones_promedio.mean(), Correlaciones_promedio.std()
 
 def Cabezas_canales_rep(Canales_repetidos_sujetos, info, Display, Save, Run_graficos_path, title):
     if Display:

@@ -11,7 +11,7 @@ import Funciones
 Display_figures_Trace = False
 Save_figures_Trace = True
 
-Stims = ['Envelope_Spectrogram', 'Pitch_Spectrogram', 'Envelope_Pitch_Spectrogram']
+Stims = ['Shimmer', 'Envelope_Shimmer', 'Pitch_Shimmer', 'Envelope_Pitch_Shimmer']
 Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All', (1, 15), (4, 6)]
 
 Trace_interval = 2 / 3

@@ -180,6 +180,7 @@ r2_23 = Mean_Correlations[Band][stims[5]][0]**2
 r2_123 = Mean_Correlations[Band][stims[6]][0]**2
 
 r2_int_123 = r2_123 + r2_1 + r2_2 + r2_3 - r2_12 - r2_13 - r2_23
+
 r2_int_12 = r2_1 + r2_2 - r2_12 - r2_int_123
 r2_int_13 = r2_1 + r2_3 - r2_13 - r2_int_123
 r2_int_23 = r2_2 + r2_3 - r2_23 - r2_int_123

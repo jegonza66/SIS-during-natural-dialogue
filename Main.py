@@ -21,9 +21,9 @@ times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.
 
 # Stimuli and EEG
 Stims_Order = ['Envelope', 'Pitch', 'Spectrogram', 'Phonemes']
-Stims = ['Spectrogram', 'Envelope_Pitch', 'Envelope_Spectrogram', 'Pitch_Spectrogram', 'Envelope_Pitch_Spectrogram']
+Stims = ['Envelope_Spectrogram', 'Pitch_Spectrogram', 'Envelope_Pitch_Spectrogram']
 Stims = ['Envelope']
-Bands = ['Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All']
+Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All', (4,6), (1,15)]
 Bands = ['Theta']
 
 # Standarization
@@ -36,12 +36,12 @@ Run_permutations = False
 
 # Figures
 Display_Ind_Figures = False
-Display_Total_Figures = True
+Display_Total_Figures = False
 
-Save_Ind_Figures = False
-Save_Total_Figures = False
+Save_Ind_Figures = True
+Save_Total_Figures = True
 
-Save_Final_Correlation = False
+Save_Final_Correlation = True
 
 # Files
 alphas_fname = 'saves/Alphas/Alphas_Trace{:.1f}_Corr0.025.pkl'.format(2 / 3)
@@ -65,20 +65,15 @@ f = open('saves/Subjects_Pitch.pkl', 'rb')
 subjects_pitch = pickle.load(f)
 f.close()
 
-
 for Band in Bands:
     print('\n{}\n'.format(Band))
     try:
-        Mean_correlations_Band = Mean_Correlations[Band]
+        Mean_Correlations_Band = Mean_Correlations[Band]
     except:
         Mean_Correlations_Band = {}
 
     for stim in Stims:
         print('\n' + stim + '\n')
-        try:
-            Mean_correlations_Stim = Mean_Correlations[Band][stim]
-        except:
-            Mean_Correlations_Stim = {}
         # Paths
         save_path = 'saves/Ridge/Final_Correlation/tmin{}_tmax{}/'.format(tmin, tmax)
         procesed_data_path = 'saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
@@ -150,10 +145,12 @@ for Band in Bands:
                                                                                          Stims_preprocess,
                                                                                          EEG_preprocess,
                                                                                          axis, porcent)
-                    # alpha = Alphas[Band][stim][sesion][sujeto]
-                    # if alpha == 'FAILED':
-                    #     alpha = np.mean([value for sesion_dict in Alphas[Band][stim].keys() for value in list(Alphas[Band][stim][sesion_dict].values()) if type(value) != str])
-                    alpha = 100
+                    try:
+                        alpha = Alphas[Band][stim][sesion][sujeto]
+                        if alpha == 'FAILED':
+                            alpha = np.mean([value for sesion_dict in Alphas[Band][stim].keys() for value in list(Alphas[Band][stim][sesion_dict].values()) if type(value) != str])
+                    except:
+                        alpha = 100
 
                     # Ajusto el modelo y guardo
                     Model = Models.Ridge(alpha)
@@ -286,8 +283,10 @@ for Band in Bands:
                 sujeto_total += 1
 
         # Armo cabecita con correlaciones promedio entre sujetos
-        Mean_Correlations[Band][stim] = Plot.Cabezas_corr_promedio(Correlaciones_totales_sujetos, info, Display_Total_Figures, Save_Total_Figures,
+        Mean_Correlations_Band[stim] = Plot.Cabezas_corr_promedio(Correlaciones_totales_sujetos, info, Display_Total_Figures, Save_Total_Figures,
                                    Run_graficos_path, title='Correlation')
+        if Display_Total_Figures: Plot.Cabezas_3d(Correlaciones_totales_sujetos, info, Display_Total_Figures, Save_Total_Figures,
+                                   Run_graficos_path, title='Correlation 3D')
         Plot.Cabezas_corr_promedio(Rmse_totales_sujetos, info, Display_Total_Figures, Save_Total_Figures,
                                    Run_graficos_path,
                                    title='Rmse')
@@ -319,6 +318,7 @@ for Band in Bands:
                                               Save_Total_Figures, Run_graficos_path)
 
         # SAVE FINAL CORRELATION
+        Mean_Correlations[Band] = Mean_Correlations_Band
         if Save_Final_Correlation and sujeto_total == 18:
             try:
                 os.makedirs(save_path)

@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Sep 22 22:38:25 2021
-
-@author: joaco
-"""
 import os
 import pickle
 import matplotlib.pyplot as plt
@@ -16,7 +10,7 @@ import Load
 import Models
 import Plot
 import Processing
-import Simulation
+import Permutations
 
 # WHAT TO DO
 Plot_EEG_PSD = False
@@ -47,9 +41,10 @@ alpha = 100
 # Stimuli and EEG
 Stims = ['Envelope', 'Pitch', 'Spectrogram', 'Envelope_Pitch_Spectrogram']
 Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All']
+Bands = ['Theta']
 
 stim = 'Envelope'
-Band = None
+Band = 'Theta'
 situacion = 'Escucha'
 tmin, tmax = -0.6, -0.003
 sr = 128
@@ -88,7 +83,7 @@ for sesion in sesiones:
             pitch_std.append(np.std(pitch))
     else:
         # LOAD DATA BY SUBJECT
-        Sujeto_1, Sujeto_2 = Load.Load_Data(sesion=sesion, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
+        Sujeto_1, Sujeto_2 = Load.Load_Data(sesion=sesion, stim=stim, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
                                             procesed_data_path=procesed_data_path, situacion=situacion)
         # LOAD EEG BY SUBJECT
         eeg_sujeto_1, eeg_sujeto_2 = Sujeto_1['EEG'], Sujeto_2['EEG']
@@ -164,7 +159,7 @@ for sesion in sesiones:
                         fmin, fmax = 0, 40
                         # SIMULACIONES PERMUTADAS PARA COMPARAR
                         toy_iterations = 10
-                        psd_rand_correlation = Simulation.simular_iteraciones_Ridge_plot(info, times, situacion, alpha,
+                        psd_rand_correlation = Permutations.simular_iteraciones_Ridge_plot(info, times, situacion, alpha,
                                                                                          toy_iterations, sesion, sujeto,
                                                                                          fold, dstims_train_val,
                                                                                          eeg_train_val, dstims_test,
