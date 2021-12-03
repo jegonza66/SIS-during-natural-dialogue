@@ -180,27 +180,10 @@ class Trial_channel:
 
         return jitter, shimmer
 
-    # def f_shimmer(self):
-    #     smile = opensmile.Smile(
-    #         feature_set=opensmile.FeatureSet.eGeMAPSv02,
-    #         feature_level=opensmile.FeatureLevel.LowLevelDescriptors)
-    #
-    #     y = smile.process_file(self.wav_fname)
-    #     y.index = y.index.droplevel(0)
-    #     y.index = y.index.map(lambda x: x[0].total_seconds())
-    #
-    #     shimmer = y['shimmerLocaldB_sma3nz']
-    #     mcm = Funciones.minimo_comun_multiplo(len(shimmer), len(self.envelope))
-    #     shimmer = np.repeat(shimmer, mcm / len(shimmer))
-    #     shimmer = Processing.subsamplear(shimmer, mcm / len(self.envelope))
-    #     shimmer = Processing.matriz_shifteada(shimmer, self.delays)
-    #
-    #     return shimmer
-
     def f_cssp(self):
-        snd = parselmouth.Sound(self.wav_fname)
-
         cssp = self.envelope
+
+        # snd = parselmouth.Sound(self.wav_fname)
         # data = []
         # frame_length = 0.2
         # hop_length = 1/128
@@ -245,7 +228,6 @@ class Trial_channel:
         channel['pitch'], channel['pitch_der'] = self.load_pitch()
         channel['spectrogram'] = self.f_spectrogram()
         channel['jitter'], channel['shimmer'] = self.f_jitter_shimmer()
-        # channel['shimmer'] = self.f_shimmer()
         channel['cssp'] = self.f_cssp()
         return channel
 
@@ -447,8 +429,7 @@ class Sesion_class:
                                                                                    self.valores_faltantes)
         Shimmer_path = self.procesed_data_path + 'Shimmer/Sit_{}_Faltantes_{}/'.format(self.situacion,
                                                                                    self.valores_faltantes)
-        Cssp_path = self.procesed_data_path + 'Cssp/Sit_{}_Faltantes_{}/'.format(self.situacion,
-                                                                                   self.valores_faltantes)
+        Cssp_path = self.procesed_data_path + 'Cssp/Sit_{}/'.format(self.situacion)
 
         for path in [EEG_path, Envelope_path, Pitch_path, Pitch_der_path, Spectrogram_path, Jitter_path, Shimmer_path,
                      Cssp_path]:
@@ -588,17 +569,9 @@ class Sesion_class:
                         stimuli_para_sujeto_2 == 0] = self.valores_faltantes, self.valores_faltantes  # cambio 0s
 
             if stimuli == 'Cssp':
-                f = open(self.procesed_data_path + 'Cssp/Sit_{}_Faltantes_{}/Sesion{}.pkl' \
-                         .format(self.situacion, self.valores_faltantes, self.sesion), 'rb')
+                f = open(self.procesed_data_path + 'Cssp/Sit_{}/Sesion{}.pkl'.format(self.situacion, self.sesion), 'rb')
                 stimuli_para_sujeto_1, stimuli_para_sujeto_2 = pickle.load(f)
                 f.close()
-
-                if self.valores_faltantes == None:
-                    stimuli_para_sujeto_1, stimuli_para_sujeto_2 = stimuli_para_sujeto_1[stimuli_para_sujeto_1 != 0], \
-                                                               stimuli_para_sujeto_2[stimuli_para_sujeto_2 != 0]  # saco 0s
-                elif self.valores_faltantes:
-                    stimuli_para_sujeto_1[stimuli_para_sujeto_1 == 0], stimuli_para_sujeto_2[
-                        stimuli_para_sujeto_2 == 0] = self.valores_faltantes, self.valores_faltantes  # cambio 0s
 
             Sujeto_1[stimuli] = stimuli_para_sujeto_2
             Sujeto_2[stimuli] = stimuli_para_sujeto_1

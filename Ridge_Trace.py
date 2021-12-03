@@ -11,7 +11,8 @@ import Funciones
 Display_figures_Trace = False
 Save_figures_Trace = True
 
-Stims = ['Shimmer', 'Envelope_Shimmer', 'Pitch_Shimmer', 'Envelope_Pitch_Shimmer']
+Stims = ['Jitter', 'Shimmer', 'Envelope_Shimmer', 'Pitch_Shimmer', 'Envelope_Pitch_Shimmer', 'Envelope_Jitter',
+         'Pitch_Jitter', 'Envelope_Pitch_Jitter', 'Jitter_Shimmer', 'Envelope_Jitter_Shimmer', 'Pitch_Jitter_Shimmer']
 Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All', (1, 15), (4, 6)]
 
 Trace_interval = 2 / 3
@@ -96,7 +97,7 @@ for Band in Bands:
                 Failed_Sesion = {}
 
             # LOAD DATA BY SUBJECT
-            Sujeto_1, Sujeto_2 = Load.Load_Data(sesion=sesion, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
+            Sujeto_1, Sujeto_2 = Load.Load_Data(sesion=sesion, stim=stim, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
                                                 procesed_data_path=procesed_data_path)
 
             # LOAD EEG BY SUBJECT
