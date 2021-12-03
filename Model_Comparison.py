@@ -12,9 +12,8 @@ tmin, tmax = -0.6, -0.003
 Run_graficos_path = 'gráficos/Model_Comparison/tmin{}_tmax{}/'.format(tmin, tmax)
 Save_fig = True
 
-Stims_Order = ['Envelope', 'Pitch', 'Spectrogram']
-Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All']
-Bands = ['Theta']
+Bands = ['Delta', 'Alpha', 'Beta_1', (4,6), (1,15)]
+# Bands = ['Theta']
 for Band in Bands:
 
     f = open('saves/Ridge/Final_Correlation/tmin{}_tmax{}/Envelope_EEG_{}.pkl'.format(tmin, tmax, Band), 'rb')
@@ -150,7 +149,6 @@ if Save_fig:
     plt.savefig(Run_graficos_path + '{}.svg'.format(stim))
 
 ## Venn Diagrams
-from matplotlib_venn import venn2, venn2_circles, venn2_unweighted
 from matplotlib_venn import venn3, venn3_circles
 from matplotlib import pyplot as plt
 
@@ -163,46 +161,48 @@ f = open('saves/Ridge/Final_Correlation/tmin{}_tmax{}/Mean_Correlations.pkl'.for
 Mean_Correlations = pickle.load(f)
 f.close()
 
-Band = 'Theta'
-stims = ['Envelope', 'Pitch', 'Spectrogram']
+Bands = ['Delta', 'Alpha', 'Beta_1', (4,6), (1,15)]
+for Band in Bands:
+    stims = ['Envelope', 'Pitch', 'Spectrogram']
 
-stims.append('{}_{}'.format(stims[0], stims[1]))
-stims.append('{}_{}'.format(stims[0], stims[2]))
-stims.append('{}_{}'.format(stims[1], stims[2]))
-stims.append('{}_{}_{}'.format(stims[0], stims[1], stims[2]))
+    stims.append('{}_{}'.format(stims[0], stims[1]))
+    stims.append('{}_{}'.format(stims[0], stims[2]))
+    stims.append('{}_{}'.format(stims[1], stims[2]))
+    stims.append('{}_{}_{}'.format(stims[0], stims[1], stims[2]))
 
-r2_1 = Mean_Correlations[Band][stims[0]][0]**2
-r2_2 = Mean_Correlations[Band][stims[1]][0]**2
-r2_3 = Mean_Correlations[Band][stims[2]][0]**2
-r2_12 = Mean_Correlations[Band][stims[3]][0]**2
-r2_13 = Mean_Correlations[Band][stims[4]][0]**2
-r2_23 = Mean_Correlations[Band][stims[5]][0]**2
-r2_123 = Mean_Correlations[Band][stims[6]][0]**2
+    r2_1 = Mean_Correlations[Band][stims[0]][0]**2
+    r2_2 = Mean_Correlations[Band][stims[1]][0]**2
+    r2_3 = Mean_Correlations[Band][stims[2]][0]**2
+    r2_12 = Mean_Correlations[Band][stims[3]][0]**2
+    r2_13 = Mean_Correlations[Band][stims[4]][0]**2
+    r2_23 = Mean_Correlations[Band][stims[5]][0]**2
+    r2_123 = Mean_Correlations[Band][stims[6]][0]**2
 
-r2_int_123 = r2_123 + r2_1 + r2_2 + r2_3 - r2_12 - r2_13 - r2_23
+    r2_int_123 = r2_123 + r2_1 + r2_2 + r2_3 - r2_12 - r2_13 - r2_23
 
-r2_int_12 = r2_1 + r2_2 - r2_12 - r2_int_123
-r2_int_13 = r2_1 + r2_3 - r2_13 - r2_int_123
-r2_int_23 = r2_2 + r2_3 - r2_23 - r2_int_123
+    r2_int_12 = r2_1 + r2_2 - r2_12 - r2_int_123
+    r2_int_13 = r2_1 + r2_3 - r2_13 - r2_int_123
+    r2_int_23 = r2_2 + r2_3 - r2_23 - r2_int_123
 
-r2_1 = Mean_Correlations[Band][stims[0]][0]**2 - r2_int_123 - r2_int_12 - r2_int_13
-r2_2 = Mean_Correlations[Band][stims[1]][0]**2 - r2_int_123 - r2_int_12 - r2_int_23
-r2_3 = Mean_Correlations[Band][stims[2]][0]**2 - r2_int_123 - r2_int_13 - r2_int_23
+    r2_1 = Mean_Correlations[Band][stims[0]][0]**2 - r2_int_123 - r2_int_12 - r2_int_13
+    r2_2 = Mean_Correlations[Band][stims[1]][0]**2 - r2_int_123 - r2_int_12 - r2_int_23
+    r2_3 = Mean_Correlations[Band][stims[2]][0]**2 - r2_int_123 - r2_int_13 - r2_int_23
 
 
-plt.figure()
-venn3(subsets=(r2_1.round(2), r2_2.round(2), r2_int_12.round(2), r2_3.round(2), r2_int_13.round(2), r2_int_23.round(2),
-               r2_int_123.round(2)), set_labels=(stims[0], stims[1], stims[2]),
-      set_colors=('purple', 'skyblue', 'red'), alpha=0.5)
+    plt.figure()
+    venn3(subsets=(r2_1.round(2), r2_2.round(2), r2_int_12.round(2), r2_3.round(2), r2_int_13.round(2), r2_int_23.round(2),
+                   r2_int_123.round(2)), set_labels=(stims[0], stims[1], stims[2]),
+          set_colors=('purple', 'skyblue', 'red'), alpha=0.5)
 
-plt.tight_layout()
-if Save_fig:
-    try:
-        os.makedirs(save_path_graficos)
-    except:
-        pass
-    plt.savefig(Run_graficos_path + '{}.png'.format(Band))
-    plt.savefig(Run_graficos_path + '{}.svg'.format(Band))
+    plt.tight_layout()
+    if Save_fig:
+        try:
+            os.makedirs(save_path_graficos)
+        except:
+            pass
+        plt.savefig(Run_graficos_path + '{}.png'.format(Band))
+        plt.savefig(Run_graficos_path + '{}.svg'.format(Band))
+
 ## Plot por subjects
 
 montage = mne.channels.make_standard_montage('biosemi128')

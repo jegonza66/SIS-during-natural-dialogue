@@ -8,7 +8,7 @@ import copy
 import matplotlib.pyplot as plt
 import Models
 
-def simular_iteraciones_Ridge(alpha, iteraciones, sesion, sujeto, fold, dstims_train_val, eeg_train_val,
+def simular_iteraciones_Ridge(Fake_Model, alpha, iteraciones, sesion, sujeto, fold, dstims_train_val, eeg_train_val,
                               dstims_test, eeg_test, Pesos_fake, Correlaciones_fake, Errores_fake):
     print("\nSesion {} - Sujeto {} - Fold {}".format(sesion, sujeto, fold + 1))
     for iteracion in np.arange(iteraciones):
@@ -17,7 +17,6 @@ def simular_iteraciones_Ridge(alpha, iteraciones, sesion, sujeto, fold, dstims_t
         np.random.shuffle(dstims_train_random)
 
         # Fit Model
-        Fake_Model = Models.Ridge(alpha)
         Fake_Model.fit(dstims_train_random, eeg_train_val)  # entreno el modelo
         Pesos_fake[fold, iteracion] = Fake_Model.coefs
 

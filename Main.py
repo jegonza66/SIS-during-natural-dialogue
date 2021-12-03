@@ -7,7 +7,6 @@ import Load
 import Models
 import Plot
 import Processing
-import Permutations
 
 from datetime import datetime
 startTime = datetime.now()
@@ -20,11 +19,10 @@ delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
 times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays))
 
 # Stimuli and EEG
-Stims_Order = ['Envelope', 'Pitch', 'Spectrogram', 'Phonemes']
-Stims = ['Envelope_Spectrogram', 'Pitch_Spectrogram', 'Envelope_Pitch_Spectrogram']
-Stims = ['Envelope']
-Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All', (4,6), (1,15)]
-Bands = ['Theta']
+Stims = ['Envelope', 'Pitch', 'Spectrogram', 'Envelope_Pitch', 'Envelope_Spectrogram', 'Pitch_Spectrogram', 'Envelope_Pitch_Spectrogram']
+# Stims = ['Envelope']
+Bands = ['Delta', 'Alpha', 'Beta_1', (4,6), (1,15)]
+# Bands = ['Theta']
 
 # Standarization
 Stims_preprocess = 'Normalize'
@@ -32,7 +30,6 @@ EEG_preprocess = 'Standarize'
 
 # Random permutations
 Statistical_test = False
-Run_permutations = False
 
 # Figures
 Display_Ind_Figures = False
@@ -116,9 +113,10 @@ for Band in Bands:
                 Corr_buenas_ronda_canal = np.zeros((n_folds, info['nchan']))
                 Rmse_buenos_ronda_canal = np.zeros((n_folds, info['nchan']))
 
-                Pesos_fake = np.zeros((n_folds, iteraciones, info['nchan'], sum(Len_Estimulos)), dtype=np.float16)
-                Correlaciones_fake = np.zeros((n_folds, iteraciones, info['nchan']))
-                Errores_fake = np.zeros((n_folds, iteraciones, info['nchan']))
+                if Statistical_test:
+                    Pesos_fake = np.zeros((n_folds, iteraciones, info['nchan'], sum(Len_Estimulos)), dtype=np.float16)
+                    Correlaciones_fake = np.zeros((n_folds, iteraciones, info['nchan']))
+                    Errores_fake = np.zeros((n_folds, iteraciones, info['nchan']))
 
                 Prob_Corr_ronda_canales = np.ones((n_folds, info['nchan']))
                 Prob_Rmse_ronda_canales = np.ones((n_folds, info['nchan']))
@@ -151,6 +149,7 @@ for Band in Bands:
                             alpha = np.mean([value for sesion_dict in Alphas[Band][stim].keys() for value in list(Alphas[Band][stim][sesion_dict].values()) if type(value) != str])
                     except:
                         alpha = 100
+                        print('Alpha missing. Ussing default value: {}'.format(alpha))
 
                     # Ajusto el modelo y guardo
                     Model = Models.Ridge(alpha)
@@ -179,13 +178,7 @@ for Band in Bands:
                             Correlaciones_fake, Errores_fake = pickle.load(f)
                             f.close()
                         except:
-                            if Run_permutations:
-                                Pesos_fake, Correlaciones_fake, Errores_fake = \
-                                    Permutations.simular_iteraciones_Ridge(alpha, iteraciones, sesion, sujeto, fold,
-                                    dstims_train_val, eeg_train_val, dstims_test, eeg_test,
-                                    Pesos_fake, Correlaciones_fake, Errores_fake)
-                            else:
-                                Statistical_test = False
+                            Statistical_test = False
 
                         # TEST ESTADISTICO
                         Rcorr_fake = Correlaciones_fake[fold]
@@ -194,24 +187,10 @@ for Band in Bands:
                         p_corr = ((Rcorr_fake > Rcorr).sum(0) + 1) / (iteraciones + 1)
                         p_rmse = ((Rmse_fake < Rmse).sum(0) + 1) / (iteraciones + 1)
 
-                        # Umbral de 5% y aplico Bonferroni (/128 Divido el umbral por el numero de intentos)
+                        # Umbral
                         umbral = 0.001
                         Prob_Corr_ronda_canales[fold][p_corr < umbral] = p_corr[p_corr < umbral]
                         Prob_Rmse_ronda_canales[fold][p_rmse < umbral] = p_rmse[p_rmse < umbral]
-
-                # Save permutations
-                if Run_permutations:
-                    try:
-                        os.makedirs(Path_it)
-                    except:
-                        pass
-                    f = open(Path_it + 'Corr_Rmse_fake_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto), 'wb')
-                    pickle.dump([Correlaciones_fake, Errores_fake], f)
-                    f.close()
-
-                    f = open(Path_it + 'Pesos_fake_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto), 'wb')
-                    pickle.dump(Pesos_fake.mean(0), f)
-                    f.close()
 
                 # Save Model Weights and Correlations
                 try:
