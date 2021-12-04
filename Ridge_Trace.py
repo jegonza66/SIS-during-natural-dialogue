@@ -11,9 +11,8 @@ import Funciones
 Display_figures_Trace = False
 Save_figures_Trace = True
 
-Stims = ['Jitter', 'Shimmer', 'Envelope_Shimmer', 'Pitch_Shimmer', 'Envelope_Pitch_Shimmer', 'Envelope_Jitter',
-         'Pitch_Jitter', 'Envelope_Pitch_Jitter', 'Jitter_Shimmer', 'Envelope_Jitter_Shimmer', 'Pitch_Jitter_Shimmer']
-Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All', (1, 15), (4, 6)]
+Stims = ['Pitch_Jitter', 'Envelope_Pitch_Jitter', 'Jitter_Shimmer', 'Envelope_Jitter_Shimmer', 'Pitch_Jitter_Shimmer']
+Bands = ['Theta']
 
 Trace_interval = 2 / 3
 min_trace_derivate = 0
@@ -38,7 +37,7 @@ except:
 
 # DEFINO PARAMETROS
 for Band in Bands:
-    print('\n{}\n'.format(Band))
+    print('\n\n{}'.format(Band))
     try:
         Alphas_Band = Alphas[Band]
     except:
@@ -49,7 +48,7 @@ for Band in Bands:
         Failed_Band = {}
 
     for stim in Stims:
-        print('\n' + stim + '\n')
+        print('\n\n' + stim + '\n')
         try:
             Alphas_Stim = Alphas[Band][stim]
         except:
@@ -86,7 +85,7 @@ for Band in Bands:
         # Empiezo corrida
         sujeto_total = 0
         for sesion in sesiones:
-            print('\nSesion {}'.format(sesion))
+            print('Sesion {}'.format(sesion))
             try:
                 Alphas_Sesion = Alphas[Band][stim][sesion]
             except:
@@ -101,17 +100,17 @@ for Band in Bands:
                                                 procesed_data_path=procesed_data_path)
 
             # LOAD EEG BY SUBJECT
-            eeg_sujeto_1, eeg_sujeto_2 = Sujeto_1['EEG'], Sujeto_2['EEG']
+            eeg_sujeto_1, eeg_sujeto_2, info = Sujeto_1['EEG'], Sujeto_2['EEG'], Sujeto_1['info']
 
             # LOAD STIMULUS BY SUBJECT
-            dstims_para_sujeto_1, dstims_para_sujeto_2, info = Load.Estimulos(stim=stim, Sujeto_1=Sujeto_1,
+            dstims_para_sujeto_1, dstims_para_sujeto_2 = Load.Estimulos(stim=stim, Sujeto_1=Sujeto_1,
                                                                               Sujeto_2=Sujeto_2)
             Len_Estimulos = [len(dstims_para_sujeto_1[i][0]) for i in range(len(dstims_para_sujeto_1))]
 
             for sujeto, eeg, dstims in zip((1, 2), (eeg_sujeto_1, eeg_sujeto_2),
                                            (dstims_para_sujeto_1, dstims_para_sujeto_2)):
                 # for sujeto, eeg, dstims in zip([2], [eeg_sujeto_2], [dstims_para_sujeto_2]):
-                print('\n\nSujeto {}'.format(sujeto))
+                print('Sujeto {}'.format(sujeto))
                 # Separo los datos en 5 y tomo test set de 20% de datos con kfold (5 iteraciones)
                 n_splits = 5
 
@@ -173,7 +172,7 @@ for Band in Bands:
                     Trace_derivate_2 = np.diff(Trace_derivate) / alpha_step
 
                     print("\rProgress: {}%".format(int((alpha_num + 1) * 100 / pasos)), end='')
-
+                print("\n")
                 # Individual Ridge Trace
                 if (Trace_derivate_2 < min_trace_derivate).any():
                     Trace_range = np.arange((np.where(Trace_derivate_2 < min_trace_derivate)[0] + 1)[0],
@@ -284,14 +283,17 @@ for Band in Bands:
             Failed_Stim[sesion] = Failed_Sesion
         Alphas_Band[stim] = Alphas_Stim
         Failed_Band[stim] = Failed_Stim
-    Alphas[Band] = Alphas_Band
-    Failed[Band] = Failed_Band
+        Alphas[Band] = Alphas_Band
+        Failed[Band] = Failed_Band
 
-# Save Alphas
-f = open(alphas_fname, 'wb')
-pickle.dump(Alphas, f)
-f.close()
+        # Save Alphas
+        f = open(alphas_fname, 'wb')
+        pickle.dump(Alphas, f)
+        f.close()
 
-f = open(failed_fname, 'wb')
-pickle.dump(Failed, f)
-f.close()
+        f = open(failed_fname, 'wb')
+        pickle.dump(Failed, f)
+        f.close()
+
+
+
