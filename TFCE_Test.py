@@ -5,20 +5,6 @@ import numpy as np
 import Load
 import matplotlib.pyplot as plt
 
-# Para cada modelo=feature/banda
-# 	Para el dato original
-# 		Matriz de canales (128) x tiempos (77) x sujetos (18)
-# 		Para canal y tiempo,
-# 			Correr t-test sujetos contra 0 (t-test simple, d.f. = 17)
-# 	https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.ttest_1samp.html
-# 			tt_orig(canal, tiempo) = stats.ttest_1samp( pesos(canal, tiempo, :) , 0.0)
-#
-#
-# 	Para cada permut (1 a 3000)
-# Para canal y tiempo,
-# 			Correr t-test sujetos contra 0 (t-test simple, d.f. = 17)
-# 			tt_permut(canal, tiempo, permut) = stats.ttest_1samp( pesos(canal, tiempo, :) , 0.0)
-
 #Defino parametros
 Stims_preprocess = 'Normalize'
 EEG_preprocess = 'Standarize'
@@ -29,7 +15,7 @@ tmin, tmax = -0.6, -0.003
 sr = 128
 delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
 times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays))
-n_iterations = 3000
+n_iterations = 1000
 
 procesed_data_path = 'saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
 Sujeto_1, Sujeto_2 = Load.Load_Data(sesion=21, stim=stim, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
@@ -66,7 +52,7 @@ for subject, file in enumerate(permutations_files):
     f = open(file, 'rb')
     permutations_weights_subject = pickle.load(f)
     f.close()
-    permutations_weights[:,subject,:,:] = permutations_weights_subject.mean(0)
+    permutations_weights[:,subject,:,:] = permutations_weights_subject
 
 # Armo las matrices de t valores (Testeo)
 tt_original = np.zeros((info['nchan'], sum(Len_Estimulos)))
@@ -82,6 +68,17 @@ for permutation in range(n_iterations):
             tt_permutations[permutation, channel, delay] = scipy.stats.ttest_1samp(permutations_weights[permutation,:,channel, delay], 0.0)[0]
     print("\rProgress: {}%".format(int((permutation + 1) * 100 / n_iterations)), end='')
 
+plt.figure()
+plt.imshow(tt_original)
+plt.title('Original data t-values')
+plt.colorbar()
+plt.savefig('gráficos/Original_t-values.png')
+
+plt.figure()
+plt.imshow(tt_permutations[0])
+plt.title('First permutation t-values')
+plt.colorbar()
+plt.savefig('gráficos/Permutation_t-values.png')
 ## TFCE TEST
 from mne.stats import permutation_cluster_1samp_test
 from scipy import stats

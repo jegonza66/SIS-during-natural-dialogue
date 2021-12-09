@@ -5,7 +5,6 @@ from sklearn.model_selection import KFold
 
 import Load
 import Models
-import Plot
 import Processing
 import Permutations
 
@@ -18,10 +17,10 @@ tmin, tmax = -0.6, -0.003
 sr = 128
 
 # Stimuli and EEG
-Stims = ['Envelope', 'Pitch', 'Spectrogram', 'Envelope_Pitch', 'Envelope_Spectrogram', 'Pitch_Spectrogram', 'Envelope_Pitch_Spectrogram']
+Stims = ['Envelope', 'Pitch', 'Envelope_Pitch', 'Spectrogram']
 # Stims = ['Envelope']
-Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', (4,6), (1,15)]
-Bands = ['Theta']
+# Bands = ['Delta', 'Theta', 'Alpha']
+Bands = ['Beta_1']
 
 # Standarization
 Stims_preprocess = 'Normalize'
@@ -113,17 +112,17 @@ for Band in Bands:
                         Pesos_fake, Correlaciones_fake, Errores_fake)
 
                 # Save permutations
-                if Run_permutations:
-                    try:
-                        os.makedirs(Path_it)
-                    except:
-                        pass
-                    f = open(Path_it + 'Corr_Rmse_fake_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto), 'wb')
-                    pickle.dump([Correlaciones_fake, Errores_fake], f)
-                    f.close()
+                try:
+                    os.makedirs(Path_it)
+                except:
+                    pass
+                f = open(Path_it + 'Corr_Rmse_fake_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto), 'wb')
+                pickle.dump([Correlaciones_fake, Errores_fake], f)
+                f.close()
 
-                    f = open(Path_it + 'Pesos_fake_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto), 'wb')
-                    pickle.dump(Pesos_fake.mean(0), f)
-                    f.close()
+                f = open(Path_it + 'Pesos_fake_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto), 'wb')
+                pickle.dump(Pesos_fake.mean(0), f)
+                f.close()
 
+print('\n')
 print(datetime.now() - startTime)
