@@ -57,11 +57,11 @@ for sesion in sesiones:
     Sujeto_1, Sujeto_2 = Load.Load_Data(sesion, Band, sr, tmin, tmax, procesed_data_path)
 
     # LOAD EEG BY SUBJECT
-    eeg_sujeto_1, eeg_sujeto_2 = Sujeto_1['EEG'], Sujeto_2['EEG']
+    eeg_sujeto_1, eeg_sujeto_2, info = Sujeto_1['EEG'], Sujeto_2['EEG'], Sujeto_1['info']
 
     # LOAD STIMULUS BY SUBJECT
-    dstims_para_sujeto_1, dstims_para_sujeto_2, info = Load.Estimulos(stim, Sujeto_1, Sujeto_2)
-    Cant_Estimulos = len(dstims_para_sujeto_1)
+    dstims_para_sujeto_1, dstims_para_sujeto_2 = Load.Estimulos(stim, Sujeto_1, Sujeto_2)
+    Len_Estimulos = [len(dstims_para_sujeto_1[i][0]) for i in range(len(dstims_para_sujeto_1))]
 
     for sujeto, eeg, dstims in zip((1, 2), (eeg_sujeto_1, eeg_sujeto_2), (dstims_para_sujeto_1, dstims_para_sujeto_2)):
         # for sujeto, eeg, dstims in zip([2], [eeg_sujeto_2], [dstims_para_sujeto_2]):
@@ -75,7 +75,7 @@ for sesion in sesiones:
         iteraciones = 3000
 
         # Defino variables donde voy a guardar mil cosas
-        Pesos_ronda_canales = np.zeros((n_splits, info['nchan'], len(delays) * Cant_Estimulos))
+        Pesos_ronda_canales = np.zeros((n_splits, info['nchan'], sum(Len_Estimulos)))
         # Empiezo el KFold de test
         kf_test = KFold(n_splits, shuffle=False)
         for fold, (train_val_index, test_index) in enumerate(kf_test.split(eeg)):
@@ -129,8 +129,5 @@ except:
 
 
 curva_pesos_totales = Plot.regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display, Save,
-                                              Run_graficos_path, Cant_Estimulos, Stims_Order, stim, decorrelation_times)
-
-
-
+                                              Run_graficos_path, Len_Estimulos, stim, decorrelation_times)
 

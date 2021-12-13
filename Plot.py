@@ -156,14 +156,14 @@ def plot_grafico_pesos(Display, sesion, sujeto, best_alpha, Pesos_promedio,
             spectrogram_weights = Pesos_promedio[:, sum(Len_Estimulos[j] for j in range(i)):sum(
                 Len_Estimulos[j] for j in range(i + 1))].mean(0)
             spectrogram_weights = spectrogram_weights.reshape(16, len(times))
-            
+
             im = ax.pcolormesh(times * 1000, np.arange(16), spectrogram_weights, cmap='RdBu_r',
                                vmin=-spectrogram_weights.max(), vmax=spectrogram_weights.max(), shading='gouraud')
 
             Bands_center = librosa.mel_frequencies(n_mels=18, fmin=62, fmax=8000)[1:-1]
             ax.set(xlabel='Time (ms)', ylabel='Hz')
             ticks_positions = np.arange(0, 16, 2)
-            ticks_labels = [int(Bands_center[i+1]) for i in np.arange(0, len(Bands_center-1), 2)]
+            ticks_labels = [int(Bands_center[i + 1]) for i in np.arange(0, len(Bands_center - 1), 2)]
             ax.set_yticks(ticks_positions)
             ax.set_yticklabels(ticks_labels)
 
@@ -311,6 +311,7 @@ def Cabezas_corr_promedio(Correlaciones_totales_sujetos, info, Display, Save, Ru
 
     return Correlaciones_promedio.mean(), Correlaciones_promedio.std()
 
+
 def Cabezas_3d(Correlaciones_totales_sujetos, info, Display, Save, Run_graficos_path, title):
     Correlaciones_promedio = Correlaciones_totales_sujetos.mean(0)
 
@@ -326,8 +327,8 @@ def Cabezas_3d(Correlaciones_totales_sujetos, info, Display, Save, Run_graficos_
 
     evoked = mne.EvokedArray(np.array([Correlaciones_promedio, ]).transpose(), info)
     field_map = mne.make_field_map(evoked, trans=sample_data_trans_file,
-                              subject='sample', subjects_dir=subjects_dir, ch_type='eeg',
-                              meg_surf='head')
+                                   subject='sample', subjects_dir=subjects_dir, ch_type='eeg',
+                                   meg_surf='head')
 
     fig = evoked.plot_field(field_map, time=0)
     xy, im = mne.viz.snapshot_brain_montage(fig, info)
@@ -344,6 +345,7 @@ def Cabezas_3d(Correlaciones_totales_sujetos, info, Display, Save, Run_graficos_
         fig.savefig(Run_graficos_path + '{}.png'.format(title))
 
     return Correlaciones_promedio.mean(), Correlaciones_promedio.std()
+
 
 def Cabezas_canales_rep(Canales_repetidos_sujetos, info, Display, Save, Run_graficos_path, title):
     if Display:
@@ -373,7 +375,7 @@ def Cabezas_canales_rep(Canales_repetidos_sujetos, info, Display, Save, Run_graf
 
 
 def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display, Save, Run_graficos_path,
-                       Len_Estimulos, stim, subjects_pitch, sujeto_total, decorrelation_times=None):
+                       Len_Estimulos, stim, decorrelation_times=None):
     # Armo pesos promedio por canal de todos los sujetos que por lo menos tuvieron un buen canal
     Pesos_totales_sujetos_todos_canales_copy = Pesos_totales_sujetos_todos_canales.swapaxes(0, 2)
     Pesos_totales_sujetos_todos_canales_copy = Pesos_totales_sujetos_todos_canales_copy.mean(0).transpose()
@@ -397,23 +399,15 @@ def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display
                                       Len_Estimulos[j] for j in range(i + 1))].mean(0)
             spectrogram_weights = spectrogram_weights.reshape(16, len(times))
 
-
             im = ax.pcolormesh(times * 1000, np.arange(16), spectrogram_weights, cmap='RdBu_r',
                                vmin=-spectrogram_weights.max(), vmax=spectrogram_weights.max(), shading='gouraud')
             ax.set(xlabel='Time (ms)', ylabel='Hz')
 
             Bands_center = librosa.mel_frequencies(n_mels=18, fmin=62, fmax=8000)[1:-1]
-            ticks_positions = np.arange(0,16,2)
-            ticks_labels = [int(Bands_center[i]) for i in np.arange(0,len(Bands_center), 2)]
+            ticks_positions = np.arange(0, 16, 2)
+            ticks_labels = [int(Bands_center[i]) for i in np.arange(0, len(Bands_center), 2)]
             ax.set_yticks(ticks_positions)
             ax.set_yticklabels(ticks_labels)
-
-            # Pitch = np.mean(subjects_pitch[0])
-            # Pitch_std = np.std(subjects_pitch[0])
-            # ax.hlines(Pitch, ax.get_xlim()[0], ax.get_xlim()[1], linestyle='dashed', color='black',
-            #           label='Speaker\'s Pitch')
-            # ax.hlines(Pitch + Pitch_std / 2, ax.get_xlim()[0], ax.get_xlim()[1], linestyle='dashed', color='black')
-            # ax.hlines(Pitch - Pitch_std / 2, ax.get_xlim()[0], ax.get_xlim()[1], linestyle='dashed', color='black')
 
             fig.colorbar(im, ax=ax, orientation='vertical')
 

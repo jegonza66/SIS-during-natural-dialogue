@@ -88,7 +88,6 @@ for Band in Bands:
         for sesion in sesiones:
             print('Sesion {}'.format(sesion))
 
-
             # LOAD DATA BY SUBJECT
             Sujeto_1, Sujeto_2 = Load.Load_Data(sesion=sesion, stim=stim, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
                                                 procesed_data_path=procesed_data_path)
@@ -281,7 +280,7 @@ for Band in Bands:
 
         # Grafico Pesos
         Plot.regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display_Total_Figures,
-                                Save_Total_Figures, Run_graficos_path, Len_Estimulos, stim, subjects_pitch, sujeto_total)
+                                Save_Total_Figures, Run_graficos_path, Len_Estimulos, stim)
 
         # Plot.regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times,
         #                                                      Display_Total_Figures, Save_Total_Figures,
