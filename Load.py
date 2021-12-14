@@ -595,7 +595,8 @@ def Load_Data(sesion, stim, Band, sr, tmin, tmax, procesed_data_path, situacion=
     except:
         Sesion = Sesion_obj.load_from_raw()
 
-    Sujeto_1, Sujeto_2 = Sesion['Sujeto_1'], Sesion['Sujeto_2']
+    Sujeto_1 = {key: Sesion['Sujeto_1'][key] for key in ['EEG', 'info'] + stim.split('_')}
+    Sujeto_2 = {key: Sesion['Sujeto_2'][key] for key in ['EEG', 'info'] + stim.split('_')}
 
     return Sujeto_1, Sujeto_2
 
