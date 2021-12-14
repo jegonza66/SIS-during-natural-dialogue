@@ -17,10 +17,10 @@ tmin, tmax = -0.6, -0.003
 sr = 128
 
 # Stimuli and EEG
-Stims = ['Envelope', 'Pitch', 'Envelope_Pitch', 'Spectrogram']
+Stims = ['Envelope_Spectrogram', 'Pitch_Spectrogram', 'Envelope_Pitch_Spectrogram']
 # Stims = ['Envelope']
-# Bands = ['Delta', 'Theta', 'Alpha']
-Bands = ['Beta_1']
+Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1']
+# Bands = ['Beta_1']
 
 # Standarization
 Stims_preprocess = 'Normalize'
