@@ -132,11 +132,11 @@ def band_freq(band):
     return l_freq, h_freq
 
 
-def preproc(momentos_escucha, delays, situacion, *args):
+def preproc_dict(momentos_escucha, delays, situacion, dict):
     momentos_escucha_matriz = matriz_shifteada(momentos_escucha, delays).astype(float)
 
     if situacion == 'Todo':
-        return args
+        return
 
     elif situacion == 'Silencio':
         situacion = 0
@@ -151,12 +151,11 @@ def preproc(momentos_escucha, delays, situacion, *args):
 
     keep_indexes = pd.isnull(momentos_escucha_matriz).all(1).nonzero()[0]
 
-    returns = []
-    for var in args:
-        var = var[keep_indexes, :]
-        returns.append(var)
+    keys = list(dict.keys())
+    keys.remove('info')
 
-    return tuple(returns)
+    for key in keys:
+        dict[key] = dict[key][keep_indexes, :]
 
 
 class estandarizar():

@@ -31,9 +31,14 @@ def rename_paths(Stims_preprocess, EEG_preprocess, stim, Band, tmin, tmax, *path
 def trunc(values, decs=0):
     return np.trunc(values * 10 ** decs) / (10 ** decs)
 
-
 def flatten_list(t):
     return [item for sublist in t for item in sublist]
+
+
+def make_array_dict(dict):
+    keys = list(dict.keys())
+    for key in keys:
+        dict[key] = dict[key].to_numpy()
 
 
 def make_array(*args):
@@ -43,6 +48,13 @@ def make_array(*args):
     return tuple(returns)
 
 
+def make_df_dict(dict):
+    keys = list(dict.keys())
+    keys.remove('info')
+    for key in keys:
+        dict[key] = pd.DataFrame(dict[key])
+
+
 def make_df(*args):
     returns = []
     for var in args:
@@ -50,16 +62,19 @@ def make_df(*args):
     return tuple(returns)
 
 
-def igualar_largos(*args):
-    minimo_largo = min([var.shape[0] for var in args])
+def igualar_largos_dict(dict, momentos):
+    keys = list(dict.keys())
+    keys.remove('info')
 
-    returns = []
-    for var in args:
-        if var.shape[0] > minimo_largo:
-            var = var[:minimo_largo]
-        returns.append(var)
+    minimo_largo = min([dict[key].shape[0] for key in keys] + [len(momentos)])
 
-    return tuple(returns)
+    for key in keys:
+            if dict[key].shape[0] > minimo_largo:
+                dict[key] = dict[key][:minimo_largo]
+    if len(momentos) > minimo_largo:
+        momentos = momentos[:minimo_largo]
+
+    return momentos
 
 
 def correlacion(x, y, axis=0):
