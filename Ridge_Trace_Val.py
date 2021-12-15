@@ -18,8 +18,8 @@ Trace_interval = 2 / 3
 min_trace_derivate = 0
 Corr_limit = 0.025
 
-alphas_fname = 'saves/Alphas/Alphas_Trace{:.1f}_Corr{}.pkl'.format(Trace_interval, Corr_limit)
-failed_fname = 'saves/Alphas/Failed{:.1f}_Corr{}.pkl'.format(Trace_interval, Corr_limit)
+alphas_fname = 'saves/Alphas/Alphas_Trace{:.1f}_Corr{}_VAL.pkl'.format(Trace_interval, Corr_limit)
+failed_fname = 'saves/Alphas/Failed{:.1f}_Corr{}_VAL.pkl'.format(Trace_interval, Corr_limit)
 
 try:
     f = open(alphas_fname, 'rb')
