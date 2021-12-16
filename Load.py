@@ -507,21 +507,31 @@ class Sesion_class:
 
 def Load_Data(sesion, stim, Band, sr, tmin, tmax, procesed_data_path, situacion='Escucha', Causal_filter_EEG=True,
               Env_Filter=False, valores_faltantes=0, Calculate_pitch=False):
-    Sesion_obj = Sesion_class(sesion=sesion, stim=stim, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
-                              valores_faltantes=valores_faltantes, Causal_filter_EEG=Causal_filter_EEG,
-                              Env_Filter=Env_Filter, situacion=situacion, Calculate_pitch=Calculate_pitch,
-                              procesed_data_path=procesed_data_path)
 
-    # Intento cargar de preprocesados si existen
-    try:
-        Sesion = Sesion_obj.load_procesed()
-        # Si falla cargo de raw y guardo
-    except:
-        Sesion = Sesion_obj.load_from_raw()
+    possible_stims = ['Envelope', 'Pitch', 'Spectrogram', 'Shimmer']
 
-    Sujeto_1, Sujeto_2 = Sesion['Sujeto_1'], Sesion['Sujeto_2']
+    if all(stimulus in possible_stims for stimulus in stim.split('_')):
 
-    return Sujeto_1, Sujeto_2
+        Sesion_obj = Sesion_class(sesion=sesion, stim=stim, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
+                                  valores_faltantes=valores_faltantes, Causal_filter_EEG=Causal_filter_EEG,
+                                  Env_Filter=Env_Filter, situacion=situacion, Calculate_pitch=Calculate_pitch,
+                                  procesed_data_path=procesed_data_path)
+
+        # Intento cargar de preprocesados si existen
+        try:
+            Sesion = Sesion_obj.load_procesed()
+            # Si falla cargo de raw y guardo
+        except:
+            Sesion = Sesion_obj.load_from_raw()
+
+        Sujeto_1, Sujeto_2 = Sesion['Sujeto_1'], Sesion['Sujeto_2']
+
+        return Sujeto_1, Sujeto_2
+
+    else:
+        print('Invalid stimulus. Please enter valid stimulus. Possible stimulus are:')
+        for i in range(len(possible_stims)):
+            print(possible_stims[i])
 
 
 def Estimulos(stim, Sujeto_1, Sujeto_2):

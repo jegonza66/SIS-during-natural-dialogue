@@ -466,27 +466,53 @@ def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, 
     Cant_Estimulos = len(Len_Estimulos)
 
     for i in range(Cant_Estimulos):
-        mean_coefs = Pesos_totales_sujetos_todos_canales_copy[:,
-                     sum(Len_Estimulos[j] for j in range(i)):sum(Len_Estimulos[j] for j in range(i + 1))]
+        fig, axs = plt.subplots(2, 1, sharex=True, figsize=(6, 8), gridspec_kw={'height_ratios': [1, 4]})
+        fig.suptitle('{}'.format(Stims_Order[i]), fontsize=23)
 
-        evoked = mne.EvokedArray(mean_coefs, info)
-        evoked.times = times
+        if Stims_Order[i] == 'Spectrogram':
+            spectrogram_weights = Pesos_totales_sujetos_todos_canales_copy[:,
+                                  sum(Len_Estimulos[j] for j in range(i)):sum(
+                                      Len_Estimulos[j] for j in range(i + 1))].mean(0)
+            spectrogram_weights = spectrogram_weights.reshape(16, len(times))
 
-        fig, axs = plt.subplots(2, 1, sharex=True, figsize=(6, 8), gridspec_kw={'height_ratios': [1, 3]})
+            im = axs[1].pcolormesh(times * 1000, np.arange(16), spectrogram_weights, cmap='RdBu_r',
+                               vmin=-spectrogram_weights.max(), vmax=spectrogram_weights.max(), shading='gouraud')
+            axs[1].set(xlabel='Time (ms)', ylabel='Hz')
 
-        im = axs[1].pcolormesh(times * 1000, np.arange(info['nchan']), mean_coefs, cmap='RdBu_r',
-                               vmin=-(mean_coefs).max(),
-                               vmax=(mean_coefs).max(), shading='gouraud')
-        axs[1].set(xlabel='Time (ms)', ylabel='Channel')
-        fig.colorbar(im, ax=axs[1], orientation='horizontal')
+            Bands_center = librosa.mel_frequencies(n_mels=18, fmin=62, fmax=8000)[1:-1]
+            ticks_positions = np.arange(0, 16, 2)
+            ticks_labels = [int(Bands_center[i]) for i in np.arange(0, len(Bands_center), 2)]
+            axs[1].set_yticks(ticks_positions)
+            axs[1].set_yticklabels(ticks_labels)
+            fig.colorbar(im, ax=axs[1], orientation='horizontal')
 
-        evoked.plot(scalings=dict(eeg=1, grad=1, mag=1), zorder='std', time_unit='ms',
-                    show=False, spatial_colors=True, unit=False, units='w', axes=axs[0])
-        axs[0].plot(times * 1000, evoked._data.mean(0), "k--", label="Mean", zorder=130, linewidth=2)
-        axs[0].axis('off')
-        axs[0].legend(loc="upper right")
+            axs[0].plot(times * 1000, spectrogram_weights.mean(0), "k-", label="Mean", zorder=130, linewidth=2)
+            axs[0].axis('off')
+            axs[0].legend(loc="lower left")
 
-        fig.tight_layout()
+        else:
+            mean_coefs = Pesos_totales_sujetos_todos_canales_copy[:,
+                         sum(Len_Estimulos[j] for j in range(i)):sum(Len_Estimulos[j] for j in range(i + 1))]
+
+            evoked = mne.EvokedArray(mean_coefs, info)
+            evoked.times = times
+
+            fig, axs = plt.subplots(2, 1, sharex=True, figsize=(6, 8), gridspec_kw={'height_ratios': [1, 3]})
+
+            im = axs[1].pcolormesh(times * 1000, np.arange(info['nchan']), mean_coefs, cmap='RdBu_r',
+                                   vmin=-(mean_coefs).max(),
+                                   vmax=(mean_coefs).max(), shading='gouraud')
+            axs[1].set(xlabel='Time (ms)', ylabel='Channel')
+            fig.colorbar(im, ax=axs[1], orientation='horizontal')
+
+            # axs[0].hlines(0,plt.xlim()[0], plt.xlim()[1], color='grey', linestyles='-')
+            evoked.plot(scalings=dict(eeg=1, grad=1, mag=1), zorder='std', time_unit='ms',
+                        show=False, spatial_colors=True, unit=False, units='w', axes=axs[0])
+            axs[0].plot(times * 1000, evoked._data.mean(0), "k--", label="Mean", zorder=130, linewidth=2)
+            axs[0].axis('off')
+            axs[0].legend(loc="lower left")
+
+            fig.tight_layout()
 
         if Save:
             save_path_graficos = Run_graficos_path

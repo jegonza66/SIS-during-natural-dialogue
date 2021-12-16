@@ -12,14 +12,15 @@ Display_figures_Trace = False
 Save_figures_Trace = True
 
 Stims = ['Pitch_Jitter', 'Envelope_Pitch_Jitter', 'Jitter_Shimmer', 'Envelope_Jitter_Shimmer', 'Pitch_Jitter_Shimmer']
+Stims = ['Envelope']
 Bands = ['Theta']
 
 Trace_interval = 2 / 3
 min_trace_derivate = 0
 Corr_limit = 0.025
 
-alphas_fname = 'saves/Alphas/Alphas_Trace{:.1f}_Corr{}.pkl'.format(Trace_interval, Corr_limit)
-failed_fname = 'saves/Alphas/Failed{:.1f}_Corr{}.pkl'.format(Trace_interval, Corr_limit)
+alphas_fname = 'saves/Alphas/Alphas_Trace{:.1f}_Corr{}_VAL.pkl'.format(Trace_interval, Corr_limit)
+failed_fname = 'saves/Alphas/Failed{:.1f}_Corr{}VAL.pkl'.format(Trace_interval, Corr_limit)
 
 try:
     f = open(alphas_fname, 'rb')
@@ -191,17 +192,14 @@ for Band in Bands:
                     pass
 
                 try:
-                    if Trace_range_med in Overlap and alphas_swept[Correlaciones.argmax()] in Overlap:
-                        Alpha_Sujeto = (alphas_swept[Trace_range_med], alphas_swept[Correlaciones.argmax()]).max()
-                        Failed_sujeto = 'MAX'
+
+                    if Correlaciones.argmax() in Overlap:
+                        Alpha_Sujeto = alphas_swept[Correlaciones.argmax()]
+                        Failed_sujeto = 'CORR'
 
                     elif Trace_range_med in Overlap:
                         Alpha_Sujeto = alphas_swept[Trace_range_med]
                         Failed_sujeto = 'TRACE'
-
-                    elif alphas_swept[Correlaciones.argmax()] in Overlap:
-                        Alpha_Sujeto = alphas_swept[Correlaciones.argmax()]
-                        Failed_sujeto = 'CORR'
 
                     elif Overlap:
                         alpha_index = np.mean([Overlap[0], Overlap[-1]])

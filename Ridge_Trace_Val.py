@@ -6,20 +6,20 @@ from sklearn.model_selection import KFold
 import Load
 import Models
 import Processing
-import Funciones
 
 Display_figures_Trace = False
-Save_figures_Trace = False
+Save_figures_Trace = True
 
-Stims = ['Envelope']
-Bands = ['Beta_1']
+Stims = ['Envelope', 'Pitch', 'Spectrogram', 'Shimmer', 'Envelope_Pitch', 'Envelope_Spectrogram', 'Envelope_Shimmer',
+         'Pitch_Spectrogram', 'Pitch_Shimmer', 'Spectrogram_Shimmer', 'Envelope_Pitch_Spectrogram',
+         'Envelope_Pitch_Shimmer', 'Envelope_Spectrogram_Shimmer', 'Envelope_Pitch_Spectrogram_Shimmer']
+Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All', (1,15), (4,6)]
 
-Trace_interval = 2 / 3
 min_trace_derivate = 0
-Corr_limit = 0.025
+Corr_limit = 0.01
 
-alphas_fname = 'saves/Alphas/Alphas_Trace{:.1f}_Corr{}_VAL.pkl'.format(Trace_interval, Corr_limit)
-failed_fname = 'saves/Alphas/Failed{:.1f}_Corr{}_VAL.pkl'.format(Trace_interval, Corr_limit)
+alphas_fname = 'saves/Alphas/Alphas_Corr{}.pkl'.format(Corr_limit)
+failed_fname = 'saves/Alphas/Alphas_How_Corr{}.pkl'.format(Corr_limit)
 
 try:
     f = open(alphas_fname, 'rb')
@@ -153,7 +153,6 @@ for Band in Bands:
                             Processing.standarize_normalize(eeg_train, eeg_val, dstims_train, dstims_val,
                                                             Stims_preprocess, EEG_preprocess, axis=0, porcent=5)
 
-
                         # Ajusto el modelo y guardo
                         Model = Models.Ridge(alpha)
                         Model.fit(dstims_train, eeg_train)
@@ -191,22 +190,10 @@ for Band in Bands:
                 Corr_range = np.where(Correlaciones.max() - Correlaciones < Correlaciones.max() * Corr_limit)[0]
 
                 Overlap = sorted(set(Trace_range).intersection(set(Corr_range)), key=list(Trace_range).index)
-                Trace_range_med = None
+
+                Alpha_Sujeto = alphas_swept[Correlaciones.argmax()]
                 try:
-                    Trace_range_med = int(len(Trace_range) * Trace_interval + Trace_range[0])
-                except:
-                    pass
-
-                try:
-                    if Trace_range_med in Overlap and alphas_swept[Correlaciones.argmax()] in Overlap:
-                        Alpha_Sujeto = (alphas_swept[Trace_range_med], alphas_swept[Correlaciones.argmax()]).max()
-                        Failed_sujeto = 'MAX'
-
-                    elif Trace_range_med in Overlap:
-                        Alpha_Sujeto = alphas_swept[Trace_range_med]
-                        Failed_sujeto = 'TRACE'
-
-                    elif alphas_swept[Correlaciones.argmax()] in Overlap:
+                    if Correlaciones.argmax() in Overlap or not Overlap:
                         Alpha_Sujeto = alphas_swept[Correlaciones.argmax()]
                         Failed_sujeto = 'CORR'
 
@@ -215,22 +202,9 @@ for Band in Bands:
                         decimal_part = alpha_index % 1
                         alpha_extra = decimal_part * alpha_step
                         Alpha_Sujeto = alphas_swept[int(alpha_index)] + alpha_extra
-                        Failed_sujeto = 'OVERLAP'
+                        Failed_sujeto = 'MEAN_OVERLAP'
 
-                    # Si nada funciono tomo el medio entre los ranges
-                    else:
-                        intervals = [[Corr_range.min(), Corr_range.max()], [Trace_range_med, Trace_range_med]]
-                        gap = Funciones.findFreeinterval(intervals)
-                        values = set(gap[0])
-
-                        # Interpolo (alphas vs indice)
-                        alpha_index = np.mean(list(values))
-                        decimal_part = alpha_index % 1
-                        alpha_extra = decimal_part * alpha_step
-                        Alpha_Sujeto = alphas_swept[int(alpha_index)] + alpha_extra
-                        Failed_sujeto = 'NO OVERLAP'
                 except:
-                    Alpha_Sujeto = 'FAILED'
                     Failed_sujeto = 'FAILED'
 
                 if Display_figures_Trace:
@@ -285,19 +259,19 @@ for Band in Bands:
                     plt.savefig(save_path + 'Sesion_{}_Sujeto_{}.png'.format(sesion, sujeto))
 
                 Alphas_Sesion[sujeto] = Alpha_Sujeto
-                Failed_Sesion[sujeto] = Failed_sujeto
+                # Failed_Sesion[sujeto] = Failed_sujeto
             Alphas_Stim[sesion] = Alphas_Sesion
-            Failed_Stim[sesion] = Failed_Sesion
+            # Failed_Stim[sesion] = Failed_Sesion
         Alphas_Band[stim] = Alphas_Stim
-        Failed_Band[stim] = Failed_Stim
+        # Failed_Band[stim] = Failed_Stim
         Alphas[Band] = Alphas_Band
-        Failed[Band] = Failed_Band
+        # Failed[Band] = Failed_Band
 
         # Save Alphas
         f = open(alphas_fname, 'wb')
         pickle.dump(Alphas, f)
         f.close()
 
-        f = open(failed_fname, 'wb')
-        pickle.dump(Failed, f)
-        f.close()
+        # f = open(failed_fname, 'wb')
+        # pickle.dump(Failed, f)
+        # f.close()

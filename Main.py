@@ -41,7 +41,7 @@ Save_Total_Figures = False
 Save_Final_Correlation = False
 
 # Files
-alphas_fname = 'saves/Alphas/Alphas_Trace{:.1f}_Corr0.025.pkl'.format(2 / 3)
+alphas_fname = 'saves/Alphas/Alphas_Trace{:.1f}_Corr0.01_VAL.pkl'.format(2 / 3)
 try:
     f = open(alphas_fname, 'rb')
     Alphas = pickle.load(f)
@@ -147,7 +147,7 @@ for Band in Bands:
                         if alpha == 'FAILED':
                             alpha = np.mean([value for sesion_dict in Alphas[Band][stim].keys() for value in list(Alphas[Band][stim][sesion_dict].values()) if type(value) != str])
                     except:
-                        alpha = 100
+                        alpha = 1000
                         print('Alpha missing. Ussing default value: {}'.format(alpha))
 
                     # Ajusto el modelo y guardo
@@ -282,10 +282,10 @@ for Band in Bands:
         Plot.regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display_Total_Figures,
                                 Save_Total_Figures, Run_graficos_path, Len_Estimulos, stim)
 
-        # Plot.regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times,
-        #                                                      Display_Total_Figures, Save_Total_Figures,
-        #                                                      Run_graficos_path,
-        #                                                      Len_Estimulos, stim)
+        Plot.regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times,
+                                                             Display_Total_Figures, Save_Total_Figures,
+                                                             Run_graficos_path,
+                                                             Len_Estimulos, stim)
 
         # Matriz de Correlacion
         Plot.Matriz_corr_channel_wise(Pesos_totales_sujetos_todos_canales, Display_Total_Figures, Save_Total_Figures,
