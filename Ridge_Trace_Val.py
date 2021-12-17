@@ -13,13 +13,13 @@ Save_figures_Trace = True
 Stims = ['Envelope', 'Pitch', 'Spectrogram', 'Shimmer', 'Envelope_Pitch', 'Envelope_Spectrogram', 'Envelope_Shimmer',
          'Pitch_Spectrogram', 'Pitch_Shimmer', 'Spectrogram_Shimmer', 'Envelope_Pitch_Spectrogram',
          'Envelope_Pitch_Shimmer', 'Envelope_Spectrogram_Shimmer', 'Envelope_Pitch_Spectrogram_Shimmer']
-Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All', (1,15), (4,6)]
+Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All', (1, 15), (4, 6)]
 
 min_trace_derivate = 0
-Corr_limit = 0.01
+Corr_limit = 0.001
 
 alphas_fname = 'saves/Alphas/Alphas_Corr{}.pkl'.format(Corr_limit)
-failed_fname = 'saves/Alphas/Alphas_How_Corr{}.pkl'.format(Corr_limit)
+alpha_info_fname = 'saves/Alphas/Alphas_How_Corr{}.pkl'.format(Corr_limit)
 
 try:
     f = open(alphas_fname, 'rb')
@@ -29,11 +29,11 @@ except:
     Alphas = {}
 
 try:
-    f = open(failed_fname, 'rb')
-    Failed = pickle.load(f)
+    f = open(alpha_info_fname, 'rb')
+    Info = pickle.load(f)
     f.close()
 except:
-    Failed = {}
+    Info = {}
 
 # DEFINO PARAMETROS
 for Band in Bands:
@@ -43,9 +43,9 @@ for Band in Bands:
     except:
         Alphas_Band = {}
     try:
-        Failed_Band = Failed[Band]
+        Info_Band = Info[Band]
     except:
-        Failed_Band = {}
+        Info_Band = {}
 
     for stim in Stims:
         print('\n\n' + stim + '\n')
@@ -54,9 +54,9 @@ for Band in Bands:
         except:
             Alphas_Stim = {}
         try:
-            Failed_Stim = Failed[Band][stim]
+            Info_Stim = Info[Band][stim]
         except:
-            Failed_Stim = {}
+            Info_Stim = {}
 
         # Defino situacion de interes
         situacion = 'Escucha'
@@ -91,9 +91,9 @@ for Band in Bands:
             except:
                 Alphas_Sesion = {}
             try:
-                Failed_Sesion = Failed[Band][stim][sesion]
+                Info_Sesion = Info[Band][stim][sesion]
             except:
-                Failed_Sesion = {}
+                Info_Sesion = {}
 
             # LOAD DATA BY SUBJECT
             Sujeto_1, Sujeto_2 = Load.Load_Data(sesion=sesion, stim=stim, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
@@ -104,7 +104,7 @@ for Band in Bands:
 
             # LOAD STIMULUS BY SUBJECT
             dstims_para_sujeto_1, dstims_para_sujeto_2 = Load.Estimulos(stim=stim, Sujeto_1=Sujeto_1,
-                                                                              Sujeto_2=Sujeto_2)
+                                                                        Sujeto_2=Sujeto_2)
             Len_Estimulos = [len(dstims_para_sujeto_1[i][0]) for i in range(len(dstims_para_sujeto_1))]
 
             for sujeto, eeg, dstims in zip((1, 2), (eeg_sujeto_1, eeg_sujeto_2),
@@ -144,8 +144,8 @@ for Band in Bands:
                         dstims_val = list()
 
                         for stimulus in list(dstims_train_val):
-                            dstims_train.append(stimulus[:int(train_percent*len(eeg_train_val))])
-                            dstims_val.append(stimulus[int(train_percent*len(eeg_train_val)):])
+                            dstims_train.append(stimulus[:int(train_percent * len(eeg_train_val))])
+                            dstims_val.append(stimulus[int(train_percent * len(eeg_train_val)):])
 
                         axis = 0
                         porcent = 5
@@ -191,40 +191,32 @@ for Band in Bands:
 
                 Overlap = sorted(set(Trace_range).intersection(set(Corr_range)), key=list(Trace_range).index)
 
-                Alpha_Sujeto = alphas_swept[Correlaciones.argmax()]
-                try:
-                    if Correlaciones.argmax() in Overlap or not Overlap:
-                        Alpha_Sujeto = alphas_swept[Correlaciones.argmax()]
-                        Failed_sujeto = 'CORR'
+                if Correlaciones.argmax() in Overlap or not Overlap:
+                    Alpha_Sujeto = alphas_swept[Correlaciones.argmax()]
+                    Info_sujeto = 'MAX_CORR'
 
-                    elif Overlap:
-                        alpha_index = np.mean([Overlap[0], Overlap[-1]])
-                        decimal_part = alpha_index % 1
-                        alpha_extra = decimal_part * alpha_step
-                        Alpha_Sujeto = alphas_swept[int(alpha_index)] + alpha_extra
-                        Failed_sujeto = 'MEAN_OVERLAP'
-
-                except:
-                    Failed_sujeto = 'FAILED'
+                elif Overlap:
+                    alpha_index = Overlap[-1]
+                    Alpha_Sujeto = alphas_swept[int(alpha_index)]
+                    Info_sujeto = 'MAX_OVERLAP'
 
                 if Display_figures_Trace:
                     plt.ion()
                 else:
                     plt.ioff()
 
-                fig, axs = plt.subplots(2, 1, sharex=True, figsize=(10, 13))
+                fig, axs = plt.subplots(2, 1, sharex=True, figsize=(10, 7))
                 fig.suptitle('Ridge Trace - {} - {}'.format(Band, stim))
                 plt.xlabel('Ridge Parameter')
                 plt.xscale('log')
 
                 axs[0].set_ylabel('Standarized Coefficents')
                 axs[0].plot(alphas_swept, Standarized_Betas, 'o--')
-                if Alpha_Sujeto != 'FAILED': axs[0].vlines(Alpha_Sujeto, axs[0].get_ylim()[0],
-                                                           axs[0].get_ylim()[1], linestyle='dashed',
-                                                           color='black', linewidth=1.5)
-                if Trace_range.size: axs[0].axvspan(alphas_swept[Trace_range[0]], alphas_swept[Trace_range[-1]],
-                                                    alpha=0.4, color='grey',
-                                                    label='Trace range')
+                axs[0].vlines(Alpha_Sujeto, axs[0].get_ylim()[0], axs[0].get_ylim()[1], linestyle='dashed',
+                              color='red', linewidth=1.5, label='Selected value')
+                if Trace_range.size > 1:
+                    axs[0].axvspan(alphas_swept[Trace_range[0]], alphas_swept[Trace_range[-1]], alpha=0.4, color='grey',
+                                   label='Concave range')
                 if Overlap:
                     axs[0].axvspan(alphas_swept[Overlap[0]], alphas_swept[Overlap[-1]], alpha=0.4, color='green',
                                    label='Overlap')
@@ -235,13 +227,12 @@ for Band in Bands:
                 axs[1].plot(alphas_swept, Correlaciones, 'o--')
                 axs[1].errorbar(alphas_swept, Correlaciones, yerr=Std_Corr, fmt='none', ecolor='black',
                                 elinewidth=0.5, capsize=0.5)
-                if alphas_swept[Correlaciones.argmax()]: axs[1].vlines(alphas_swept[Correlaciones.argmax()],
-                                                                       axs[1].get_ylim()[0],
-                                                                       axs[1].get_ylim()[1], linestyle='dashed',
-                                                                       color='black', linewidth=1.5)
-                if Corr_range.size: axs[1].axvspan(alphas_swept[Corr_range[0]], alphas_swept[Corr_range[-1]], alpha=0.4,
-                                                   color='grey',
-                                                   label='Corr range')
+                axs[1].vlines(alphas_swept[Correlaciones.argmax()], axs[1].get_ylim()[0],
+                              axs[1].get_ylim()[1], linestyle='dashed', color='black', linewidth=1.5,
+                              label='Max. Correlation')
+                if Corr_range.size > 1:
+                    axs[1].axvspan(alphas_swept[Corr_range[0]], alphas_swept[Corr_range[-1]], alpha=0.4, color='grey',
+                                   label='{}% Max. Correlation'.format(Corr_limit*100))
                 if Overlap:
                     axs[1].axvspan(alphas_swept[Overlap[0]], alphas_swept[Overlap[-1]], alpha=0.4, color='green',
                                    label='Overlap')
@@ -259,19 +250,19 @@ for Band in Bands:
                     plt.savefig(save_path + 'Sesion_{}_Sujeto_{}.png'.format(sesion, sujeto))
 
                 Alphas_Sesion[sujeto] = Alpha_Sujeto
-                # Failed_Sesion[sujeto] = Failed_sujeto
+                Info_Sesion[sujeto] = Info_sujeto
             Alphas_Stim[sesion] = Alphas_Sesion
-            # Failed_Stim[sesion] = Failed_Sesion
+            Info_Stim[sesion] = Info_Sesion
         Alphas_Band[stim] = Alphas_Stim
-        # Failed_Band[stim] = Failed_Stim
+        Info_Band[stim] = Info_Stim
         Alphas[Band] = Alphas_Band
-        # Failed[Band] = Failed_Band
+        Info[Band] = Info_Band
 
         # Save Alphas
         f = open(alphas_fname, 'wb')
         pickle.dump(Alphas, f)
         f.close()
 
-        # f = open(failed_fname, 'wb')
-        # pickle.dump(Failed, f)
-        # f.close()
+        f = open(alpha_info_fname, 'wb')
+        pickle.dump(Info, f)
+        f.close()
