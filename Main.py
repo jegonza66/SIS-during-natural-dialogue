@@ -41,7 +41,7 @@ Save_Total_Figures = False
 Save_Final_Correlation = False
 
 # Files
-alphas_fname = 'saves/Alphas/Alphas_Trace{:.1f}_Corr0.01_VAL.pkl'.format(2 / 3)
+alphas_fname = 'saves/Alphas/Alphas_Corr0.001.pkl'
 try:
     f = open(alphas_fname, 'rb')
     Alphas = pickle.load(f)
