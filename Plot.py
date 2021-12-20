@@ -399,7 +399,7 @@ def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display
                                       Len_Estimulos[j] for j in range(i + 1))].mean(0)
             spectrogram_weights = spectrogram_weights.reshape(16, len(times))
 
-            im = ax.pcolormesh(times * 1000, np.arange(16), spectrogram_weights, cmap='RdBu_r',
+            im = ax.pcolormesh(times * 1000, np.arange(16), spectrogram_weights, cmap='jet',
                                vmin=-spectrogram_weights.max(), vmax=spectrogram_weights.max(), shading='gouraud')
             ax.set(xlabel='Time (ms)', ylabel='Hz')
 
@@ -466,16 +466,16 @@ def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, 
     Cant_Estimulos = len(Len_Estimulos)
 
     for i in range(Cant_Estimulos):
-        fig, axs = plt.subplots(2, 1, sharex=True, figsize=(6, 8), gridspec_kw={'height_ratios': [1, 4]})
-        fig.suptitle('{}'.format(Stims_Order[i]), fontsize=23)
 
         if Stims_Order[i] == 'Spectrogram':
+            fig, axs = plt.subplots(2, 1, sharex=True, figsize=(6, 8), gridspec_kw={'height_ratios': [1, 4]})
+            fig.suptitle('{}'.format(Stims_Order[i]), fontsize=23)
             spectrogram_weights = Pesos_totales_sujetos_todos_canales_copy[:,
                                   sum(Len_Estimulos[j] for j in range(i)):sum(
                                       Len_Estimulos[j] for j in range(i + 1))].mean(0)
             spectrogram_weights = spectrogram_weights.reshape(16, len(times))
 
-            im = axs[1].pcolormesh(times * 1000, np.arange(16), spectrogram_weights, cmap='RdBu_r',
+            im = axs[1].pcolormesh(times * 1000, np.arange(16), spectrogram_weights, cmap='jet',
                                vmin=-spectrogram_weights.max(), vmax=spectrogram_weights.max(), shading='gouraud')
             axs[1].set(xlabel='Time (ms)', ylabel='Hz')
 
@@ -499,7 +499,7 @@ def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, 
 
             fig, axs = plt.subplots(2, 1, sharex=True, figsize=(6, 8), gridspec_kw={'height_ratios': [1, 3]})
 
-            im = axs[1].pcolormesh(times * 1000, np.arange(info['nchan']), mean_coefs, cmap='RdBu_r',
+            im = axs[1].pcolormesh(times * 1000, np.arange(info['nchan']), mean_coefs, cmap='jet',
                                    vmin=-(mean_coefs).max(),
                                    vmax=(mean_coefs).max(), shading='gouraud')
             axs[1].set(xlabel='Time (ms)', ylabel='Channel')
