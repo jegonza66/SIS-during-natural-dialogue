@@ -400,7 +400,7 @@ def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display
             spectrogram_weights = spectrogram_weights.reshape(16, len(times))
 
             im = ax.pcolormesh(times * 1000, np.arange(16), spectrogram_weights, cmap='jet',
-                               vmin=-spectrogram_weights.max(), vmax=spectrogram_weights.max(), shading='gouraud')
+                               vmin=-spectrogram_weights.max(), vmax=spectrogram_weights.max(), shading='auto')
             ax.set(xlabel='Time (ms)', ylabel='Hz')
 
             Bands_center = librosa.mel_frequencies(n_mels=18, fmin=62, fmax=8000)[1:-1]
@@ -476,7 +476,7 @@ def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, 
             spectrogram_weights = spectrogram_weights.reshape(16, len(times))
 
             im = axs[1].pcolormesh(times * 1000, np.arange(16), spectrogram_weights, cmap='jet',
-                               vmin=-spectrogram_weights.max(), vmax=spectrogram_weights.max(), shading='gouraud')
+                               vmin=-spectrogram_weights.max(), vmax=spectrogram_weights.max(), shading='auto')
             axs[1].set(xlabel='Time (ms)', ylabel='Hz')
 
             Bands_center = librosa.mel_frequencies(n_mels=18, fmin=62, fmax=8000)[1:-1]
