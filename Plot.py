@@ -505,7 +505,6 @@ def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, 
             axs[1].set(xlabel='Time (ms)', ylabel='Channel')
             fig.colorbar(im, ax=axs[1], orientation='horizontal')
 
-            # axs[0].hlines(0,plt.xlim()[0], plt.xlim()[1], color='grey', linestyles='-')
             evoked.plot(scalings=dict(eeg=1, grad=1, mag=1), zorder='std', time_unit='ms',
                         show=False, spatial_colors=True, unit=False, units='w', axes=axs[0])
             axs[0].plot(times * 1000, evoked._data.mean(0), "k--", label="Mean", zorder=130, linewidth=2)
