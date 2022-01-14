@@ -9,7 +9,7 @@ from scipy.spatial import ConvexHull
 
 tmin, tmax = -0.6, -0.003
 
-Run_graficos_path = 'gráficos/Model_Comparison/tmin{}_tmax{}/'.format(tmin, tmax)
+Run_graficos_path = 'gráficos/Model_Comparison/tmin{}_tmax{}/Convex_Hull'.format(tmin, tmax)
 Save_fig = True
 
 Bands = ['Delta', 'Alpha', 'Beta_1', (4,6), (1,15)]
@@ -99,15 +99,13 @@ for Band in Bands:
     # Save
     plt.tight_layout()
     if Save_fig:
-        save_path_graficos = Run_graficos_path
-        try:
-            os.makedirs(save_path_graficos)
-        except:
-            pass
-        plt.savefig(save_path_graficos + '{}.png'.format(Band))
-        plt.savefig(save_path_graficos + '{}.svg'.format(Band))
+        Run_graficos_path
+        os.makedirs(Run_graficos_path, exist_ok=True)
+        plt.savefig(Run_graficos_path + '{}.png'.format(Band))
+        plt.savefig(Run_graficos_path + '{}.svg'.format(Band))
 
 ## Violin Plot Bandas
+import pandas as pd
 import pickle
 import matplotlib.pyplot as plt
 import os
@@ -115,11 +113,11 @@ import seaborn as sn
 
 tmin, tmax = -0.6, -0.003
 
-Run_graficos_path = 'gráficos/Model_Comparison/tmin{}_tmax{}/'.format(tmin, tmax)
+Run_graficos_path = 'gráficos/Model_Comparison/tmin{}_tmax{}/Violin Plots/'.format(tmin, tmax)
 Save_fig = True
 Correlaciones = {}
 
-stim = 'Envelope'
+stim = 'Spectrogram'
 
 Bands = ['All', 'Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2']
 for Band in Bands:
@@ -141,10 +139,7 @@ ax.set_xticklabels(['All\n(0.1 - 40 Hz)', 'Delta\n(1 - 4 Hz)', 'Theta\n(4 - 8 Hz
 plt.tight_layout()
 
 if Save_fig:
-    try:
-        os.makedirs(save_path_graficos)
-    except:
-        pass
+    os.makedirs(Run_graficos_path, exist_ok=True)
     plt.savefig(Run_graficos_path + '{}.png'.format(stim))
     plt.savefig(Run_graficos_path + '{}.svg'.format(stim))
 
@@ -154,7 +149,7 @@ from matplotlib import pyplot as plt
 
 tmin, tmax = -0.6, -0.003
 
-Run_graficos_path = 'gráficos/Model_Comparison/tmin{}_tmax{}/Venn_Diagram'.format(tmin, tmax)
+Run_graficos_path = 'gráficos/Model_Comparison/tmin{}_tmax{}/Venn_Diagrams/'.format(tmin, tmax)
 Save_fig = True
 
 f = open('saves/Ridge/Final_Correlation/tmin{}_tmax{}/Mean_Correlations.pkl'.format(tmin, tmax), 'rb')
@@ -196,7 +191,7 @@ for Band in Bands:
 
     plt.tight_layout()
     if Save_fig:
-        os.makedirs(save_path_graficos, exist_ok=True)
+        os.makedirs(Run_graficos_path, exist_ok=True)
         plt.savefig(Run_graficos_path + '{}.png'.format(Band))
         plt.savefig(Run_graficos_path + '{}.svg'.format(Band))
 

@@ -281,6 +281,29 @@ def Plot_PSD(sesion, sujeto, Band, situacion, Display, Save, save_path, info, da
             save_path_graficos + 'Sesion{} - Sujeto{} - Band {}'.format(sesion, sujeto, Band))
 
 
+def Cabezas_corr_promedio_scaled(Correlaciones_totales_sujetos, info, Display, Save, Run_graficos_path, title):
+    Correlaciones_promedio = Correlaciones_totales_sujetos.mean(0)
+
+    # if Display:
+    #     plt.ion()
+    # else:
+    #     plt.ioff()
+
+    fig = plt.figure()
+    plt.suptitle("Mean {} per channel among subjects".format(title), fontsize=19)
+    plt.title('{} = {:.3f} +/- {:.3f}'.format(title, Correlaciones_promedio.mean(), Correlaciones_promedio.std()),
+              fontsize=19)
+    im = mne.viz.plot_topomap(Correlaciones_promedio, info, cmap='Greys', vmin=0, vmax=0.41, show=Display, sphere=0.07)
+    cb = plt.colorbar(im[0], shrink=0.85, orientation='vertical')
+    cb.ax.tick_params(labelsize=23)
+    fig.tight_layout()
+
+    if Save:
+        save_path_graficos = Run_graficos_path
+        os.makedirs(save_path_graficos, exist_ok=True)
+        fig.savefig(save_path_graficos + '{}_promedio_scaled.svg'.format(title))
+        fig.savefig(save_path_graficos + '{}_promedio_sacled.png'.format(title))
+
 def Cabezas_corr_promedio(Correlaciones_totales_sujetos, info, Display, Save, Run_graficos_path, title):
     Correlaciones_promedio = Correlaciones_totales_sujetos.mean(0)
 
@@ -302,10 +325,7 @@ def Cabezas_corr_promedio(Correlaciones_totales_sujetos, info, Display, Save, Ru
 
     if Save:
         save_path_graficos = Run_graficos_path
-        try:
-            os.makedirs(save_path_graficos)
-        except:
-            pass
+        os.makedirs(save_path_graficos, exist_ok=True)
         fig.savefig(save_path_graficos + '{}_promedio.svg'.format(title))
         fig.savefig(save_path_graficos + '{}_promedio.png'.format(title))
 
@@ -367,11 +387,9 @@ def Cabezas_canales_rep(Canales_repetidos_sujetos, info, Display, Save, Run_graf
 
     if Save:
         save_path_graficos = Run_graficos_path
-        try:
-            os.makedirs(save_path_graficos)
-        except:
-            pass
+        os.makedirs(save_path_graficos, exist_ok=True)
         fig.savefig(save_path_graficos + 'Canales_repetidos_{}.png'.format(title))
+        fig.savefig(save_path_graficos + 'Canales_repetidos_{}.svg'.format(title))
 
 
 def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display, Save, Run_graficos_path,
@@ -440,14 +458,10 @@ def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display
 
         if Save:
             save_path_graficos = Run_graficos_path
-            try:
-                os.makedirs(save_path_graficos)
-            except:
-                pass
-            fig.savefig(
-                save_path_graficos + 'Regression_Weights_{}.svg'.format(Stims_Order[i]))
-            fig.savefig(
-                save_path_graficos + 'Regression_Weights_{}.png'.format(Stims_Order[i]))
+            os.makedirs(save_path_graficos, exist_ok=True)
+
+            fig.savefig(save_path_graficos + 'Regression_Weights_{}.svg'.format(Stims_Order[i]))
+            fig.savefig(save_path_graficos + 'Regression_Weights_{}.png'.format(Stims_Order[i]))
 
 
 def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, Display,
@@ -610,10 +624,7 @@ def Channel_wise_correlation_topomap(Pesos_totales_sujetos_todos_canales, info, 
 
     if Save:
         save_path_graficos = Run_graficos_path
-        try:
-            os.makedirs(save_path_graficos)
-        except:
-            pass
+        os.makedirs(save_path_graficos, exist_ok=True)
         fig.savefig(save_path_graficos + 'Channel_correlation_topo.png')
 
 

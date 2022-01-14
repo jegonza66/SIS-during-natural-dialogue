@@ -19,26 +19,26 @@ delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
 times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays))
 
 # Stimuli and EEG
-Stims = ['Envelope', 'Pitch', 'Spectrogram', 'Envelope_Pitch', 'Envelope_Spectrogram', 'Pitch_Spectrogram', 'Envelope_Pitch_Spectrogram']
-Stims = ['Envelope']
-Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', (4,6), (1,15)]
-Bands = ['Theta']
+Stims = ['Envelope', 'Pitch', 'Spectrogram', 'Shimmer']
+# Stims = ['Envelope']
+Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'All']
+Bands = ['Beta_2']
 
 # Standarization
 Stims_preprocess = 'Normalize'
 EEG_preprocess = 'Standarize'
 
 # Random permutations
-Statistical_test = True
+Statistical_test = False
 
 # Figures
 Display_Ind_Figures = False
-Display_Total_Figures = True
+Display_Total_Figures = False
 
-Save_Ind_Figures = False
-Save_Total_Figures = False
+Save_Ind_Figures = True
+Save_Total_Figures = True
 
-Save_Final_Correlation = False
+Save_Final_Correlation = True
 
 # Files
 alphas_fname = 'saves/Alphas/Alphas_Corr0.001.pkl'
@@ -261,22 +261,27 @@ for Band in Bands:
                 sujeto_total += 1
 
         # Armo cabecita con correlaciones promedio entre sujetos
-        Mean_Correlations_Band[stim] = Plot.Cabezas_corr_promedio(Correlaciones_totales_sujetos, info, Display_Total_Figures, Save_Total_Figures,
-                                   Run_graficos_path, title='Correlation')
-        Plot.Cabezas_3d(Correlaciones_totales_sujetos, info, Display_Total_Figures, Save_Total_Figures,
-                        Run_graficos_path, title='Correlation 3D')
-        Plot.Cabezas_corr_promedio(Rmse_totales_sujetos, info, Display_Total_Figures, Save_Total_Figures,
-                                   Run_graficos_path,
-                                   title='Rmse')
+        Mean_Correlations_Band[stim] = Plot.Cabezas_corr_promedio(Correlaciones_totales_sujetos, info,
+                                                                  Display_Total_Figures, Save_Total_Figures,
+                                                                  Run_graficos_path, title='Correlation')
+
+        Plot.Cabezas_corr_promedio_scaled(Correlaciones_totales_sujetos, info, Display_Total_Figures,
+                                          Save_Total_Figures, Run_graficos_path, title='Correlation')
+
+        # Plot.Cabezas_3d(Correlaciones_totales_sujetos, info, Display_Total_Figures, Save_Total_Figures,
+        #                 Run_graficos_path, title='Correlation 3D')
+        # Plot.Cabezas_corr_promedio(Rmse_totales_sujetos, info, Display_Total_Figures, Save_Total_Figures,
+        #                            Run_graficos_path,
+        #                            title='Rmse')
 
         # Armo cabecita con canales repetidos
         if Statistical_test:
             Plot.Cabezas_canales_rep(Canales_repetidos_corr_sujetos.sum(0), info, Display_Total_Figures,
                                      Save_Total_Figures,
                                      Run_graficos_path, title='Correlation')
-            Plot.Cabezas_canales_rep(Canales_repetidos_rmse_sujetos.sum(0), info, Display_Total_Figures,
-                                     Save_Total_Figures,
-                                     Run_graficos_path, title='Rmse')
+            # Plot.Cabezas_canales_rep(Canales_repetidos_rmse_sujetos.sum(0), info, Display_Total_Figures,
+            #                          Save_Total_Figures,
+            #                          Run_graficos_path, title='Rmse')
 
         # Grafico Pesos
         Plot.regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display_Total_Figures,
