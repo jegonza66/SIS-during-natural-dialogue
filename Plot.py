@@ -463,6 +463,7 @@ def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display
             fig.savefig(save_path_graficos + 'Regression_Weights_{}.svg'.format(Stims_Order[i]))
             fig.savefig(save_path_graficos + 'Regression_Weights_{}.png'.format(Stims_Order[i]))
 
+    return Pesos_totales_sujetos_todos_canales_copy
 
 def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, Display,
                               Save, Run_graficos_path, Len_Estimulos, stim):

@@ -19,9 +19,9 @@ delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
 times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays))
 
 # Stimuli and EEG
-Stims = ['Envelope', 'Pitch', 'Spectrogram', 'Shimmer']
-# Stims = ['Envelope_Pitch_Spectrogram']
-Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'All']
+# Stims = ['Envelope', 'Pitch', 'Spectrogram', 'Shimmer']
+Stims = ['Envelope']
+Bands = ['Theta']
 # Bands = ['All']
 
 # Standarization
@@ -29,16 +29,16 @@ Stims_preprocess = 'Normalize'
 EEG_preprocess = 'Standarize'
 
 # Random permutations
-Statistical_test = True
+Statistical_test = False
 
 # Figures
 Display_Ind_Figures = False
 Display_Total_Figures = False
 
-Save_Ind_Figures = True
-Save_Total_Figures = True
+Save_Ind_Figures = False
+Save_Total_Figures = False
 
-Save_Final_Correlation = True
+Save_Final_Correlation = False
 
 # Files
 alphas_fname = 'saves/Alphas/Alphas_Corr0.001.pkl'
@@ -284,7 +284,7 @@ for Band in Bands:
             #                          Run_graficos_path, title='Rmse')
 
         # Grafico Pesos
-        Plot.regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display_Total_Figures,
+        Pesos_totales = Plot.regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display_Total_Figures,
                                 Save_Total_Figures, Run_graficos_path, Len_Estimulos, stim)
 
         Plot.regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times,
@@ -299,6 +299,11 @@ for Band in Bands:
         # Cabezas de correlacion de pesos por canal
         Plot.Channel_wise_correlation_topomap(Pesos_totales_sujetos_todos_canales, info, Display_Total_Figures,
                                               Save_Total_Figures, Run_graficos_path)
+
+        # Save final weights
+        f = open(Path_origial + 'Pesos_Totales_{}_{}.pkl'.format(stim, Band), 'wb')
+        pickle.dump(Pesos_totales, f)
+        f.close()
 
         # SAVE FINAL CORRELATION
         Mean_Correlations[Band] = Mean_Correlations_Band
