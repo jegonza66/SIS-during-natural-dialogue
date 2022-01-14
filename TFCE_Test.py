@@ -2,14 +2,19 @@ import scipy
 import pathlib
 import pickle
 import numpy as np
-import Load
+import os
 import matplotlib.pyplot as plt
+
+import Load
+
 
 #Defino parametros
 Stims_preprocess = 'Normalize'
 EEG_preprocess = 'Standarize'
 stim = 'Envelope'
 Band = 'Theta'
+save_path = 'saves/Ridge/T_value_matrices/{}'.format(Band)
+Save_matrices = True
 
 tmin, tmax = -0.6, -0.003
 sr = 128
@@ -62,17 +67,27 @@ for channel in range(128):
     for delay in range(sum(Len_Estimulos)):
         tt_original[channel, delay] = scipy.stats.ttest_1samp(original_weights[:, channel, delay], 0.0)[0]
 
-# for permutation in range(n_iterations):
-#     for channel in range(128):
-#         for delay in range(sum(Len_Estimulos)):
-#             tt_permutations[permutation, channel, delay] = scipy.stats.ttest_1samp(permutations_weights[permutation,:,channel, delay], 0.0)[0]
-#     print("\rProgress: {}%".format(int((permutation + 1) * 100 / n_iterations)), end='')
+for permutation in range(n_iterations):
+    for channel in range(128):
+        for delay in range(sum(Len_Estimulos)):
+            tt_permutations[permutation, channel, delay] = scipy.stats.ttest_1samp(permutations_weights[permutation,:,channel, delay], 0.0)[0]
+    print("\rProgress: {}%".format(int((permutation + 1) * 100 / n_iterations)), end='')
 
-plt.figure()
-plt.imshow(original_weights.mean(0))
-plt.title('Original data t-values')
-plt.colorbar()
-plt.savefig('gráficos/Original_t-values.png')
+if Save_matrices:
+    os.makedirs(save_path, exist_ok=True)
+    f = open(save_path + '{}_original_tvalues.pkl'.format(stim), 'wb')
+    pickle.dump(tt_original, f)
+    f.close()
+
+    f = open(save_path + '{}_permutations_tvalues.pkl'.format(stim), 'wb')
+    pickle.dump(tt_permutations, f)
+    f.close()
+
+# plt.figure()
+# plt.imshow(original_weights.mean(0))
+# plt.title('Original data t-values')
+# plt.colorbar()
+# plt.savefig('gráficos/Original_t-values.png')
 #
 # plt.figure()
 # plt.imshow(tt_permutations[0])

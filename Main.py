@@ -298,10 +298,7 @@ for Band in Bands:
         # SAVE FINAL CORRELATION
         Mean_Correlations[Band] = Mean_Correlations_Band
         if Save_Final_Correlation and sujeto_total == 18:
-            try:
-                os.makedirs(save_path)
-            except:
-                pass
+            os.makedirs(save_path, exist_ok=True)
             f = open(save_path + '{}_EEG_{}.pkl'.format(stim, Band), 'wb')
             pickle.dump([Correlaciones_totales_sujetos, Canales_repetidos_corr_sujetos], f)
             f.close()

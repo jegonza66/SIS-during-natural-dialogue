@@ -196,10 +196,7 @@ for Band in Bands:
 
     plt.tight_layout()
     if Save_fig:
-        try:
-            os.makedirs(save_path_graficos)
-        except:
-            pass
+        os.makedirs(save_path_graficos, exist_ok=True)
         plt.savefig(Run_graficos_path + '{}.png'.format(Band))
         plt.savefig(Run_graficos_path + '{}.svg'.format(Band))
 
