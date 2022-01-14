@@ -117,9 +117,10 @@ Run_graficos_path = 'gráficos/Model_Comparison/tmin{}_tmax{}/Violin Plots/'.for
 Save_fig = True
 Correlaciones = {}
 
-stim = 'Spectrogram'
+stim = 'Envelope'
 
 Bands = ['All', 'Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2']
+
 for Band in Bands:
     f = open('saves/Ridge/Final_Correlation/tmin{}_tmax{}/{}_EEG_{}.pkl'.format(tmin, tmax, stim, Band), 'rb')
     Corr, Pass = pickle.load(f)
