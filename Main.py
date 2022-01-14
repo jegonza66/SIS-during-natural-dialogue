@@ -20,16 +20,16 @@ times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.
 
 # Stimuli and EEG
 Stims = ['Envelope', 'Pitch', 'Spectrogram', 'Shimmer']
-# Stims = ['Envelope']
+# Stims = ['Envelope_Pitch_Spectrogram']
 Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'All']
-Bands = ['Beta_2']
+# Bands = ['All']
 
 # Standarization
 Stims_preprocess = 'Normalize'
 EEG_preprocess = 'Standarize'
 
 # Random permutations
-Statistical_test = False
+Statistical_test = True
 
 # Figures
 Display_Ind_Figures = False

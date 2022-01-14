@@ -17,7 +17,7 @@ tmin, tmax = -0.6, -0.003
 sr = 128
 
 # Stimuli and EEG
-Stims = ['Envelope', 'Pitch', 'Spectrogram', 'Shimmer']
+Stims = ['Envelope', 'Pitch', 'Shimmer']
 # Stims = ['Envelope']
 Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'All']
 # Bands = ['Beta_1']
@@ -67,7 +67,7 @@ for Band in Bands:
                 # Separo los datos en 5 y tomo test set de 20% de datos con kfold (5 iteraciones)
                 Predicciones = {}
                 n_folds = 5
-                iteraciones = 1000
+                iteraciones = 3000
 
                 # Defino variables donde voy a guardar mil cosas
                 Pesos_fake = np.zeros((n_folds, iteraciones, info['nchan'], sum(Len_Estimulos)), dtype=np.float16)

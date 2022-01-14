@@ -9,11 +9,11 @@ from scipy.spatial import ConvexHull
 
 tmin, tmax = -0.6, -0.003
 
-Run_graficos_path = 'gráficos/Model_Comparison/tmin{}_tmax{}/Convex_Hull'.format(tmin, tmax)
+Run_graficos_path = 'gráficos/Model_Comparison/tmin{}_tmax{}/Convex_Hull/'.format(tmin, tmax)
 Save_fig = True
 
-Bands = ['Delta', 'Alpha', 'Beta_1', (4,6), (1,15)]
-# Bands = ['Theta']
+Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'All']
+
 for Band in Bands:
 
     f = open('saves/Ridge/Final_Correlation/tmin{}_tmax{}/Envelope_EEG_{}.pkl'.format(tmin, tmax, Band), 'rb')

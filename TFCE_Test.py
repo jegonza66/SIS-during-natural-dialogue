@@ -13,7 +13,7 @@ Stims_preprocess = 'Normalize'
 EEG_preprocess = 'Standarize'
 stim = 'Envelope'
 Band = 'Theta'
-save_path = 'saves/Ridge/T_value_matrices/{}'.format(Band)
+save_path = 'saves/Ridge/T_value_matrices/{}/'.format(Band)
 Save_matrices = True
 
 tmin, tmax = -0.6, -0.003
