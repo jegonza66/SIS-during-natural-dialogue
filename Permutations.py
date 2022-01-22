@@ -38,7 +38,7 @@ def simular_iteraciones_Ridge(Fake_Model, alpha, iteraciones, sesion, sujeto, fo
 
 
 def simular_iteraciones_Ridge_plot(info, times, situacion, alpha, iteraciones, sesion, sujeto, fold,
-                                   dstims_train_val, eeg_train_val, dstims_test, eeg_test, fmin, fmax, Display=False):
+                                   dstims_train_val, eeg_train_val, dstims_test, eeg_test, fmin, fmax, stim, Band, save_path, Display=False):
     print("\nSesion {} - Sujeto {} - Test round {}".format(sesion, sujeto, fold + 1))
     psds_rand_correlations = []
     for iteracion in range(iteraciones):
@@ -104,6 +104,8 @@ def simular_iteraciones_Ridge_plot(info, times, situacion, alpha, iteraciones, s
             plt.ylabel('Amplitude')
             plt.grid()
             plt.legend()
+            os.makedirs(save_path+'Fake/Stim_{}_EEG_Band{}/'.format(stim,Band), exist_ok=True)
+            plt.savefig(save_path+'Fake/Stim_{}_EEG_Band{}/Sesion{}_Sujeto_{}.png'.format(stim, Band,sesion, sujeto))
 
             # Plot PSD
             fig, ax = plt.subplots()
@@ -114,6 +116,10 @@ def simular_iteraciones_Ridge_plot(info, times, situacion, alpha, iteraciones, s
                         spatial_colors=True, unit=False, units='w', axes=ax)
             ax.set_xlabel('Frequency [Hz]')
             ax.grid()
+            save_path_graficos = 'gráficos/PSD/Fake/'
+            os.makedirs(save_path_graficos, exist_ok=True)
+            plt.savefig(save_path_graficos + 'Sesion{} - Sujeto{} - Band {}'.format(sesion, sujeto, Band))
+
 
         print("\rProgress: {}%".format(int((iteracion + 1) * 100 / iteraciones)), end='')
     return psds_rand_correlations

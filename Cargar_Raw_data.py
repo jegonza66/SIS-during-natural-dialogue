@@ -18,7 +18,7 @@ s = 21
 trial = 1
 channel = 2
 
-valores_faltantes_pitch = 0
+valores_faltantes_pitch = np.nan
 audio_sr = 16000
 sampleStep = 0.01
 
@@ -79,8 +79,16 @@ envelope = np.array(
     [np.mean(envelope[i:i + window_size]) for i in range(0, len(envelope), stride) if i + window_size <= len(envelope)])
 envelope = envelope.ravel().flatten()
 
-plt.figure()
-plt.plot(envelope)
+envelope_x = np.linspace(0, len(wav)/audio_sr, len(envelope))
+fig, ax = plt.subplots()
+plt.plot(np.linspace(0, len(wav)/audio_sr, len(wav)), wav, label='Audio signal')
+plt.plot(envelope_x, envelope, label='Envelope')
+ax.set_xlabel('Time [s]')
+ax.set_ylabel('Amplitude')
+plt.grid()
+plt.legend()
+
+
 
 ## PLOT spectre
 sp = fft(envelope)
@@ -135,7 +143,15 @@ pitch = Processing.subsamplear(pitch, 125)
 pitch_der = np.array(np.repeat(pitch_der, audio_sr * sampleStep), dtype=float)
 pitch_der = Processing.subsamplear(pitch_der, 125)
 
-## Normalize features and leave nans for plot
+fig, ax = plt.subplots()
+plt.plot(np.linspace(0, len(wav)/audio_sr, len(wav)), wav, label='Audio signal [Amplitude]')
+plt.plot(np.linspace(0,len(wav)/audio_sr, len(pitch)), pitch, label='Pitch [Hz]')
+ax.set_xlabel('Time [s]')
+ax.set_ylabel('Magnitude')
+plt.grid()
+plt.legend()
+
+## Normalice features Leave nans for plot
 
 no_nan_pitch = pitch[~np.isnan(pitch)]
 no_nan_pitch_der = pitch_der[~np.isnan(pitch_der)]
@@ -207,9 +223,18 @@ mcm = Funciones.minimo_comun_multiplo(len(shimmer), len(envelope))
 shimmer = np.repeat(shimmer, mcm/len(shimmer))
 shimmer = Processing.subsamplear(shimmer, mcm/len(envelope))
 
-plt.figure(figsize=(16, 4))
-y['shimmerLocaldB_sma3nz'].plot(rot=45)
-plt.title('Shimmer')
+norm.normalize_11(wav)
+wav -= wav.mean()
+
+fig, ax = plt.subplots()
+plt.plot(np.linspace(0, len(wav)/audio_sr, len(wav)), wav*5, label='Audio signal')
+plt.plot(np.linspace(0,len(wav)/audio_sr, len(shimmer)), shimmer, label='Shimmer')
+ax.set_xlabel('Time [s]')
+ax.set_ylabel('Amplitude')
+plt.grid()
+plt.legend()
+
+
 
 ## JITTER
 

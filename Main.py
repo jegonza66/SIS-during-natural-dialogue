@@ -21,24 +21,23 @@ times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.
 # Stimuli and EEG
 # Stims = ['Envelope', 'Pitch', 'Spectrogram', 'Shimmer']
 Stims = ['Envelope']
-Bands = ['Theta']
-# Bands = ['All']
+Bands = ['All']
 
 # Standarization
 Stims_preprocess = 'Normalize'
 EEG_preprocess = 'Standarize'
 
 # Random permutations
-Statistical_test = False
+Statistical_test = True
 
 # Figures
 Display_Ind_Figures = False
 Display_Total_Figures = False
 
-Save_Ind_Figures = False
-Save_Total_Figures = False
+Save_Ind_Figures = True
+Save_Total_Figures = True
 
-Save_Final_Correlation = False
+Save_Final_Correlation = True
 
 # Files
 alphas_fname = 'saves/Alphas/Alphas_Corr0.001.pkl'
@@ -137,11 +136,9 @@ for Band in Bands:
 
                     axis = 0
                     porcent = 5
-                    eeg_train_val, eeg_test, dstims_train_val, dstims_test = Processing.standarize_normalize(eeg_train_val, eeg_test, dstims_train_val,
-                                                                                         dstims_test,
-                                                                                         Stims_preprocess,
-                                                                                         EEG_preprocess,
-                                                                                         axis, porcent)
+                    eeg_train_val, eeg_test, dstims_train_val, dstims_test = \
+                        Processing.standarize_normalize(eeg_train_val, eeg_test, dstims_train_val, dstims_test,
+                                                        Stims_preprocess, EEG_preprocess, axis, porcent)
                     try:
                         alpha = Alphas[Band][stim][sesion][sujeto]
                         if alpha == 'FAILED':
@@ -265,32 +262,17 @@ for Band in Bands:
                                                                   Display_Total_Figures, Save_Total_Figures,
                                                                   Run_graficos_path, title='Correlation')
 
-        Plot.Cabezas_corr_promedio_scaled(Correlaciones_totales_sujetos, info, Display_Total_Figures,
-                                          Save_Total_Figures, Run_graficos_path, title='Correlation')
-
-        # Plot.Cabezas_3d(Correlaciones_totales_sujetos, info, Display_Total_Figures, Save_Total_Figures,
-        #                 Run_graficos_path, title='Correlation 3D')
-        # Plot.Cabezas_corr_promedio(Rmse_totales_sujetos, info, Display_Total_Figures, Save_Total_Figures,
-        #                            Run_graficos_path,
-        #                            title='Rmse')
-
         # Armo cabecita con canales repetidos
         if Statistical_test:
             Plot.Cabezas_canales_rep(Canales_repetidos_corr_sujetos.sum(0), info, Display_Total_Figures,
-                                     Save_Total_Figures,
-                                     Run_graficos_path, title='Correlation')
-            # Plot.Cabezas_canales_rep(Canales_repetidos_rmse_sujetos.sum(0), info, Display_Total_Figures,
-            #                          Save_Total_Figures,
-            #                          Run_graficos_path, title='Rmse')
+                                     Save_Total_Figures, Run_graficos_path, title='Correlation')
 
         # Grafico Pesos
         Pesos_totales = Plot.regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display_Total_Figures,
-                                Save_Total_Figures, Run_graficos_path, Len_Estimulos, stim)
+                                                Save_Total_Figures, Run_graficos_path, Len_Estimulos, stim)
 
-        Plot.regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times,
-                                                             Display_Total_Figures, Save_Total_Figures,
-                                                             Run_graficos_path,
-                                                             Len_Estimulos, stim)
+        Plot.regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, Display_Total_Figures,
+                                       Save_Total_Figures, Run_graficos_path, Len_Estimulos, stim)
 
         # Matriz de Correlacion
         Plot.Matriz_corr_channel_wise(Pesos_totales_sujetos_todos_canales, Display_Total_Figures, Save_Total_Figures,
@@ -299,6 +281,12 @@ for Band in Bands:
         # Cabezas de correlacion de pesos por canal
         Plot.Channel_wise_correlation_topomap(Pesos_totales_sujetos_todos_canales, info, Display_Total_Figures,
                                               Save_Total_Figures, Run_graficos_path)
+
+        # Plot.Cabezas_3d(Correlaciones_totales_sujetos, info, Display_Total_Figures, Save_Total_Figures,
+        #                 Run_graficos_path, title='Correlation 3D')
+        # Plot.Cabezas_corr_promedio(Rmse_totales_sujetos, info, Display_Total_Figures, Save_Total_Figures,
+        #                            Run_graficos_path,
+        #                            title='Rmse')
 
         # Save final weights
         f = open(Path_origial + 'Pesos_Totales_{}_{}.pkl'.format(stim, Band), 'wb')

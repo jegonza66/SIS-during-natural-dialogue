@@ -14,15 +14,15 @@ import Permutations
 
 # WHAT TO DO
 Plot_EEG_PSD = False
-Simulate_random_data = False
+Simulate_random_data = True
 Cov_Matrix = False
-Signal_vs_Pred = False
+Signal_vs_Pred = True
 Phase_Align = False
 Pitch = False
 
 # Figures
 Display = False
-Save = False
+Save = True
 
 if Display:
     plt.ion()
@@ -35,8 +35,13 @@ Stims_preprocess = 'Normalize'
 EEG_preprocess = 'Standarize'
 
 # Model
-# Model = Ridge
-alpha = 100
+alphas_fname = 'saves/Alphas/Alphas_Corr0.001.pkl'
+try:
+    f = open(alphas_fname, 'rb')
+    Alphas = pickle.load(f)
+    f.close()
+except:
+    print('\n\nAlphas file not found.\n\n')
 
 # Stimuli and EEG
 Stims = ['Envelope', 'Pitch', 'Spectrogram', 'Envelope_Pitch_Spectrogram']
@@ -44,7 +49,7 @@ Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All']
 Bands = ['Theta']
 
 stim = 'Envelope'
-Band = 'Theta'
+Band = 'All'
 situacion = 'Escucha'
 tmin, tmax = -0.6, -0.003
 sr = 128
@@ -54,6 +59,7 @@ times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.
 # Paths
 procesed_data_path = 'saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
 Run_saves_path = 'saves/'
+graficos_save_path = 'gráficos/Signals_vs_Pred/tmin{}_tmax{}/'.format(tmin, tmax, stim, Band)
 
 # Save Variables
 if Simulate_random_data:
@@ -86,11 +92,11 @@ for sesion in sesiones:
         Sujeto_1, Sujeto_2 = Load.Load_Data(sesion=sesion, stim=stim, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
                                             procesed_data_path=procesed_data_path, situacion=situacion)
         # LOAD EEG BY SUBJECT
-        eeg_sujeto_1, eeg_sujeto_2 = Sujeto_1['EEG'], Sujeto_2['EEG']
+        eeg_sujeto_1, eeg_sujeto_2, info = Sujeto_1['EEG'], Sujeto_2['EEG'], Sujeto_1['info']
         N_Samples.append(len(eeg_sujeto_1))
         N_Samples.append(len(eeg_sujeto_2))
         # LOAD STIMULUS BY SUBJECT
-        dstims_para_sujeto_1, dstims_para_sujeto_2, info = Load.Estimulos(stim, Sujeto_1, Sujeto_2)
+        dstims_para_sujeto_1, dstims_para_sujeto_2 = Load.Estimulos(stim, Sujeto_1, Sujeto_2)
         Len_Estimulos = [len(dstims_para_sujeto_1[i][0]) for i in range(len(dstims_para_sujeto_1))]
 
         for sujeto, eeg, dstims in zip((1, 2), (eeg_sujeto_1, eeg_sujeto_2),
@@ -119,11 +125,19 @@ for sesion in sesiones:
 
                     axis = 0
                     porcent = 5
-                    eeg, dstims_train_val, dstims_test = Processing.standarize_normalize(eeg, dstims_train_val, dstims_test,
-                                                                                         Stims_preprocess, EEG_preprocess,
-                                                                                         axis=0, porcent=5)
+                    eeg_train_val, eeg_test, dstims_train_val, dstims_test = \
+                        Processing.standarize_normalize(eeg_train_val, eeg_test, dstims_train_val, dstims_test,
+                                                        Stims_preprocess, EEG_preprocess, axis, porcent)
 
                     # Ajusto el modelo y guardo
+                    try:
+                        alpha = Alphas[Band][stim][sesion][sujeto]
+                        if alpha == 'FAILED':
+                            alpha = np.mean([value for sesion_dict in Alphas[Band][stim].keys() for value in list(Alphas[Band][stim][sesion_dict].values()) if type(value) != str])
+                    except:
+                        alpha = 1000
+                        print('Alpha missing. Ussing default value: {}'.format(alpha))
+
                     Model = Models.Ridge(alpha)
                     Model.fit(dstims_train_val, eeg_train_val)
 
@@ -140,31 +154,34 @@ for sesion in sesiones:
 
                     if Signal_vs_Pred:
                         # SINGAL AND PREDICTION PLOT
-                        plt.ion()
+                        plt.ioff()
                         fig = plt.figure()
-                        fig.suptitle('Pearson Correlation = {}'.format(Rcorr[0]))
+                        fig.suptitle('Original prediction')
+                        plt.title('Pearson Correlation = {}'.format(Rcorr[0]))
                         plt.plot(eeg_test[:, 0], label='Signal')
                         plt.plot(predicted[:, 0], label='Prediction')
-                        plt.title('Original Signals - alpha: {}'.format(alpha))
                         plt.xlim([2000, 3000])
                         plt.xlabel('Samples')
                         plt.ylabel('Amplitude')
                         plt.grid()
                         plt.legend()
-                        plt.savefig('gráficos/Ridge/Alpha/Signals_alpha{}.png'.format(alpha))
                         plt.tight_layout()
-                        break
+
+                        os.makedirs(graficos_save_path+'Original/Stim_{}_EEG_Band{}/'.format(stim, Band), exist_ok=True)
+                        plt.savefig(graficos_save_path + 'Original/Stim_{}_EEG_Band{}/Sesion{}_Sujeto{}.png'.format(stim, Band, sesion, sujeto))
+
 
                     if Simulate_random_data:
                         fmin, fmax = 0, 40
                         # SIMULACIONES PERMUTADAS PARA COMPARAR
                         toy_iterations = 10
                         psd_rand_correlation = Permutations.simular_iteraciones_Ridge_plot(info, times, situacion, alpha,
-                                                                                         toy_iterations, sesion, sujeto,
-                                                                                         fold, dstims_train_val,
-                                                                                         eeg_train_val, dstims_test,
-                                                                                         eeg_test, fmin, fmax,
-                                                                                         Display=False)
+                                                                                           toy_iterations, sesion, sujeto,
+                                                                                           fold, dstims_train_val,
+                                                                                           eeg_train_val, dstims_test,
+                                                                                           eeg_test, fmin, fmax, stim, Band,
+                                                                                           save_path=graficos_save_path,
+                                                                                           Display=False)
                         psd_rand_correlations.append(psd_rand_correlation)
 
                         # PSD of predicted EEG vs Signal
@@ -173,14 +190,16 @@ for sesion in sesiones:
                         psds_pred, freqs_mean = mne.time_frequency.psd_array_welch(predicted.transpose(), info['sfreq'],
                                                                                    fmin, fmax)
                         # Ploteo PSD
-                        Plot.Plot_PSD(sesion, sujeto, fold, Band, situacion, Display, Save, 'Prediccion', info,
+                        Plot.Plot_PSD(sesion, sujeto, Band, situacion, Display, Save, 'Prediccion', info,
                                       predicted.transpose())
-                        Plot.Plot_PSD(sesion, sujeto, fold, Band, situacion, Display, Save, 'Test', info,
+                        Plot.Plot_PSD(sesion, sujeto, Band, situacion, Display, Save, 'Test', info,
                                       eeg_test.transpose())
 
+                        # Calculate channelwise correlation between prediction and signal psd
                         psds_channel_corr = np.array(
                             [np.corrcoef(psds_test[ii].ravel(), np.array(psds_pred[ii]).ravel())[0, 1]
                              for ii in range(len(psds_test))])
+                        # save average of channels psd correlation
                         psd_pred_correlations.append(np.mean(psds_channel_corr))
 
             if Cov_Matrix:
@@ -238,6 +257,6 @@ if Pitch:
 
 # PSD Boxplot
 if Simulate_random_data:
-    Run_graficos_path = 'gráficos/Ridge/Stims_{}_EEG_{}/Alpha_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
-        Stims_preprocess, EEG_preprocess, alpha, tmin, tmax, stim, Band)
+    Run_graficos_path = 'gráficos/Ridge/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
+        Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
     Plot.PSD_boxplot(psd_pred_correlations, psd_rand_correlations, Display, Save, Run_graficos_path)

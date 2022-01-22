@@ -142,10 +142,8 @@ def plot_grafico_pesos(Display, sesion, sujeto, best_alpha, Pesos_promedio,
         plt.ioff()
 
     fig = plt.figure()
-    fig.suptitle('Sesion {} - Sujeto {} - Corr max {:.2f} - Rmse max {:.2f}- alpha: {:.2f}'.format(sesion, sujeto,
-                                                                                                   Corr_mejor_canal,
-                                                                                                   Rmse_mejor_canal,
-                                                                                                   best_alpha))
+    fig.suptitle('Sesion {} - Sujeto {} - Corr max {:.2f} - Rmse max {:.2f} - '
+                 'alpha: {:.2f}'.format(sesion, sujeto, Corr_mejor_canal, Rmse_mejor_canal, best_alpha))
     Stims_Order = stim.split('_')
     Cant_Estimulos = len(Len_Estimulos)
 
@@ -157,8 +155,8 @@ def plot_grafico_pesos(Display, sesion, sujeto, best_alpha, Pesos_promedio,
                 Len_Estimulos[j] for j in range(i + 1))].mean(0)
             spectrogram_weights = spectrogram_weights.reshape(16, len(times))
 
-            im = ax.pcolormesh(times * 1000, np.arange(16), spectrogram_weights, cmap='RdBu_r',
-                               vmin=-spectrogram_weights.max(), vmax=spectrogram_weights.max(), shading='gouraud')
+            im = ax.pcolormesh(times * 1000, np.arange(16), spectrogram_weights, cmap='jet',
+                               vmin=-spectrogram_weights.max(), vmax=spectrogram_weights.max(), shading='auto')
 
             Bands_center = librosa.mel_frequencies(n_mels=18, fmin=62, fmax=8000)[1:-1]
             ax.set(xlabel='Time (ms)', ylabel='Hz')
@@ -273,36 +271,9 @@ def Plot_PSD(sesion, sujeto, Band, situacion, Display, Save, save_path, info, da
 
     if Save:
         save_path_graficos = 'gráficos/PSD/{}/'.format(save_path)
-        try:
-            os.makedirs(save_path_graficos)
-        except:
-            pass
-        plt.savefig(
-            save_path_graficos + 'Sesion{} - Sujeto{} - Band {}'.format(sesion, sujeto, Band))
-
-
-def Cabezas_corr_promedio_scaled(Correlaciones_totales_sujetos, info, Display, Save, Run_graficos_path, title):
-    Correlaciones_promedio = Correlaciones_totales_sujetos.mean(0)
-
-    # if Display:
-    #     plt.ion()
-    # else:
-    #     plt.ioff()
-
-    fig = plt.figure()
-    plt.suptitle("Mean {} per channel among subjects".format(title), fontsize=19)
-    plt.title('{} = {:.3f} +/- {:.3f}'.format(title, Correlaciones_promedio.mean(), Correlaciones_promedio.std()),
-              fontsize=19)
-    im = mne.viz.plot_topomap(Correlaciones_promedio, info, cmap='Greys', vmin=0, vmax=0.41, show=Display, sphere=0.07)
-    cb = plt.colorbar(im[0], shrink=0.85, orientation='vertical')
-    cb.ax.tick_params(labelsize=23)
-    fig.tight_layout()
-
-    if Save:
-        save_path_graficos = Run_graficos_path
         os.makedirs(save_path_graficos, exist_ok=True)
-        fig.savefig(save_path_graficos + '{}_promedio_scaled.svg'.format(title))
-        fig.savefig(save_path_graficos + '{}_promedio_sacled.png'.format(title))
+        plt.savefig(save_path_graficos + 'Sesion{} - Sujeto{} - Band {}'.format(sesion, sujeto, Band))
+
 
 def Cabezas_corr_promedio(Correlaciones_totales_sujetos, info, Display, Save, Run_graficos_path, title):
     Correlaciones_promedio = Correlaciones_totales_sujetos.mean(0)
@@ -427,7 +398,8 @@ def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display
             ax.set_yticks(ticks_positions)
             ax.set_yticklabels(ticks_labels)
 
-            fig.colorbar(im, ax=ax, orientation='vertical')
+            cbar = fig.colorbar(im, ax=ax, orientation='vertical')
+            cbar.set_label('w magnitude')
 
         else:
             evoked = mne.EvokedArray(Pesos_totales_sujetos_todos_canales_copy[:,
@@ -464,6 +436,7 @@ def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display
             fig.savefig(save_path_graficos + 'Regression_Weights_{}.png'.format(Stims_Order[i]))
 
     return Pesos_totales_sujetos_todos_canales_copy
+
 
 def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, Display,
                               Save, Run_graficos_path, Len_Estimulos, stim):
@@ -513,14 +486,16 @@ def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, 
             evoked.times = times
 
             fig, axs = plt.subplots(2, 1, sharex=True, figsize=(6, 8), gridspec_kw={'height_ratios': [1, 3]})
+            fig.suptitle('{}'.format(Stims_Order[i] if Cant_Estimulos > 1 else stim), fontsize=23)
 
             im = axs[1].pcolormesh(times * 1000, np.arange(info['nchan']), mean_coefs, cmap='jet',
                                    vmin=-(mean_coefs).max(),
                                    vmax=(mean_coefs).max(), shading='gouraud')
             axs[1].set(xlabel='Time (ms)', ylabel='Channel')
-            fig.colorbar(im, ax=axs[1], orientation='horizontal')
+            cbar = fig.colorbar(im, ax=axs[1], orientation='horizontal')
+            cbar.set_label('w magnitude')
 
-            evoked.plot(scalings=dict(eeg=1, grad=1, mag=1), zorder='std', time_unit='ms',
+            evoked.plot(scalings=dict(eeg=1, grad=1, mag=1), zorder='std', time_unit='ms', titles=dict(eeg=''),
                         show=False, spatial_colors=True, unit=False, units='w', axes=axs[0])
             axs[0].plot(times * 1000, evoked._data.mean(0), "k--", label="Mean", zorder=130, linewidth=2)
             axs[0].axis('off')
@@ -663,7 +638,8 @@ def Matriz_corr_channel_wise(Pesos_totales_sujetos_todos_canales, Display, Save,
     Correlation_mean, Correlation_std = np.mean(np.abs(corr_values)), np.std(np.abs(corr_values))
 
     fig, (ax, cax) = plt.subplots(ncols=2, figsize=(15, 9), gridspec_kw={"width_ratios": [1, 0.05]})
-    fig.suptitle('Correlation among subject\'s $w$', fontsize=26)
+    fig.suptitle('Similarity among subject\'s $w$', fontsize=26)
+    fig.suptitle('Similarity among subject\'s $w$', fontsize=26)
     ax.set_title('Mean: {:.3f} +/- {:.3f}'.format(Correlation_mean, Correlation_std), fontsize=18)
     sn.heatmap(Correlation_matrix, mask=mask, cmap="coolwarm", fmt='.2f', ax=ax,
                annot=True, center=0, xticklabels=True, annot_kws={"size": 15},
@@ -689,59 +665,6 @@ def Matriz_corr_channel_wise(Pesos_totales_sujetos_todos_canales, Display, Save,
         fig.savefig(save_path_graficos + 'Channelwise_correlation_matrix.png')
 
 
-def Matriz_std_channel_wise(Pesos_totales_sujetos_todos_canales, Display, Save, Run_graficos_path):
-    Pesos_totales_sujetos_todos_canales_average = np.dstack(
-        (Pesos_totales_sujetos_todos_canales, Pesos_totales_sujetos_todos_canales.mean(2)))
-    Correlation_matrices = np.zeros((Pesos_totales_sujetos_todos_canales_average.shape[0],
-                                     Pesos_totales_sujetos_todos_canales_average.shape[2],
-                                     Pesos_totales_sujetos_todos_canales_average.shape[2]))
-    for channel in range(len(Pesos_totales_sujetos_todos_canales_average)):
-        Correlation_matrices[channel] = np.array(
-            pd.DataFrame(Pesos_totales_sujetos_todos_canales_average[channel]).corr(method='pearson'))
-
-    # std por sujeto
-    std_matrix = Correlation_matrices.std(0)
-
-    for i in range(len(std_matrix)):
-        std_matrix[i, i] = std_matrix[-1, i]
-
-    lista_nombres = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "Promedio"]
-    std_matrix = pd.DataFrame(std_matrix[:-1, :-1])
-    std_matrix.columns = lista_nombres[:len(std_matrix) - 1] + [lista_nombres[-1]]
-
-    if Display:
-        plt.ion()
-    else:
-        plt.ioff()
-
-    mask = np.ones_like(std_matrix)
-    mask[np.tril_indices_from(mask)] = False
-
-    fig, (ax, cax) = plt.subplots(ncols=2, figsize=(15, 9), gridspec_kw={"width_ratios": [1, 0.05]})
-    fig.suptitle('Absolute value of the correlation among subject\'s $w$', fontsize=26)
-    sn.heatmap(abs(std_matrix), mask=mask, cmap="coolwarm", fmt='.3', ax=ax,
-               annot=True, center=0, xticklabels=True, annot_kws={"size": 19},
-               cbar=False)
-
-    ax.set_yticklabels(['Mean of subjects'] + lista_nombres[1:len(std_matrix)], rotation='horizontal', fontsize=19)
-    ax.set_xticklabels(lista_nombres[:len(std_matrix) - 1] + ['Mean of subjects'], rotation='horizontal', ha='left',
-                       fontsize=19)
-
-    sn.despine(right=True, left=True, bottom=True, top=True)
-    fig.colorbar(ax.get_children()[0], cax=cax, orientation="vertical")
-    cax.yaxis.set_tick_params(labelsize=20)
-
-    fig.tight_layout()
-
-    if Save:
-        save_path_graficos = Run_graficos_path
-        try:
-            os.makedirs(save_path_graficos)
-        except:
-            pass
-        fig.savefig(save_path_graficos + 'Channelwise_std_matrix.png')
-
-
 def PSD_boxplot(psd_pred_correlations, psd_rand_correlations, Display, Save, Run_graficos_path):
     psd_rand_correlations = Funciones.flatten_list(psd_rand_correlations)
 
@@ -751,9 +674,10 @@ def PSD_boxplot(psd_pred_correlations, psd_rand_correlations, Display, Save, Run
     else:
         plt.ioff()
 
-    fig = plt.figure()
-    sn.violinplot(data=[psd_pred_correlations, psd_rand_correlations])
-    # plt.boxplot([psd_pred_correlations, psd_rand_correlations], labels=['Prediction', 'Random'])
+    fig, ax = plt.subplots()
+    sn.violinplot(data=[psd_pred_correlations, psd_rand_correlations], ax=ax)
+    ax.set_xticklabels(['Prediction', 'Random'])
+    # plt.boxplot([psd_pred_correlations, psd_rand_correlations], labels=['Prediction', 'Random'])plt.boxplot([psd_pred_correlations, psd_rand_correlations], labels=['Prediction', 'Random'])plt.boxplot([psd_pred_correlations, psd_rand_correlations], labels=['Prediction', 'Random'])plt.boxplot([psd_pred_correlations, psd_rand_correlations], labels=['Prediction', 'Random'])
     plt.ylim([0, 1])
     plt.ylabel('Correlation')
 
@@ -1001,3 +925,81 @@ def Plot_instantes_casera(Pesos_totales_sujetos_todos_canales, info, Band, times
         fig.savefig(save_path_graficos + 'Instantes_interes.png')
 
     return Pesos_totales_sujetos_todos_canales_copy.mean(1)
+
+
+
+def Matriz_std_channel_wise(Pesos_totales_sujetos_todos_canales, Display, Save, Run_graficos_path):
+    Pesos_totales_sujetos_todos_canales_average = np.dstack(
+        (Pesos_totales_sujetos_todos_canales, Pesos_totales_sujetos_todos_canales.mean(2)))
+    Correlation_matrices = np.zeros((Pesos_totales_sujetos_todos_canales_average.shape[0],
+                                     Pesos_totales_sujetos_todos_canales_average.shape[2],
+                                     Pesos_totales_sujetos_todos_canales_average.shape[2]))
+    for channel in range(len(Pesos_totales_sujetos_todos_canales_average)):
+        Correlation_matrices[channel] = np.array(
+            pd.DataFrame(Pesos_totales_sujetos_todos_canales_average[channel]).corr(method='pearson'))
+
+    # std por sujeto
+    std_matrix = Correlation_matrices.std(0)
+
+    for i in range(len(std_matrix)):
+        std_matrix[i, i] = std_matrix[-1, i]
+
+    lista_nombres = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "Promedio"]
+    std_matrix = pd.DataFrame(std_matrix[:-1, :-1])
+    std_matrix.columns = lista_nombres[:len(std_matrix) - 1] + [lista_nombres[-1]]
+
+    if Display:
+        plt.ion()
+    else:
+        plt.ioff()
+
+    mask = np.ones_like(std_matrix)
+    mask[np.tril_indices_from(mask)] = False
+
+    fig, (ax, cax) = plt.subplots(ncols=2, figsize=(15, 9), gridspec_kw={"width_ratios": [1, 0.05]})
+    fig.suptitle('Absolute value of the correlation among subject\'s $w$', fontsize=26)
+    sn.heatmap(abs(std_matrix), mask=mask, cmap="coolwarm", fmt='.3', ax=ax,
+               annot=True, center=0, xticklabels=True, annot_kws={"size": 19},
+               cbar=False)
+
+    ax.set_yticklabels(['Mean of subjects'] + lista_nombres[1:len(std_matrix)], rotation='horizontal', fontsize=19)
+    ax.set_xticklabels(lista_nombres[:len(std_matrix) - 1] + ['Mean of subjects'], rotation='horizontal', ha='left',
+                       fontsize=19)
+
+    sn.despine(right=True, left=True, bottom=True, top=True)
+    fig.colorbar(ax.get_children()[0], cax=cax, orientation="vertical")
+    cax.yaxis.set_tick_params(labelsize=20)
+
+    fig.tight_layout()
+
+    if Save:
+        save_path_graficos = Run_graficos_path
+        try:
+            os.makedirs(save_path_graficos)
+        except:
+            pass
+        fig.savefig(save_path_graficos + 'Channelwise_std_matrix.png')
+
+
+def Cabezas_corr_promedio_scaled(Correlaciones_totales_sujetos, info, Display, Save, Run_graficos_path, title):
+    Correlaciones_promedio = Correlaciones_totales_sujetos.mean(0)
+
+    if Display:
+        plt.ion()
+    else:
+        plt.ioff()
+
+    fig = plt.figure()
+    plt.suptitle("Mean {} per channel among subjects".format(title), fontsize=19)
+    plt.title('{} = {:.3f} +/- {:.3f}'.format(title, Correlaciones_promedio.mean(), Correlaciones_promedio.std()),
+              fontsize=19)
+    im = mne.viz.plot_topomap(Correlaciones_promedio, info, cmap='Greys', vmin=0, vmax=0.41, show=Display, sphere=0.07)
+    cb = plt.colorbar(im[0], shrink=0.85, orientation='vertical')
+    cb.ax.tick_params(labelsize=23)
+    fig.tight_layout()
+
+    if Save:
+        save_path_graficos = Run_graficos_path
+        os.makedirs(save_path_graficos, exist_ok=True)
+        fig.savefig(save_path_graficos + '{}_promedio_scaled.svg'.format(title))
+        fig.savefig(save_path_graficos + '{}_promedio_sacled.png'.format(title))
