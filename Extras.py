@@ -21,7 +21,7 @@ Phase_Align = False
 Pitch = False
 
 # Figures
-Display = False
+Display = True
 Save = True
 
 if Display:
@@ -180,7 +180,7 @@ for sesion in sesiones:
                                                                                            fold, dstims_train_val,
                                                                                            eeg_train_val, dstims_test,
                                                                                            eeg_test, fmin, fmax, stim, Band,
-                                                                                           save_path=graficos_save_path,
+                                                                                           save_path=False,
                                                                                            Display=False)
                         psd_rand_correlations.append(psd_rand_correlation)
 
@@ -260,3 +260,8 @@ if Simulate_random_data:
     Run_graficos_path = 'gráficos/Ridge/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
         Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
     Plot.PSD_boxplot(psd_pred_correlations, psd_rand_correlations, Display, Save, Run_graficos_path)
+
+#
+# import scipy
+# scipy.stats.normaltest(np.array(psd_pred_correlations))
+# scipy.stats.normaltest(np.array(psd_rand_correlations).reshape(900))

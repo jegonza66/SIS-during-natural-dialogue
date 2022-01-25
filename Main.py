@@ -13,7 +13,7 @@ startTime = datetime.now()
 
 # Define Parameters
 # Model parameters
-tmin, tmax = -0.6, -0.003
+tmin, tmax = -0.6, 0.1
 sr = 128
 delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
 times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays))
@@ -21,14 +21,14 @@ times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.
 # Stimuli and EEG
 # Stims = ['Envelope', 'Pitch', 'Spectrogram', 'Shimmer']
 Stims = ['Envelope']
-Bands = ['All']
+Bands = ['Delta']
 
 # Standarization
 Stims_preprocess = 'Normalize'
 EEG_preprocess = 'Standarize'
 
 # Random permutations
-Statistical_test = True
+Statistical_test = False
 
 # Figures
 Display_Ind_Figures = False
@@ -272,7 +272,7 @@ for Band in Bands:
                                                 Save_Total_Figures, Run_graficos_path, Len_Estimulos, stim)
 
         Plot.regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, Display_Total_Figures,
-                                       Save_Total_Figures, Run_graficos_path, Len_Estimulos, stim)
+                                       Save_Total_Figures, Run_graficos_path, Len_Estimulos, stim, Band)
 
         # Matriz de Correlacion
         Plot.Matriz_corr_channel_wise(Pesos_totales_sujetos_todos_canales, Display_Total_Figures, Save_Total_Figures,

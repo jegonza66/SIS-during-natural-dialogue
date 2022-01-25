@@ -439,7 +439,7 @@ def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display
 
 
 def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, Display,
-                              Save, Run_graficos_path, Len_Estimulos, stim):
+                              Save, Run_graficos_path, Len_Estimulos, stim, Band):
     # Armo pesos promedio por canal de todos los sujetos que por lo menos tuvieron un buen canal
     Pesos_totales_sujetos_todos_canales_copy = Pesos_totales_sujetos_todos_canales.swapaxes(0, 2)
     Pesos_totales_sujetos_todos_canales_copy = Pesos_totales_sujetos_todos_canales_copy.mean(0).transpose()
@@ -486,7 +486,7 @@ def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, 
             evoked.times = times
 
             fig, axs = plt.subplots(2, 1, sharex=True, figsize=(6, 8), gridspec_kw={'height_ratios': [1, 3]})
-            fig.suptitle('{}'.format(Stims_Order[i] if Cant_Estimulos > 1 else stim), fontsize=23)
+            fig.suptitle('{}'.format(Band), fontsize=23)
 
             im = axs[1].pcolormesh(times * 1000, np.arange(info['nchan']), mean_coefs, cmap='jet',
                                    vmin=-(mean_coefs).max(),
@@ -680,6 +680,9 @@ def PSD_boxplot(psd_pred_correlations, psd_rand_correlations, Display, Save, Run
     # plt.boxplot([psd_pred_correlations, psd_rand_correlations], labels=['Prediction', 'Random'])plt.boxplot([psd_pred_correlations, psd_rand_correlations], labels=['Prediction', 'Random'])plt.boxplot([psd_pred_correlations, psd_rand_correlations], labels=['Prediction', 'Random'])plt.boxplot([psd_pred_correlations, psd_rand_correlations], labels=['Prediction', 'Random'])
     plt.ylim([0, 1])
     plt.ylabel('Correlation')
+    plt.title('Prediction Correlation:{:.2f} +/- {:.2f}\n'
+              'Random Correlation:{:.2f} +/- {:.2f}'.format(np.mean(psd_pred_correlations), np.std(psd_pred_correlations),
+                                                            np.mean(psd_rand_correlations), np.std(psd_rand_correlations)))
 
     if Save:
         save_path_graficos = Run_graficos_path
