@@ -17,7 +17,7 @@ tmin, tmax = -0.6, -0.003
 sr = 128
 
 # Stimuli and EEG
-Stims = ['Envelope', 'Pitch', 'Shimmer']
+Stims = ['Spectrogram']
 # Stims = ['Envelope']
 Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'All']
 # Bands = ['Beta_1']
@@ -49,7 +49,7 @@ for Band in Bands:
         # sesiones = [21]
         sujeto_total = 0
         for sesion in sesiones:
-            print(' Sesion {}'.format(sesion))
+            print('Sesion {}'.format(sesion))
             # LOAD DATA BY SUBJECT
             Sujeto_1, Sujeto_2 = Load.Load_Data(sesion=sesion, stim=stim, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
                                                 procesed_data_path=procesed_data_path)
