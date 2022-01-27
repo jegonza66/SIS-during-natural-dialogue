@@ -28,7 +28,6 @@ Stims_preprocess = 'Normalize'
 EEG_preprocess = 'Standarize'
 
 # Files
-
 Corr_limit = 0.01
 alphas_fname = 'saves/Alphas/Alphas_Corr{}.pkl'.format(Corr_limit)
 try:
