@@ -13,7 +13,7 @@ startTime = datetime.now()
 
 # Define Parameters
 # Model parameters
-tmin, tmax = -0.6, 0.1
+tmin, tmax = -0.6, -0.003
 sr = 128
 delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
 times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays))
@@ -32,15 +32,16 @@ Statistical_test = False
 
 # Figures
 Display_Ind_Figures = False
-Display_Total_Figures = False
+Display_Total_Figures = True
 
-Save_Ind_Figures = True
-Save_Total_Figures = True
+Save_Ind_Figures = False
+Save_Total_Figures = False
 
-Save_Final_Correlation = True
+Save_Final_Correlation = False
 
 # Files
-alphas_fname = 'saves/Alphas/Alphas_Corr0.001.pkl'
+Alpha_Corr_limit = 0.01
+alphas_fname = 'saves/Alphas/Alphas_Corr{}.pkl'.format(Alpha_Corr_limit)
 try:
     f = open(alphas_fname, 'rb')
     Alphas = pickle.load(f)

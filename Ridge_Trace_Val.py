@@ -10,13 +10,14 @@ import Processing
 Display_figures_Trace = False
 Save_figures_Trace = True
 
-Stims = ['Envelope', 'Pitch', 'Spectrogram', 'Shimmer', 'Envelope_Pitch', 'Envelope_Spectrogram', 'Envelope_Shimmer',
-         'Pitch_Spectrogram', 'Pitch_Shimmer', 'Spectrogram_Shimmer', 'Envelope_Pitch_Spectrogram',
-         'Envelope_Pitch_Shimmer', 'Envelope_Spectrogram_Shimmer', 'Envelope_Pitch_Spectrogram_Shimmer']
-Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All', (1, 15), (4, 6)]
+
+Stims = ['Envelope_Spectrogram', 'Envelope_Shimmer', 'Pitch_Spectrogram', 'Pitch_Shimmer', 'Spectrogram_Shimmer',
+         'Envelope_Pitch_Spectrogram', 'Envelope_Pitch_Shimmer', 'Envelope_Spectrogram_Shimmer',
+         'Envelope_Pitch_Spectrogram_Shimmer']
+Bands = ['Beta_2', 'All']
 
 min_trace_derivate = 0
-Corr_limit = 0.001
+Corr_limit = 0.01
 
 alphas_fname = 'saves/Alphas/Alphas_Corr{}.pkl'.format(Corr_limit)
 alpha_info_fname = 'saves/Alphas/Alphas_How_Corr{}.pkl'.format(Corr_limit)
@@ -73,8 +74,8 @@ for Band in Bands:
 
         # Paths
         procesed_data_path = 'saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
-        Run_graficos_path = 'gráficos/Ridge_Trace/Stims_{}_EEG_{}/tmin{}_tmax{}/'.format(Stims_preprocess,
-                                                                                         EEG_preprocess, tmin, tmax)
+        Run_graficos_path = 'gráficos/Ridge_Trace_{}/Stims_{}_EEG_{}/tmin{}_tmax{}/'.format(Corr_limit, Stims_preprocess,
+                                                                                            EEG_preprocess, tmin, tmax)
 
         min_busqueda, max_busqueda = -1, 6
         pasos = 32
@@ -187,18 +188,21 @@ for Band in Bands:
                 else:
                     Trace_range = np.array([])
 
-                Corr_range = np.where(Correlaciones.max() - Correlaciones < Correlaciones.max() * Corr_limit)[0]
+                Corr_range = np.where(abs(Correlaciones.max() - Correlaciones) < abs(Correlaciones.max() * Corr_limit))[0]
 
                 Overlap = sorted(set(Trace_range).intersection(set(Corr_range)), key=list(Trace_range).index)
 
-                if Correlaciones.argmax() in Overlap or not Overlap:
-                    Alpha_Sujeto = alphas_swept[Correlaciones.argmax()]
-                    Info_sujeto = 'MAX_CORR'
+                alpha_index = Corr_range[-1]
+                Alpha_Sujeto = alphas_swept[int(alpha_index)]
+                Info_sujeto = 'MAX_CORR'
+                #if Correlaciones.argmax() in Overlap or not Overlap:
+                #    Alpha_Sujeto = alphas_swept[Correlaciones.argmax()]
+                #    Info_sujeto = 'MAX_CORR'
 
-                elif Overlap:
-                    alpha_index = Overlap[-1]
-                    Alpha_Sujeto = alphas_swept[int(alpha_index)]
-                    Info_sujeto = 'MAX_OVERLAP'
+                #elif Overlap:
+                #    alpha_index = Overlap[-1]
+                #    Alpha_Sujeto = alphas_swept[int(alpha_index)]
+                #    Info_sujeto = 'MAX_OVERLAP'
 
                 if Display_figures_Trace:
                     plt.ion()
@@ -214,12 +218,12 @@ for Band in Bands:
                 axs[0].plot(alphas_swept, Standarized_Betas, 'o--')
                 axs[0].vlines(Alpha_Sujeto, axs[0].get_ylim()[0], axs[0].get_ylim()[1], linestyle='dashed',
                               color='red', linewidth=1.5, label='Selected value')
-                if Trace_range.size > 1:
-                    axs[0].axvspan(alphas_swept[Trace_range[0]], alphas_swept[Trace_range[-1]], alpha=0.4, color='grey',
-                                   label='Concave range')
-                if Overlap:
-                    axs[0].axvspan(alphas_swept[Overlap[0]], alphas_swept[Overlap[-1]], alpha=0.4, color='green',
-                                   label='Overlap')
+#                if Trace_range.size > 1:
+#                    axs[0].axvspan(alphas_swept[Trace_range[0]], alphas_swept[Trace_range[-1]], alpha=0.4, color='grey',
+#                                   label='Concave range')
+#                if Overlap:
+#                    axs[0].axvspan(alphas_swept[Overlap[0]], alphas_swept[Overlap[-1]], alpha=0.4, color='green',
+#                                   label='Overlap')
                 axs[0].grid()
                 axs[0].legend()
 
@@ -231,11 +235,11 @@ for Band in Bands:
                               axs[1].get_ylim()[1], linestyle='dashed', color='black', linewidth=1.5,
                               label='Max. Correlation')
                 if Corr_range.size > 1:
-                    axs[1].axvspan(alphas_swept[Corr_range[0]], alphas_swept[Corr_range[-1]], alpha=0.4, color='grey',
+                    axs[1].axvspan(alphas_swept[Corr_range[0]], alphas_swept[Corr_range[-1]], alpha=0.4, color='green',
                                    label='{}% Max. Correlation'.format(Corr_limit*100))
-                if Overlap:
-                    axs[1].axvspan(alphas_swept[Overlap[0]], alphas_swept[Overlap[-1]], alpha=0.4, color='green',
-                                   label='Overlap')
+#                if Overlap:
+#                    axs[1].axvspan(alphas_swept[Overlap[0]], alphas_swept[Overlap[-1]], alpha=0.4, color='green',
+#                                   label='Overlap')
                 axs[1].grid()
                 axs[1].legend()
 
@@ -243,10 +247,7 @@ for Band in Bands:
 
                 if Save_figures_Trace:
                     save_path = Run_graficos_path + 'Band_{}/Stim_{}/'.format(Band, stim, )
-                    try:
-                        os.makedirs(save_path)
-                    except:
-                        pass
+                    os.makedirs(save_path, exist_ok=True)
                     plt.savefig(save_path + 'Sesion_{}_Sujeto_{}.png'.format(sesion, sujeto))
 
                 Alphas_Sesion[sujeto] = Alpha_Sujeto
