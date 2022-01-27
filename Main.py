@@ -19,6 +19,7 @@ delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
 times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays))
 
 # Stimuli and EEG
+
 Stims = ['Envelope_Pitch_Spectrogram', 'Envelope_Pitch', 'Envelope_Spectrogram', 'Pitch_Spectrogram', 'Envelope',
          'Pitch', 'Spectrogram', 'Shimmer']
 # Stims = ['Envelope']
