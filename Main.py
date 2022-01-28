@@ -19,8 +19,7 @@ delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
 times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays))
 
 # Stimuli and EEG
-Stims = ['Envelope_Pitch_Spectrogram', 'Envelope_Pitch', 'Envelope_Spectrogram', 'Pitch_Spectrogram', 'Envelope',
-         'Pitch', 'Spectrogram', 'Shimmer']
+Stims = ['Spectrogram', 'Shimmer']
 # Stims = ['Envelope']
 Bands = ['Theta']
 
@@ -33,12 +32,12 @@ Statistical_test = False
 
 # Figures
 Display_Ind_Figures = False
-Display_Total_Figures = False
+Display_Total_Figures = True
 
-Save_Ind_Figures = True
-Save_Total_Figures = True
+Save_Ind_Figures = False
+Save_Total_Figures = False
 
-Save_Final_Correlation = True
+Save_Final_Correlation = False
 
 # Files
 Alpha_Corr_limit = 0.01
@@ -150,6 +149,7 @@ for Band in Bands:
                         print('Alpha missing. Ussing default value: {}'.format(alpha))
 
                     # Ajusto el modelo y guardo
+                    alpha = 1000
                     Model = Models.Ridge(alpha)
                     Model.fit(dstims_train_val, eeg_train_val)
                     Pesos_ronda_canales[fold] = Model.coefs

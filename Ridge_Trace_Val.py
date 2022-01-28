@@ -209,44 +209,45 @@ for Band in Bands:
                 else:
                     plt.ioff()
 
-                fig, axs = plt.subplots(2, 1, sharex=True, figsize=(10, 7))
-                fig.suptitle('Ridge Trace - {} - {}'.format(Band, stim))
+                fig, ax = plt.subplots()
+                fig.suptitle('{} - {}'.format(Band, stim))
                 plt.xlabel('Ridge Parameter')
                 plt.xscale('log')
 
-                axs[0].set_ylabel('Standarized Coefficents')
-                axs[0].plot(alphas_swept, Standarized_Betas, 'o--')
-                axs[0].vlines(Alpha_Sujeto, axs[0].get_ylim()[0], axs[0].get_ylim()[1], linestyle='dashed',
-                              color='red', linewidth=1.5, label='Selected value')
+                # axs[0].set_ylabel('Standarized Coefficents')
+                # axs[0].plot(alphas_swept, Standarized_Betas, 'o--')
+                # axs[0].vlines(Alpha_Sujeto, axs[0].get_ylim()[0], axs[0].get_ylim()[1], linestyle='dashed',
+                #               color='red', linewidth=1.5, label='Selected value')
 #                if Trace_range.size > 1:
 #                    axs[0].axvspan(alphas_swept[Trace_range[0]], alphas_swept[Trace_range[-1]], alpha=0.4, color='grey',
 #                                   label='Concave range')
 #                if Overlap:
 #                    axs[0].axvspan(alphas_swept[Overlap[0]], alphas_swept[Overlap[-1]], alpha=0.4, color='green',
 #                                   label='Overlap')
-                axs[0].grid()
-                axs[0].legend()
+#                 axs[0].grid()
+#                 axs[0].legend()
 
-                axs[1].set_ylabel('Mean Correlation')
-                axs[1].plot(alphas_swept, Correlaciones, 'o--')
-                axs[1].errorbar(alphas_swept, Correlaciones, yerr=Std_Corr, fmt='none', ecolor='black',
+                ax.set_ylabel('Mean Correlation')
+                ax.plot(alphas_swept, Correlaciones, 'o--')
+                ax.errorbar(alphas_swept, Correlaciones, yerr=Std_Corr, fmt='none', ecolor='black',
                                 elinewidth=0.5, capsize=0.5)
-                axs[1].vlines(alphas_swept[Correlaciones.argmax()], axs[1].get_ylim()[0],
-                              axs[1].get_ylim()[1], linestyle='dashed', color='black', linewidth=1.5,
-                              label='Max. Correlation')
+                ax.vlines(alphas_swept[Correlaciones.argmax()], ax.get_ylim()[0], ax.get_ylim()[1], linestyle='dashed',
+                          color='black', linewidth=1.5, label='Max. Correlation')
+                ax.vlines(Alpha_Sujeto, ax.get_ylim()[0], ax.get_ylim()[1], linestyle='dashed', color='red',
+                          linewidth=1.5, label='Selected value')
                 if Corr_range.size > 1:
-                    axs[1].axvspan(alphas_swept[Corr_range[0]], alphas_swept[Corr_range[-1]], alpha=0.4, color='green',
+                    ax.axvspan(alphas_swept[Corr_range[0]], alphas_swept[Corr_range[-1]], alpha=0.4, color='green',
                                    label='{}% Max. Correlation'.format(Corr_limit*100))
 #                if Overlap:
 #                    axs[1].axvspan(alphas_swept[Overlap[0]], alphas_swept[Overlap[-1]], alpha=0.4, color='green',
 #                                   label='Overlap')
-                axs[1].grid()
-                axs[1].legend()
+                ax.grid()
+                ax.legend()
 
                 fig.tight_layout()
 
                 if Save_figures_Trace:
-                    save_path = Run_graficos_path + 'Band_{}/Stim_{}/'.format(Band, stim, )
+                    save_path = Run_graficos_path + 'Band_{}/Stim_{}/'.format(Band, stim)
                     os.makedirs(save_path, exist_ok=True)
                     plt.savefig(save_path + 'Sesion_{}_Sujeto_{}.png'.format(sesion, sujeto))
 
