@@ -6,7 +6,7 @@ mtrf.py
 Otras pruebas (2019).ipynb
 plot_receptive_field_mtrf_modified.py
 Plot_señal_envolvente.py
-Validation.py
+Ridge_Trace_Val.py
 
 .ipynb_checkpoints/
 .pylint.d/
