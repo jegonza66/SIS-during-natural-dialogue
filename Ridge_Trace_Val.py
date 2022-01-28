@@ -11,10 +11,8 @@ Display_figures_Trace = False
 Save_figures_Trace = True
 
 
-Stims = ['Envelope_Spectrogram', 'Envelope_Shimmer', 'Pitch_Spectrogram', 'Pitch_Shimmer', 'Spectrogram_Shimmer',
-         'Envelope_Pitch_Spectrogram', 'Envelope_Pitch_Shimmer', 'Envelope_Spectrogram_Shimmer',
-         'Envelope_Pitch_Spectrogram_Shimmer']
-Bands = ['Beta_2', 'All']
+Stims = ['Envelope', 'Spectrogram']
+Bands = ['Theta']
 
 min_trace_derivate = 0
 Corr_limit = 0.01
@@ -237,7 +235,7 @@ for Band in Bands:
                           linewidth=1.5, label='Selected value')
                 if Corr_range.size > 1:
                     ax.axvspan(alphas_swept[Corr_range[0]], alphas_swept[Corr_range[-1]], alpha=0.4, color='green',
-                                   label='{}% Max. Correlation'.format(Corr_limit*100))
+                                   label='{}% Max. Correlation'.format(int(Corr_limit*100)))
 #                if Overlap:
 #                    axs[1].axvspan(alphas_swept[Overlap[0]], alphas_swept[Overlap[-1]], alpha=0.4, color='green',
 #                                   label='Overlap')
@@ -261,10 +259,10 @@ for Band in Bands:
         Info[Band] = Info_Band
 
         # Save Alphas
-        f = open(alphas_fname, 'wb')
-        pickle.dump(Alphas, f)
-        f.close()
-
-        f = open(alpha_info_fname, 'wb')
-        pickle.dump(Info, f)
-        f.close()
+        # f = open(alphas_fname, 'wb')
+        # pickle.dump(Alphas, f)
+        # f.close()
+        #
+        # f = open(alpha_info_fname, 'wb')
+        # pickle.dump(Info, f)
+        # f.close()
