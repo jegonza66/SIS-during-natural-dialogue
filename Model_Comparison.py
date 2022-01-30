@@ -147,6 +147,9 @@ if Save_fig:
 ## Venn Diagrams
 from matplotlib_venn import venn3, venn3_circles
 from matplotlib import pyplot as plt
+import pickle
+import os
+import numpy as np
 
 tmin, tmax = -0.6, -0.003
 
@@ -157,7 +160,7 @@ f = open('saves/Ridge/Final_Correlation/tmin{}_tmax{}/Mean_Correlations.pkl'.for
 Mean_Correlations = pickle.load(f)
 f.close()
 
-Bands = ['Delta', 'Alpha', 'Beta_1', (4,6), (1,15)]
+Bands = ['Theta']
 for Band in Bands:
     stims = ['Envelope', 'Pitch', 'Spectrogram']
 
@@ -174,21 +177,34 @@ for Band in Bands:
     r2_23 = Mean_Correlations[Band][stims[5]][0]**2
     r2_123 = Mean_Correlations[Band][stims[6]][0]**2
 
+    r2_int_12 = r2_1 + r2_2 - r2_12
+    r2_int_13 = r2_1 + r2_3 - r2_13
+    r2_int_23 = r2_2 + r2_3 - r2_23
+
     r2_int_123 = r2_123 + r2_1 + r2_2 + r2_3 - r2_12 - r2_13 - r2_23
 
-    r2_int_12 = r2_1 + r2_2 - r2_12 - r2_int_123
-    r2_int_13 = r2_1 + r2_3 - r2_13 - r2_int_123
-    r2_int_23 = r2_2 + r2_3 - r2_23 - r2_int_123
+    r2u_int_12 = r2_1 + r2_2 - r2_12 - r2_int_123
+    r2u_int_13 = r2_1 + r2_3 - r2_13 - r2_int_123
+    r2u_int_23 = r2_2 + r2_3 - r2_23 - r2_int_123
 
-    r2_1 = Mean_Correlations[Band][stims[0]][0]**2 - r2_int_123 - r2_int_12 - r2_int_13
-    r2_2 = Mean_Correlations[Band][stims[1]][0]**2 - r2_int_123 - r2_int_12 - r2_int_23
-    r2_3 = Mean_Correlations[Band][stims[2]][0]**2 - r2_int_123 - r2_int_13 - r2_int_23
+    # r2u_1 = Mean_Correlations[Band][stims[0]][0]**2 + r2_int_123 - r2_int_12 - r2_int_13
+    r2u_1 = r2_123 - r2_23
+    # r2u_2 = Mean_Correlations[Band][stims[1]][0]**2 + r2_int_123 - r2_int_12 - r2_int_23
+    r2u_2 = r2_123 - r2_13
+    # r2u_3 = Mean_Correlations[Band][stims[2]][0]**2 + r2_int_123 - r2_int_13 - r2_int_23
+    r2u_3 = r2_123 - r2_12
 
+    sets = [r2u_1, r2u_2, r2u_int_12, r2u_3, r2u_int_13, r2u_int_23, r2_int_123]
+    sets_0 = []
+    for set in sets:
+        if set < 0:
+            set = 0
+        sets_0.append(set)
+    # total = sum(sets_0)
+    # sets_0 /= total
 
     plt.figure()
-    venn3(subsets=(r2_1.round(2), r2_2.round(2), r2_int_12.round(2), r2_3.round(2), r2_int_13.round(2), r2_int_23.round(2),
-                   r2_int_123.round(2)), set_labels=(stims[0], stims[1], stims[2]),
-          set_colors=('purple', 'skyblue', 'red'), alpha=0.5)
+    venn3(subsets=np.array(sets_0).round(3), set_labels=(stims[0], stims[1], stims[2]), set_colors=('purple', 'skyblue', 'red'), alpha=0.5)
 
     plt.tight_layout()
     if Save_fig:

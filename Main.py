@@ -19,9 +19,11 @@ delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
 times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays))
 
 # Stimuli and EEG
-Stims = ['Spectrogram', 'Shimmer']
+Stims = ['Shimmer']
+Stims = ['Envelope_Pitch_Spectrogram', 'Envelope_Pitch', 'Envelope_Spectrogram', 'Pitch_Spectrogram', 'Envelope',
+         'Pitch', 'Spectrogram', 'Shimmer']
 # Stims = ['Envelope']
-Bands = ['Theta']
+Bands = ['Delta']
 
 # Standarization
 Stims_preprocess = 'Normalize'
@@ -32,12 +34,12 @@ Statistical_test = False
 
 # Figures
 Display_Ind_Figures = False
-Display_Total_Figures = True
+Display_Total_Figures = False
 
-Save_Ind_Figures = False
-Save_Total_Figures = False
+Save_Ind_Figures = True
+Save_Total_Figures = True
 
-Save_Final_Correlation = False
+Save_Final_Correlation = True
 
 # Files
 Alpha_Corr_limit = 0.01
