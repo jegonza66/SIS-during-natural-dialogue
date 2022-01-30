@@ -18,10 +18,10 @@ sr = 128
 
 # Stimuli and EEG
 #Stims = ['Spectrogram']
-Stims = ['Envelope', 'Pitch', 'Shimmer']
-#Stims = ['Spectrogram']
-#Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'All']
-Bands = ['All']
+#Stims = ['Pitch', 'Shimmer']
+Stims = ['Spectrogram']
+Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'All']
+#Bands = ['All']
 
 # Standarization
 Stims_preprocess = 'Normalize'
@@ -48,7 +48,6 @@ for Band in Bands:
 
         # Start Run
         sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
-        # sesiones = [21]
         sujeto_total = 0
         for sesion in sesiones:
             print('Sesion {}'.format(sesion))
