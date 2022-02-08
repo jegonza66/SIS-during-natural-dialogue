@@ -2,8 +2,6 @@ import pickle
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-import seaborn as sn
-import pandas as pd
 import mne
 from scipy.spatial import ConvexHull
 
@@ -200,8 +198,6 @@ for Band in Bands:
         if set < 0:
             set = 0
         sets_0.append(set)
-    # total = sum(sets_0)
-    # sets_0 /= total
 
     plt.figure()
     venn3(subsets=np.array(sets_0).round(3), set_labels=(stims[0], stims[1], stims[2]), set_colors=('purple', 'skyblue', 'red'), alpha=0.5)

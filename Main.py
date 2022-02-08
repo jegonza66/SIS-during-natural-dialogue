@@ -19,11 +19,9 @@ delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
 times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays))
 
 # Stimuli and EEG
-Stims = ['Shimmer']
-Stims = ['Envelope_Pitch_Spectrogram', 'Envelope_Pitch', 'Envelope_Spectrogram', 'Pitch_Spectrogram', 'Envelope',
-         'Pitch', 'Spectrogram', 'Shimmer']
-# Stims = ['Envelope']
-Bands = ['Delta']
+# Stims = ['Envelope_Pitch_Spectrogram', 'Envelope_Pitch', 'Envelope_Spectrogram', 'Pitch_Spectrogram', 'Spectrogram']
+Stims = ['Envelope']
+Bands = ['Theta']
 
 # Standarization
 Stims_preprocess = 'Normalize'
@@ -85,7 +83,6 @@ for Band in Bands:
 
         # Start Run
         sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
-        # sesiones = [21]
         sujeto_total = 0
         for sesion in sesiones:
             print('Sesion {}'.format(sesion))
@@ -107,7 +104,7 @@ for Band in Bands:
                 # Separo los datos en 5 y tomo test set de 20% de datos con kfold (5 iteraciones)
                 Predicciones = {}
                 n_folds = 5
-                iteraciones = 1000
+                iteraciones = 3000
 
                 # Defino variables donde voy a guardar mil cosas
                 Pesos_ronda_canales = np.zeros((n_folds, info['nchan'], sum(Len_Estimulos)), dtype=np.float16)
@@ -144,14 +141,11 @@ for Band in Bands:
                                                         Stims_preprocess, EEG_preprocess, axis, porcent)
                     try:
                         alpha = Alphas[Band][stim][sesion][sujeto]
-                        if alpha == 'FAILED':
-                            alpha = np.mean([value for sesion_dict in Alphas[Band][stim].keys() for value in list(Alphas[Band][stim][sesion_dict].values()) if type(value) != str])
                     except:
                         alpha = 1000
                         print('Alpha missing. Ussing default value: {}'.format(alpha))
 
                     # Ajusto el modelo y guardo
-                    alpha = 1000
                     Model = Models.Ridge(alpha)
                     Model.fit(dstims_train_val, eeg_train_val)
                     Pesos_ronda_canales[fold] = Model.coefs
@@ -188,15 +182,12 @@ for Band in Bands:
                         p_rmse = ((Rmse_fake < Rmse).sum(0) + 1) / (iteraciones + 1)
 
                         # Umbral
-                        umbral = 0.001
+                        umbral = 0.05/128
                         Prob_Corr_ronda_canales[fold][p_corr < umbral] = p_corr[p_corr < umbral]
                         Prob_Rmse_ronda_canales[fold][p_rmse < umbral] = p_rmse[p_rmse < umbral]
 
                 # Save Model Weights and Correlations
-                try:
-                    os.makedirs(Path_origial)
-                except:
-                    pass
+                os.makedirs(Path_origial, exist_ok=True)
                 f = open(Path_origial + 'Corr_Rmse_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto), 'wb')
                 pickle.dump([Corr_buenas_ronda_canal, Rmse_buenos_ronda_canal], f)
                 f.close()
@@ -281,6 +272,9 @@ for Band in Bands:
         # Matriz de Correlacion
         Plot.Matriz_corr_channel_wise(Pesos_totales_sujetos_todos_canales, Display_Total_Figures, Save_Total_Figures,
                                       Run_graficos_path)
+
+        _ = Plot.Plot_cabezas_instantes(Pesos_totales_sujetos_todos_canales, info, Band, times, sr, Display_Total_Figures,
+                                       Save_Total_Figures, Run_graficos_path)
 
         # Cabezas de correlacion de pesos por canal
         Plot.Channel_wise_correlation_topomap(Pesos_totales_sujetos_todos_canales, info, Display_Total_Figures,

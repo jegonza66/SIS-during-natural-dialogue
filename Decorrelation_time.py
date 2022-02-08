@@ -10,7 +10,7 @@ import Processing
 
 # Figures
 Display = True
-Save = False
+Save = True
 
 # Define Parameters
 # Standarization
@@ -18,12 +18,10 @@ Stims_preprocess = 'Normalize'
 EEG_preprocess = 'Standarize'
 
 # Stimuli and EEG
-Stims_Order = ['Envelope', 'Pitch', 'Pitch_der', 'Spectrogram', 'Phonemes']
-Stims = ['Envelope', 'Pitch', 'Pitch_der', 'Envelope_Pitch_Pitch_der']
 Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All']
 
 stim = 'Envelope'
-Band = 'Theta'
+Band = 'All'
 situacion = 'Escucha'
 tmin, tmax = -0.6, 0.3
 sr = 128
@@ -32,10 +30,10 @@ times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.
 
 # Paths
 procesed_data_path = 'saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
-Run_graficos_path = 'gráficos/Ridge/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
-    Stims_preprocess, EEG_preprocess,  tmin, tmax, stim, Band)
+Run_graficos_path = 'gráficos/Decorrelation time/tmin{}_tmax{}/Stim_{}_EEG_Band_{}_Causal/'.format(tmin, tmax, stim, Band)
 
-alphas_fname = 'saves/Alphas/Alphas_Trace{:.1f}_Corr0.025.pkl'.format(2/3)
+Alpha_Corr_limit = 0.01
+alphas_fname = 'saves/Alphas/Alphas_Corr{}.pkl'.format(Alpha_Corr_limit)
 try:
     f = open(alphas_fname, 'rb')
     Alphas = pickle.load(f)
@@ -48,19 +46,19 @@ N_samples = []
 # Start Run
 decorrelation_times = []
 
-sesiones = np.arange(21, 26)
+sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
 sujeto_total = 0
 for sesion in sesiones:
     print('Sesion {}'.format(sesion))
 
     # LOAD DATA BY SUBJECT
-    Sujeto_1, Sujeto_2 = Load.Load_Data(sesion, Band, sr, tmin, tmax, procesed_data_path)
-
+    Sujeto_1, Sujeto_2 = Load.Load_Data(sesion=sesion, stim=stim, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
+                                        procesed_data_path=procesed_data_path)
     # LOAD EEG BY SUBJECT
     eeg_sujeto_1, eeg_sujeto_2, info = Sujeto_1['EEG'], Sujeto_2['EEG'], Sujeto_1['info']
 
     # LOAD STIMULUS BY SUBJECT
-    dstims_para_sujeto_1, dstims_para_sujeto_2 = Load.Estimulos(stim, Sujeto_1, Sujeto_2)
+    dstims_para_sujeto_1, dstims_para_sujeto_2 = Load.Estimulos(stim=stim, Sujeto_1=Sujeto_1, Sujeto_2=Sujeto_2)
     Len_Estimulos = [len(dstims_para_sujeto_1[i][0]) for i in range(len(dstims_para_sujeto_1))]
 
     for sujeto, eeg, dstims in zip((1, 2), (eeg_sujeto_1, eeg_sujeto_2), (dstims_para_sujeto_1, dstims_para_sujeto_2)):
@@ -72,7 +70,6 @@ for sesion in sesiones:
         # Separo los datos en 5 y tomo test set de 20% de datos con kfold (5 iteraciones)
         Predicciones = {}
         n_splits = 5
-        iteraciones = 3000
 
         # Defino variables donde voy a guardar mil cosas
         Pesos_ronda_canales = np.zeros((n_splits, info['nchan'], sum(Len_Estimulos)))
@@ -90,13 +87,11 @@ for sesion in sesiones:
 
             axis = 0
             porcent = 5
-            eeg, dstims_train_val, dstims_test = Processing.standarize_normalize(eeg, dstims_train_val, dstims_test,
-                                                                                 Stims_preprocess, EEG_preprocess,
-                                                                                 axis, porcent)
+            eeg_train_val, eeg_test, dstims_train_val, dstims_test = \
+                Processing.standarize_normalize(eeg_train_val, eeg_test, dstims_train_val, dstims_test,
+                                                Stims_preprocess, EEG_preprocess, axis, porcent)
             alpha = Alphas[Band][stim][sesion][sujeto]
-            if alpha == 'FAILED':
-                alpha = np.mean([value for sesion_dict in Alphas[Band][stim].keys() for value in
-                                 list(Alphas[Band][stim][sesion_dict].values()) if type(value) != 'FAILED'])
+            alpha = 1000
 
             # Ajusto el modelo y guardo
             Model = Models.Ridge(alpha)
@@ -118,12 +113,12 @@ for sesion in sesiones:
         sujeto_total += 1
 
 try:
-    f = open('saves/Decorrelation_times_{}_NoFilt_tmin{}_tmax{}.pkl'.format(stim, tmin, tmax), 'rb')
+    f = open('saves/Decorrelation_times_{}_Causal_tmin{}_tmax{}.pkl'.format(stim, tmin, tmax), 'rb')
     decorrelation_times = pickle.load(f)
     f.close()
 except:
     decorrelation_times = Funciones.decorrelation_time(Estimulos, sr)
-    f = open('saves/Decorrelation_times_{}_NoFilt_tmin{}_tmax{}.pkl'.format(stim, tmin, tmax), 'wb')
+    f = open('saves/Decorrelation_times_{}_Causal_tmin{}_tmax{}.pkl'.format(stim, tmin, tmax), 'wb')
     pickle.dump(decorrelation_times, f)
     f.close()
 

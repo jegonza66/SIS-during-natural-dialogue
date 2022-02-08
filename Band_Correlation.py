@@ -7,7 +7,7 @@ import pickle
 
 
 Stims = ['Envelope', 'Pitch', 'Spectrogram', 'Envelope_Pitch_Spectrogram']
-Stims = ['Spectrogram']
+Stims = ['Envelope']
 Alphas = [100]
 
 Bands_low = np.flip(np.arange(2, 9))
@@ -52,7 +52,7 @@ for stim in Stims:
         xticks = np.array(ax.get_xticks(), dtype=int)[1:-1]
         plt.yticks(yticks, labels=Bands_low[yticks].round(2))
         plt.xticks(xticks, labels=Bands_range[xticks].round(2))
-        plt.colorbar(shrink=0.95)
+        plt.colorbar(shrink=0.8)
         plt.ylabel('Low frequency bandpass')
         plt.xlabel('Bandpass width in Hz')
         for i in range(len(max_corrs)):

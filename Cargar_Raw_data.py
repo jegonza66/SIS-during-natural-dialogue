@@ -80,8 +80,9 @@ envelope = np.array(
 envelope = envelope.ravel().flatten()
 
 envelope_x = np.linspace(0, len(wav)/audio_sr, len(envelope))
+wav_x = np.linspace(0, len(wav)/audio_sr, len(wav))
 fig, ax = plt.subplots()
-plt.plot(np.linspace(0, len(wav)/audio_sr, len(wav)), wav, label='Audio signal')
+plt.plot(wav_x, wav, label='Audio signal')
 plt.plot(envelope_x, envelope, label='Envelope')
 ax.set_xlabel('Time [s]')
 ax.set_ylabel('Amplitude')

@@ -9,6 +9,7 @@ import Processing
 import Permutations
 
 from datetime import datetime
+
 startTime = datetime.now()
 
 # Define Parameters
@@ -17,11 +18,9 @@ tmin, tmax = -0.6, -0.003
 sr = 128
 
 # Stimuli and EEG
-#Stims = ['Spectrogram']
-Stims = ['Envelope', 'Pitch', 'Shimmer']
-#Stims = ['Spectrogram']
-#Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'All']
-Bands = ['All']
+Stims = ['Pitch']
+Bands = ['Beta_1', 'All']
+
 
 # Standarization
 Stims_preprocess = 'Normalize'
@@ -48,7 +47,6 @@ for Band in Bands:
 
         # Start Run
         sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
-        # sesiones = [21]
         sujeto_total = 0
         for sesion in sesiones:
             print('Sesion {}'.format(sesion))
@@ -76,7 +74,6 @@ for Band in Bands:
                 Correlaciones_fake = np.zeros((n_folds, iteraciones, info['nchan']))
                 Errores_fake = np.zeros((n_folds, iteraciones, info['nchan']))
 
-
                 # Empiezo el KFold de test
                 kf_test = KFold(n_folds, shuffle=False)
                 for fold, (train_val_index, test_index) in enumerate(kf_test.split(eeg)):
@@ -91,33 +88,27 @@ for Band in Bands:
 
                     axis = 0
                     porcent = 5
-                    eeg_train_val, eeg_test, dstims_train_val, dstims_test = Processing.standarize_normalize(eeg_train_val, eeg_test, dstims_train_val,
-                                                                                         dstims_test,
-                                                                                         Stims_preprocess,
-                                                                                         EEG_preprocess,
-                                                                                         axis, porcent)
+                    eeg_train_val, eeg_test, dstims_train_val, dstims_test = Processing.standarize_normalize(
+                        eeg_train_val, eeg_test, dstims_train_val,
+                        dstims_test,
+                        Stims_preprocess,
+                        EEG_preprocess,
+                        axis, porcent)
                     try:
                         alpha = Alphas[Band][stim][sesion][sujeto]
-                        if alpha == 'FAILED':
-                            alpha = np.mean([value for sesion_dict in Alphas[Band][stim].keys() for value in list(Alphas[Band][stim][sesion_dict].values()) if type(value) != str])
                     except:
-                        alpha = 100
+                        alpha = 1000
                         print('Alpha missing. Ussing default value: {}'.format(alpha))
-                        break
-                        break
 
                     # Run_permutations:
                     Fake_Model = Models.Ridge(alpha)
                     Pesos_fake, Correlaciones_fake, Errores_fake = \
                         Permutations.simular_iteraciones_Ridge(Fake_Model, alpha, iteraciones, sesion, sujeto, fold,
-                        dstims_train_val, eeg_train_val, dstims_test, eeg_test,
-                        Pesos_fake, Correlaciones_fake, Errores_fake)
+                                                               dstims_train_val, eeg_train_val, dstims_test, eeg_test,
+                                                               Pesos_fake, Correlaciones_fake, Errores_fake)
 
                 # Save permutations
-                try:
-                    os.makedirs(Path_it)
-                except:
-                    pass
+                os.makedirs(Path_it, exist_ok=True)
                 f = open(Path_it + 'Corr_Rmse_fake_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto), 'wb')
                 pickle.dump([Correlaciones_fake, Errores_fake], f)
                 f.close()

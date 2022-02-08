@@ -95,13 +95,15 @@ def simular_iteraciones_Ridge_plot(info, times, situacion, alpha, iteraciones, s
             ax.grid()
 
             # Plot signal and fake prediction
+            eeg_x = np.linspace(0, len(eeg_test) / 128, len(eeg_test))
             fig = plt.figure()
-            fig.suptitle('Fake prediction')
-            plt.plot(eeg_test[:, 0], label='Signal')
-            plt.plot(predicho_fake[:, 0], label='Prediction')
+            fig.suptitle('Random prediction')
+            plt.plot(eeg_x, eeg_test[:, 0], label='Signal')
+            plt.plot(eeg_x, predicho_fake[:, 0], label='Prediction')
             plt.title('Pearson Correlation = {}'.format(Rcorr_fake[0]))
-            plt.xlim([2000, 3000])
-            plt.xlabel('Samples')
+            plt.xlim([18, 26])
+            plt.ylim([-3, 3])
+            plt.xlabel('Time [ms]')
             plt.ylabel('Amplitude')
             plt.grid()
             plt.legend()
@@ -109,6 +111,7 @@ def simular_iteraciones_Ridge_plot(info, times, situacion, alpha, iteraciones, s
             if save_path:
                 os.makedirs(save_path+'Fake/Stim_{}_EEG_Band{}/'.format(stim,Band), exist_ok=True)
                 plt.savefig(save_path+'Fake/Stim_{}_EEG_Band{}/Sesion{}_Sujeto_{}.png'.format(stim, Band,sesion, sujeto))
+                plt.savefig(save_path + 'Fake/Stim_{}_EEG_Band{}/Sesion{}_Sujeto_{}.svg'.format(stim, Band, sesion, sujeto))
 
             # Plot PSD
             fig, ax = plt.subplots()
@@ -122,7 +125,8 @@ def simular_iteraciones_Ridge_plot(info, times, situacion, alpha, iteraciones, s
             if save_path:
                 save_path_graficos = 'gráficos/PSD/Fake/'
                 os.makedirs(save_path_graficos, exist_ok=True)
-                plt.savefig(save_path_graficos + 'Sesion{} - Sujeto{} - Band {}'.format(sesion, sujeto, Band))
+                plt.savefig(save_path_graficos + 'Sesion{} - Sujeto{} - Band {}.png'.format(sesion, sujeto, Band))
+                plt.savefig(save_path_graficos + 'Sesion{} - Sujeto{} - Band {}.svg'.format(sesion, sujeto, Band))
 
 
         print("\rProgress: {}%".format(int((iteracion + 1) * 100 / iteraciones)), end='')
