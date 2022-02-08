@@ -499,7 +499,7 @@ def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, 
 
             im = axs[1].pcolormesh(times * 1000, np.arange(info['nchan']), mean_coefs, cmap='jet',
                                    vmin=-(mean_coefs).max(),
-                                   vmax=(mean_coefs).max(), shading='gouraud')
+                                   vmax=(mean_coefs).max(), shading='auto')
             axs[1].set(xlabel='Time (ms)', ylabel='Channel')
 
             axs[1].xaxis.label.set_size(14)
@@ -534,8 +534,9 @@ def Plot_cabezas_instantes(Pesos_totales_sujetos_todos_canales, info, Band, time
     Pesos_totales_sujetos_todos_canales_copy = Pesos_totales_sujetos_todos_canales.swapaxes(0, 2)
     Pesos_totales_sujetos_todos_canales_copy = Pesos_totales_sujetos_todos_canales_copy.mean(0)
 
-    instantes_index = sgn.find_peaks(np.abs(Pesos_totales_sujetos_todos_canales_copy.mean(1)[50:]),
-                                height=np.abs(Pesos_totales_sujetos_todos_canales_copy.mean(1)).max() * 0.3)[0] + 50
+    offset = 50
+    instantes_index = sgn.find_peaks(np.abs(Pesos_totales_sujetos_todos_canales_copy.mean(1)[offset:]),
+                                height=np.abs(Pesos_totales_sujetos_todos_canales_copy.mean(1)).max() * 0.3)[0] + offset
 
     instantes_de_interes = [i/ sr + times[0] for i in instantes_index if i / sr + times[0] <= 0]
 
@@ -637,11 +638,9 @@ def Matriz_corr_channel_wise(Pesos_totales_sujetos_todos_canales, Display, Save,
 
     if Save:
         save_path_graficos = Run_graficos_path
-        try:
-            os.makedirs(save_path_graficos)
-        except:
-            pass
+        os.makedirs(save_path_graficos, exist_ok=True)
         fig.savefig(save_path_graficos + 'Channelwise_correlation_matrix.png')
+        fig.savefig(save_path_graficos + 'Channelwise_correlation_matrix.svg')
 
 
 def Channel_wise_correlation_topomap(Pesos_totales_sujetos_todos_canales, info, Display, Save, Run_graficos_path):

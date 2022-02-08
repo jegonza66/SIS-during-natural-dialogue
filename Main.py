@@ -21,7 +21,7 @@ times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.
 # Stimuli and EEG
 # Stims = ['Envelope_Pitch_Spectrogram', 'Envelope_Pitch', 'Envelope_Spectrogram', 'Pitch_Spectrogram', 'Spectrogram']
 Stims = ['Envelope']
-Bands = ['Theta']
+Bands = ['Theta', 'Alpha']
 
 # Standarization
 Stims_preprocess = 'Normalize'
