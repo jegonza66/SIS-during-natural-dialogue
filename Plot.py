@@ -268,10 +268,10 @@ def Plot_PSD(sesion, sujeto, Band, situacion, Display, Save, save_path, info, da
     ax.grid()
 
     if Save:
-        save_path_graficos = 'gráficos/PSD/{}/'.format(save_path)
+        save_path_graficos = 'gráficos/PSD/{}/{}/'.format(save_path, Band)
         os.makedirs(save_path_graficos, exist_ok=True)
-        plt.savefig(save_path_graficos + 'Sesion{} - Sujeto{} - Band {}.png'.format(sesion, sujeto, Band))
-        plt.savefig(save_path_graficos + 'Sesion{} - Sujeto{} - Band {}.svg'.format(sesion, sujeto, Band))
+        plt.savefig(save_path_graficos + 'Sesion{} - Sujeto{}.png'.format(sesion, sujeto, Band))
+        plt.savefig(save_path_graficos + 'Sesion{} - Sujeto{}.svg'.format(sesion, sujeto, Band))
 
 
 def Cabezas_corr_promedio(Correlaciones_totales_sujetos, info, Display, Save, Run_graficos_path, title):
@@ -283,14 +283,14 @@ def Cabezas_corr_promedio(Correlaciones_totales_sujetos, info, Display, Save, Ru
         plt.ioff()
 
     fig = plt.figure()
-    plt.suptitle("Mean {} per channel among subjects".format(title), fontsize=15)
+    plt.suptitle("Mean {} per channel among subjects".format(title), fontsize=19)
     plt.title('{} = {:.3f} +/- {:.3f}'.format(title, Correlaciones_promedio.mean(), Correlaciones_promedio.std()),
-              fontsize=15)
+              fontsize=19)
     im = mne.viz.plot_topomap(Correlaciones_promedio, info, cmap='Greys',
                               vmin=Correlaciones_promedio.min(), vmax=Correlaciones_promedio.max(),
                               show=False, sphere=0.07)
     cb = plt.colorbar(im[0], shrink=0.85, orientation='vertical')
-    cb.ax.tick_params(labelsize=15)
+    cb.ax.tick_params(labelsize=19)
     fig.tight_layout()
 
     if Save:
@@ -534,7 +534,7 @@ def Plot_cabezas_instantes(Pesos_totales_sujetos_todos_canales, info, Band, time
     Pesos_totales_sujetos_todos_canales_copy = Pesos_totales_sujetos_todos_canales.swapaxes(0, 2)
     Pesos_totales_sujetos_todos_canales_copy = Pesos_totales_sujetos_todos_canales_copy.mean(0)
 
-    offset = 50
+    offset = 40
     instantes_index = sgn.find_peaks(np.abs(Pesos_totales_sujetos_todos_canales_copy.mean(1)[offset:]),
                                 height=np.abs(Pesos_totales_sujetos_todos_canales_copy.mean(1)).max() * 0.3)[0] + offset
 
@@ -553,7 +553,10 @@ def Plot_cabezas_instantes(Pesos_totales_sujetos_todos_canales, info, Band, time
     fig, axs = plt.subplots(figsize=(10, 5), ncols=len(cmaps))
     # fig.suptitle('Mean of $w$ among subjects - {} Band'.format(Band))
     for i in range(len(instantes_de_interes)):
-        ax = axs[i]
+        if len(cmaps)>1:
+            ax = axs[i]
+        else:
+            ax = axs
         ax.set_title('{} ms'.format(int(instantes_de_interes[i] * 1000)), fontsize = 18)
         fig.tight_layout()
         im = mne.viz.plot_topomap(Pesos_totales_sujetos_todos_canales_copy[instantes_index[i]].ravel(), info, axes=ax,
@@ -600,7 +603,7 @@ def Matriz_corr_channel_wise(Pesos_totales_sujetos_todos_canales, Display, Save,
     for i in range(len(Correlation_matrix)):
         Correlation_matrix[i, i] = Correlation_matrix[-1, i]
 
-    lista_nombres = [i for i in np.arange(1, Pesos_totales_sujetos_todos_canales.shape[-1])] + ['Promedio']
+    lista_nombres = [i for i in np.arange(1, Pesos_totales_sujetos_todos_canales.shape[-1] + 1)] + ['Promedio']
     Correlation_matrix = pd.DataFrame(Correlation_matrix[:-1, :-1])
     Correlation_matrix.columns = lista_nombres[:len(Correlation_matrix) - 1] + [lista_nombres[-1]]
 
@@ -617,8 +620,7 @@ def Matriz_corr_channel_wise(Pesos_totales_sujetos_todos_canales, Display, Save,
     Correlation_mean, Correlation_std = np.mean(np.abs(corr_values)), np.std(np.abs(corr_values))
 
     fig, (ax, cax) = plt.subplots(nrows=2, figsize=(15, 13), gridspec_kw={"height_ratios": [1, 0.05]})
-    fig.suptitle('Similarity among subject\'s $w$', fontsize=26)
-    fig.suptitle('Similarity among subject\'s $w$', fontsize=26)
+    fig.suptitle('Similarity among subject\'s mTRFs', fontsize=26)
     ax.set_title('Mean: {:.3f} +/- {:.3f}'.format(Correlation_mean, Correlation_std), fontsize=18)
     sn.heatmap(Correlation_matrix, mask=mask, cmap="coolwarm", fmt='.2f', ax=ax,
                annot=True, center=0, xticklabels=True, annot_kws={"size": 15},
@@ -630,17 +632,18 @@ def Matriz_corr_channel_wise(Pesos_totales_sujetos_todos_canales, Display, Save,
                        ha='left', fontsize=19)
 
     sn.despine(right=True, left=True, bottom=True, top=True)
-    fig.colorbar(ax.get_children()[0], label= 'Correlation', cax=cax, orientation="horizontal")
+    fig.colorbar(ax.get_children()[0], cax=cax, orientation="horizontal")
     cax.yaxis.set_tick_params(labelsize=20)
     cax.xaxis.set_tick_params(labelsize=20)
+    cax.set_xlabel(xlabel= 'Correlation', fontsize=20)
 
     fig.tight_layout()
 
     if Save:
         save_path_graficos = Run_graficos_path
         os.makedirs(save_path_graficos, exist_ok=True)
-        fig.savefig(save_path_graficos + 'Channelwise_correlation_matrix.png')
-        fig.savefig(save_path_graficos + 'Channelwise_correlation_matrix.svg')
+        fig.savefig(save_path_graficos + 'TRF_correlation_matrix.png')
+        fig.savefig(save_path_graficos + 'TRF_correlation_matrix.svg')
 
 
 def Channel_wise_correlation_topomap(Pesos_totales_sujetos_todos_canales, info, Display, Save, Run_graficos_path):
@@ -664,17 +667,21 @@ def Channel_wise_correlation_topomap(Pesos_totales_sujetos_todos_canales, info, 
         plt.ioff()
 
     fig, ax = plt.subplots()
-    fig.suptitle('Absolute value of channel-wise correlation')
+    fig.suptitle('Channel-wise mTRFs similarity', fontsize=19)
     im = mne.viz.plot_topomap(Correlation_abs_channel_wise, info, axes=ax, show=False, sphere=0.07,
-                              cmap='summer', vmin=Correlation_abs_channel_wise.min(),
+                              cmap='Greens', vmin=Correlation_abs_channel_wise.min(),
                               vmax=Correlation_abs_channel_wise.max())
-    plt.colorbar(im[0], ax=ax, label='Magnitude', shrink=0.85)
+    cbar = plt.colorbar(im[0], ax=ax, shrink=0.85)
+    cbar.ax.yaxis.set_tick_params(labelsize=17)
+    cbar.ax.set_ylabel(ylabel= 'Correlation', fontsize=17)
+
     fig.tight_layout()
 
     if Save:
         save_path_graficos = Run_graficos_path
         os.makedirs(save_path_graficos, exist_ok=True)
         fig.savefig(save_path_graficos + 'Channel_correlation_topo.png')
+        fig.savefig(save_path_graficos + 'Channel_correlation_topo.svg')
 
 
 def PSD_boxplot(psd_pred_correlations, psd_rand_correlations, Display, Save, Run_graficos_path):

@@ -20,15 +20,18 @@ times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.
 
 # Stimuli and EEG
 # Stims = ['Envelope_Pitch_Spectrogram', 'Envelope_Pitch', 'Envelope_Spectrogram', 'Pitch_Spectrogram', 'Spectrogram']
+Stims = ['Envelope', 'Pitch', 'Shimmer']
+Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'All']
+
 Stims = ['Envelope']
-Bands = ['Theta', 'Alpha']
+Bands = ['Theta']
 
 # Standarization
 Stims_preprocess = 'Normalize'
 EEG_preprocess = 'Standarize'
 
 # Random permutations
-Statistical_test = False
+Statistical_test = True
 
 # Figures
 Display_Ind_Figures = False
@@ -40,6 +43,7 @@ Save_Total_Figures = True
 Save_Final_Correlation = True
 
 # Files
+set_alpha = None
 Alpha_Corr_limit = 0.01
 alphas_fname = 'saves/Alphas/Alphas_Corr{}.pkl'.format(Alpha_Corr_limit)
 try:
@@ -139,11 +143,14 @@ for Band in Bands:
                     eeg_train_val, eeg_test, dstims_train_val, dstims_test = \
                         Processing.standarize_normalize(eeg_train_val, eeg_test, dstims_train_val, dstims_test,
                                                         Stims_preprocess, EEG_preprocess, axis, porcent)
-                    try:
-                        alpha = Alphas[Band][stim][sesion][sujeto]
-                    except:
-                        alpha = 1000
-                        print('Alpha missing. Ussing default value: {}'.format(alpha))
+                    if set_alpha == None:
+                        try:
+                            alpha = Alphas[Band][stim][sesion][sujeto]
+                        except:
+                            alpha = 1000
+                            print('Alpha missing. Ussing default value: {}'.format(alpha))
+                    else:
+                        alpha = set_alpha
 
                     # Ajusto el modelo y guardo
                     Model = Models.Ridge(alpha)

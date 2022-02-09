@@ -14,7 +14,7 @@ import Processing
 import Permutations
 
 # WHAT TO DO
-Plot_EEG_PSD = False
+Plot_EEG_PSD = True
 Simulate_random_data = True
 Cov_Matrix = False
 Signal_vs_Pred = False
@@ -36,6 +36,7 @@ Stims_preprocess = 'Normalize'
 EEG_preprocess = 'Standarize'
 
 # Model
+set_alpha = 1000
 Corr_limit = 0.01
 alphas_fname = 'saves/Alphas/Alphas_Corr{}.pkl'.format(Corr_limit)
 try:
@@ -69,9 +70,8 @@ if Simulate_random_data:
 if Pitch:
     pitch_mean, pitch_std = [], []
 
-# Start Run
-
 sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
+sesiones = [21]
 sujeto_total = 0
 N_Samples = []
 for sesion in sesiones:
@@ -109,8 +109,10 @@ for sesion in sesiones:
             n_splits = 5
 
             # Ploteo PSD de señal de EEG
-            if Plot_EEG_PSD: Plot.Plot_PSD(sesion, sujeto, Band, situacion, Display, Save, situacion, info,
-                                           eeg.transpose())
+            if Plot_EEG_PSD:
+                fmin, fmax = 1, 40
+                Plot.Plot_PSD(sesion, sujeto, Band, situacion, Display, Save, situacion, info,
+                                           eeg.transpose(), fmin, fmax)
 
             if Simulate_random_data or Signal_vs_Pred:
                 # Empiezo el KFold de test
@@ -132,13 +134,15 @@ for sesion in sesiones:
                                                         Stims_preprocess, EEG_preprocess, axis, porcent)
 
                     # Ajusto el modelo y guardo
-                    try:
-                        alpha = Alphas[Band][stim][sesion][sujeto]
-                    except:
-                        alpha = 1000
-                        print('Alpha missing. Ussing default value: {}'.format(alpha))
+                    if set_alpha == None:
+                        try:
+                            alpha = Alphas[Band][stim][sesion][sujeto]
+                        except:
+                            alpha = 1000
+                            print('Alpha missing. Ussing default value: {}'.format(alpha))
+                    else:
+                        alpha = set_alpha
 
-                    alpha = 1000
                     Model = Models.Ridge(alpha)
                     Model.fit(dstims_train_val, eeg_train_val)
 
@@ -177,7 +181,7 @@ for sesion in sesiones:
                                                                                                             sujeto))
 
                     if Simulate_random_data:
-                        fmin, fmax = 0, 40
+                        fmin, fmax = 1, 40
                         # SIMULACIONES PERMUTADAS PARA COMPARAR
                         toy_iterations = 1
                         psd_rand_correlation = Permutations.simular_iteraciones_Ridge_plot(info, times, situacion, alpha,

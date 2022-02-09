@@ -123,10 +123,10 @@ def simular_iteraciones_Ridge_plot(info, times, situacion, alpha, iteraciones, s
             ax.set_xlabel('Frequency [Hz]')
             ax.grid()
             if save_path:
-                save_path_graficos = 'gráficos/PSD/Fake/'
+                save_path_graficos = 'gráficos/PSD/Fake/{}/'.format(Band)
                 os.makedirs(save_path_graficos, exist_ok=True)
-                plt.savefig(save_path_graficos + 'Sesion{} - Sujeto{} - Band {}.png'.format(sesion, sujeto, Band))
-                plt.savefig(save_path_graficos + 'Sesion{} - Sujeto{} - Band {}.svg'.format(sesion, sujeto, Band))
+                plt.savefig(save_path_graficos + 'Sesion{} - Sujeto{}.png'.format(sesion, sujeto, Band))
+                plt.savefig(save_path_graficos + 'Sesion{} - Sujeto{}.svg'.format(sesion, sujeto, Band))
 
 
         print("\rProgress: {}%".format(int((iteracion + 1) * 100 / iteraciones)), end='')
