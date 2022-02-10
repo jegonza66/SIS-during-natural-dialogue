@@ -142,6 +142,44 @@ if Save_fig:
     plt.savefig(Run_graficos_path + '{}.png'.format(stim))
     plt.savefig(Run_graficos_path + '{}.svg'.format(stim))
 
+## Violin Plot Stims
+import pandas as pd
+import pickle
+import matplotlib.pyplot as plt
+import os
+import seaborn as sn
+
+tmin, tmax = -0.6, -0.003
+
+Run_graficos_path = 'gráficos/Model_Comparison/tmin{}_tmax{}/Violin Plots/'.format(tmin, tmax)
+Save_fig = True
+Correlaciones = {}
+
+Band = 'Theta'
+
+Stims = ['Spectrogram', 'Envelope', 'Pitch', 'Shimmer']
+
+for stim in Stims:
+    f = open('saves/Ridge/Final_Correlation/tmin{}_tmax{}/{}_EEG_{}.pkl'.format(tmin, tmax, stim, Band), 'rb')
+    Corr, Pass = pickle.load(f)
+    f.close()
+
+    Correlaciones[stim] = Corr.mean(0)
+
+plt.ion()
+plt.figure(figsize=(19, 5))
+sn.violinplot(data=pd.DataFrame(Correlaciones))
+plt.ylabel('Correlation', fontsize=24)
+plt.yticks(fontsize=20)
+plt.xticks(fontsize=24)
+plt.grid()
+plt.tight_layout()
+
+if Save_fig:
+    os.makedirs(Run_graficos_path, exist_ok=True)
+    plt.savefig(Run_graficos_path + '{}.png'.format(Band))
+    plt.savefig(Run_graficos_path + '{}.svg'.format(Band))
+
 ## Venn Diagrams
 from matplotlib_venn import venn3, venn3_circles
 from matplotlib import pyplot as plt
@@ -158,7 +196,8 @@ f = open('saves/Ridge/Final_Correlation/tmin{}_tmax{}/Mean_Correlations.pkl'.for
 Mean_Correlations = pickle.load(f)
 f.close()
 
-Bands = ['Theta']
+Bands = ['All', 'Delta', 'Theta', 'Alpha', 'Beta_1']
+
 for Band in Bands:
     stims = ['Envelope', 'Pitch', 'Spectrogram']
 
@@ -200,7 +239,8 @@ for Band in Bands:
         sets_0.append(set)
 
     plt.figure()
-    venn3(subsets=np.array(sets_0).round(3), set_labels=(stims[0], stims[1], stims[2]), set_colors=('purple', 'skyblue', 'red'), alpha=0.5)
+    plt.title('{}'.format(Band))
+    venn3(subsets=np.array(sets_0).round(5), set_labels=(stims[0], stims[1], stims[2]), set_colors=('C0', 'C1', 'purple'), alpha=0.45)
 
     plt.tight_layout()
     if Save_fig:

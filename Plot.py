@@ -396,12 +396,13 @@ def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display
             ticks_labels = [int(Bands_center[i]) for i in np.arange(0, len(Bands_center), 2)]
             ax.set_yticks(ticks_positions)
             ax.set_yticklabels(ticks_labels)
-            ax.xaxis.label.set_size(15)
-            ax.yaxis.label.set_size(15)
-            ax.tick_params(axis='both', labelsize=15)
+            ax.xaxis.label.set_size(14)
+            ax.yaxis.label.set_size(14)
+            ax.tick_params(axis='both', labelsize=14)
+
             cbar = fig.colorbar(im, ax=ax, orientation='vertical')
-            cbar.set_label('TRF', fontsize=15)
-            cbar.tick_params(labelsize=12)
+            cbar.set_label('TRF', fontsize=13)
+            cbar.ax.tick_params(labelsize=12)
 
         else:
             evoked = mne.EvokedArray(Pesos_totales_sujetos_todos_canales_copy[:,
@@ -422,11 +423,11 @@ def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display
                            np.mean(decorrelation_times) + np.std(decorrelation_times) / 2,
                            alpha=0.4, color='red', label='Decorrelation time std.')
 
-            ax.xaxis.label.set_size(23)
-            ax.yaxis.label.set_size(23)
-            ax.tick_params(axis='both', labelsize=23)
+            ax.xaxis.label.set_size(14)
+            ax.yaxis.label.set_size(14)
+            ax.tick_params(axis='both', labelsize=14)
             ax.grid()
-            ax.legend(fontsize=15, loc='lower left')
+            ax.legend(fontsize=12, loc='lower left')
 
             fig.tight_layout()
 

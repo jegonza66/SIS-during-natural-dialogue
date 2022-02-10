@@ -7,10 +7,11 @@ import pickle
 
 
 Stims = ['Envelope', 'Pitch', 'Spectrogram', 'Envelope_Pitch_Spectrogram']
-Stims = ['Envelope']
+Stims = ['Spectrogram']
 Alphas = [100]
 
 Bands_low = np.flip(np.arange(2, 9))
+# Bands_range = np.arange(0.5, 9, 0.5)
 Bands_range = np.arange(0.5, 7, 0.5)
 
 save_path = 'saves/Bands Correlation/'
@@ -39,8 +40,9 @@ for stim in Stims:
             pickle.dump(Correlations, f)
             f.close()
 
+        max_range_percent = 99
         max_corr = np.argwhere(Correlations == Correlations.max())[0]
-        max_corrs = np.argwhere(Correlations >= Correlations.max()*(0.95))
+        max_corrs = np.argwhere(Correlations >= Correlations.max()*(max_range_percent/100))
 
         plt.ion()
         fig = plt.figure()
@@ -52,14 +54,15 @@ for stim in Stims:
         xticks = np.array(ax.get_xticks(), dtype=int)[1:-1]
         plt.yticks(yticks, labels=Bands_low[yticks].round(2))
         plt.xticks(xticks, labels=Bands_range[xticks].round(2))
-        plt.colorbar(shrink=0.8)
+        plt.colorbar(shrink=0.7)
         plt.ylabel('Low frequency bandpass')
         plt.xlabel('Bandpass width in Hz')
         for i in range(len(max_corrs)):
-            Plot.highlight_cell(max_corrs[i][1], max_corrs[i][0], ax=ax, fill=False, alpha=0.4, color='red', linewidth=2, label='99% Max. Value')
+            Plot.highlight_cell(max_corrs[i][1], max_corrs[i][0], ax=ax, fill=False, alpha=0.4, color='red', linewidth=2, label='{}% Max. Value'.format(max_range_percent))
         handles, labels = plt.gca().get_legend_handles_labels()
         by_label = dict(zip(labels, handles))
         plt.legend(by_label.values(), by_label.keys())
         plt.tight_layout()
 
         fig.savefig('gráficos/Bands Correlations/{}_Band_{}_{}_{}_alpha_{}.png'.format(stim, Bands_low[-1], Bands_low[0], (Bands_range[1]-Bands_range[0]).round(1), alpha))
+        fig.savefig('gráficos/Bands Correlations/{}_Band_{}_{}_{}_alpha_{}.svg'.format(stim, Bands_low[-1], Bands_low[0], (Bands_range[1]-Bands_range[0]).round(1), alpha))

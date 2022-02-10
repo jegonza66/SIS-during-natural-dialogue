@@ -19,12 +19,8 @@ delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
 times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays))
 
 # Stimuli and EEG
-# Stims = ['Envelope_Pitch_Spectrogram', 'Envelope_Pitch', 'Envelope_Spectrogram', 'Pitch_Spectrogram', 'Spectrogram']
-Stims = ['Envelope', 'Pitch', 'Shimmer']
+Stims = ['Spectrogram']
 Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'All']
-
-Stims = ['Envelope']
-Bands = ['Theta']
 
 # Standarization
 Stims_preprocess = 'Normalize'
@@ -279,10 +275,11 @@ for Band in Bands:
         # Matriz de Correlacion
         Plot.Matriz_corr_channel_wise(Pesos_totales_sujetos_todos_canales, Display_Total_Figures, Save_Total_Figures,
                                       Run_graficos_path)
-
-        _ = Plot.Plot_cabezas_instantes(Pesos_totales_sujetos_todos_canales, info, Band, times, sr, Display_Total_Figures,
-                                       Save_Total_Figures, Run_graficos_path)
-
+        try:
+            _ = Plot.Plot_cabezas_instantes(Pesos_totales_sujetos_todos_canales, info, Band, times, sr, Display_Total_Figures,
+                                            Save_Total_Figures, Run_graficos_path)
+        except:
+            pass
         # Cabezas de correlacion de pesos por canal
         Plot.Channel_wise_correlation_topomap(Pesos_totales_sujetos_todos_canales, info, Display_Total_Figures,
                                               Save_Total_Figures, Run_graficos_path)
