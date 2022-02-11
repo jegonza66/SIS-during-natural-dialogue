@@ -62,7 +62,7 @@ times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.
 # Paths
 procesed_data_path = 'saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
 Run_saves_path = 'saves/'
-graficos_save_path = 'gráficos/Signals_vs_Pred/tmin{}_tmax{}/'.format(tmin, tmax, stim, Band)
+graficos_save_path = 'gráficos/Signals_vs_Pred/tmin{}_tmax{}/zoom/'.format(tmin, tmax, stim, Band)
 
 # Save Variables
 if Simulate_random_data:
@@ -71,7 +71,6 @@ if Pitch:
     pitch_mean, pitch_std = [], []
 
 sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
-sesiones = [21]
 sujeto_total = 0
 N_Samples = []
 for sesion in sesiones:
@@ -110,7 +109,7 @@ for sesion in sesiones:
 
             # Ploteo PSD de señal de EEG
             if Plot_EEG_PSD:
-                fmin, fmax = 1, 40
+                fmin, fmax = 0, 40
                 Plot.Plot_PSD(sesion, sujeto, Band, situacion, Display, Save, situacion, info,
                                            eeg.transpose(), fmin, fmax)
 
@@ -181,7 +180,7 @@ for sesion in sesiones:
                                                                                                             sujeto))
 
                     if Simulate_random_data:
-                        fmin, fmax = 1, 40
+                        fmin, fmax = 4, 30
                         # SIMULACIONES PERMUTADAS PARA COMPARAR
                         toy_iterations = 1
                         psd_rand_correlation = Permutations.simular_iteraciones_Ridge_plot(info, times, situacion, alpha,
@@ -200,9 +199,9 @@ for sesion in sesiones:
                                                                                    fmin, fmax)
                         # Ploteo PSD
                         Plot.Plot_PSD(sesion, sujeto, Band, situacion, Display, Save, 'Prediccion', info,
-                                      predicted.transpose())
+                                      predicted.transpose(), fmin, fmax)
                         Plot.Plot_PSD(sesion, sujeto, Band, situacion, Display, Save, 'Test', info,
-                                      eeg_test.transpose())
+                                      eeg_test.transpose(), fmin, fmax)
 
                         # Calculate channelwise correlation between prediction and signal psd
                         psds_channel_corr = np.array(
