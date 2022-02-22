@@ -268,11 +268,10 @@ def Plot_PSD(sesion, sujeto, Band, situacion, Display, Save, save_path, info, da
     ax.grid()
 
     if Save:
-        save_path_graficos = 'gráficos/PSD/{}/{}/'.format(save_path, Band)
+        save_path_graficos = 'gráficos/PSD/Zoom/{}/{}/'.format(save_path, Band)
         os.makedirs(save_path_graficos, exist_ok=True)
         plt.savefig(save_path_graficos + 'Sesion{} - Sujeto{}.png'.format(sesion, sujeto, Band))
         plt.savefig(save_path_graficos + 'Sesion{} - Sujeto{}.svg'.format(sesion, sujeto, Band))
-
 
 def Cabezas_corr_promedio(Correlaciones_totales_sujetos, info, Display, Save, Run_graficos_path, title):
     Correlaciones_promedio = Correlaciones_totales_sujetos.mean(0)

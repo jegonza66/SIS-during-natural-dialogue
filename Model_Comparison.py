@@ -190,13 +190,14 @@ import numpy as np
 tmin, tmax = -0.6, -0.003
 
 Run_graficos_path = 'gráficos/Model_Comparison/tmin{}_tmax{}/Venn_Diagrams/'.format(tmin, tmax)
-Save_fig = True
+Save_fig = False
 
 f = open('saves/Ridge/Final_Correlation/tmin{}_tmax{}/Mean_Correlations.pkl'.format(tmin, tmax), 'rb')
 Mean_Correlations = pickle.load(f)
 f.close()
 
 Bands = ['All', 'Delta', 'Theta', 'Alpha', 'Beta_1']
+Bands = ['Theta']
 
 for Band in Bands:
     stims = ['Envelope', 'Pitch', 'Spectrogram']
@@ -247,6 +248,17 @@ for Band in Bands:
         os.makedirs(Run_graficos_path, exist_ok=True)
         plt.savefig(Run_graficos_path + '{}.png'.format(Band))
         plt.savefig(Run_graficos_path + '{}.svg'.format(Band))
+
+    Envelope_percent = r2_1 * 100 /np.sum(sets_0)
+    Pitch_percent = r2_2 * 100 /np.sum(sets_0)
+    Spectrogram_percent = r2_3 * 100 /np.sum(sets_0)
+
+    Envelope_u_percent = r2u_1 * 100 /np.sum(sets_0)
+    Pitch_u_percent = r2u_2 * 100 /np.sum(sets_0)
+    Spectrogram_u_percent = r2u_3 * 100 /np.sum(sets_0)
+
+
+
 
 ## Plot por subjects
 

@@ -14,16 +14,16 @@ import Processing
 import Permutations
 
 # WHAT TO DO
-Plot_EEG_PSD = True
-Simulate_random_data = True
+Plot_EEG_PSD = False
+Simulate_random_data = False
 Cov_Matrix = False
 Signal_vs_Pred = False
-Phase_Align = False
+Phase_Align = True
 Pitch = False
 
 # Figures
-Display = False
-Save = True
+Display = True
+Save = False
 
 if Display:
     plt.ion()
@@ -36,7 +36,7 @@ Stims_preprocess = 'Normalize'
 EEG_preprocess = 'Standarize'
 
 # Model
-set_alpha = 1000
+set_alpha = None
 Corr_limit = 0.01
 alphas_fname = 'saves/Alphas/Alphas_Corr{}.pkl'.format(Corr_limit)
 try:
@@ -52,7 +52,7 @@ Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All']
 Bands = ['Theta']
 
 stim = 'Envelope'
-Band = 'All'
+Band = 'Theta'
 situacion = 'Escucha'
 tmin, tmax = -0.6, -0.003
 sr = 128
@@ -62,7 +62,7 @@ times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.
 # Paths
 procesed_data_path = 'saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
 Run_saves_path = 'saves/'
-graficos_save_path = 'gráficos/Signals_vs_Pred/tmin{}_tmax{}/zoom/'.format(tmin, tmax, stim, Band)
+graficos_save_path = 'gráficos/Signals_vs_Pred/tmin{}_tmax{}/'.format(tmin, tmax, stim, Band)
 
 # Save Variables
 if Simulate_random_data:
@@ -71,6 +71,7 @@ if Pitch:
     pitch_mean, pitch_std = [], []
 
 sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
+sesiones = [21]
 sujeto_total = 0
 N_Samples = []
 for sesion in sesiones:
@@ -100,9 +101,9 @@ for sesion in sesiones:
         dstims_para_sujeto_1, dstims_para_sujeto_2 = Load.Estimulos(stim, Sujeto_1, Sujeto_2)
         Len_Estimulos = [len(dstims_para_sujeto_1[i][0]) for i in range(len(dstims_para_sujeto_1))]
 
-        for sujeto, eeg, dstims in zip((1, 2), (eeg_sujeto_1, eeg_sujeto_2),
-                                       (dstims_para_sujeto_1, dstims_para_sujeto_2)):
-            # for sujeto, eeg, dstims in zip([1], [eeg_sujeto_1], [dstims_para_sujeto_1]):
+        # for sujeto, eeg, dstims in zip((1, 2), (eeg_sujeto_1, eeg_sujeto_2),
+        #                                (dstims_para_sujeto_1, dstims_para_sujeto_2)):
+        for sujeto, eeg, dstims in zip([1], [eeg_sujeto_1], [dstims_para_sujeto_1]):
             print('Sujeto {}'.format(sujeto))
             # Separo los datos en 5 y tomo test set de 20% de datos con kfold (5 iteraciones)
             n_splits = 5
@@ -180,7 +181,7 @@ for sesion in sesiones:
                                                                                                             sujeto))
 
                     if Simulate_random_data:
-                        fmin, fmax = 4, 30
+                        fmin, fmax = 3, 25
                         # SIMULACIONES PERMUTADAS PARA COMPARAR
                         toy_iterations = 1
                         psd_rand_correlation = Permutations.simular_iteraciones_Ridge_plot(info, times, situacion, alpha,
@@ -188,7 +189,7 @@ for sesion in sesiones:
                                                                                            fold, dstims_train_val,
                                                                                            eeg_train_val, dstims_test,
                                                                                            eeg_test, fmin, fmax, stim, Band,
-                                                                                           save_path=graficos_save_path,
+                                                                                           save_path=False,
                                                                                            Display=False)
                         psd_rand_correlations.append(psd_rand_correlation)
 
@@ -237,22 +238,29 @@ for sesion in sesiones:
                 analytic_signal = sgn.hilbert(eeg, axis=0)
                 phase = np.angle(analytic_signal).transpose()
                 average_phase_diff = np.zeros((len(phase), len(phase)))
+                average_phase_consistency = np.zeros((len(phase), len(phase)))
 
                 for channel in range(len(phase)):
                     print(channel)
-                    phase_diff = np.zeros(phase.shape)
-                    vector_x_diff = np.zeros(phase.shape)
-                    vector_y_diff = np.zeros(phase.shape)
-                    for channel_2 in range(len(phase)):
-                        phase_diff[channel_2] = phase[channel] - phase[channel_2]
+                    phase_diff = phase - phase[channel]
 
-                    vector_x_diff = np.cos(phase_diff)
-                    vector_y_diff = np.sin(phase_diff)
-                    vector_diff = vector_x_diff + vector_y_diff
-                    average_phase_diff[channel] = np.abs(np.mean(vector_diff, axis=-1))
+                    # Phase difference (forma mili):
+                    # angle: arg(complex) = arctan(imaginary/real)
+                    real_diff = np.cos(abs(phase_diff))
+                    imaginary_diff = np.sin(abs(phase_diff))
+                    vector_diff = imaginary_diff.mean(1) / real_diff.mean(1)
+                    average_phase_diff[channel] = np.arctan(vector_diff)
+
+                    # Inter-Site Phase Clustering:
+                    average_phase_consistency[channel] = np.abs(np.mean(np.exp(1j * phase_diff), axis=1))
 
                 plt.figure()
                 plt.imshow(average_phase_diff)
+                plt.colorbar()
+                plt.title('Phase difference {}'.format(situacion))
+
+                plt.figure()
+                plt.imshow(average_phase_consistency)
                 plt.colorbar()
                 plt.title('Phase sincronization {}'.format(situacion))
 
