@@ -1,10 +1,5 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Sep 22 20:24:29 2021
-
-@author: joaco
-"""
 from sklearn import linear_model
+from mne.decoding import ReceptiveField
 
 class Ridge:
     
@@ -18,4 +13,42 @@ class Ridge:
     
     def predict(self, dstims_test):   
         predicted = self.model.predict(dstims_test)
+        return predicted
+
+
+class mne_mtrf:
+
+    def __init__(self, tmin, tmax, sr, alpha):
+        self.sr = sr
+        self.rf = ReceptiveField(tmin, tmax, sr, estimator=alpha, scoring='corrcoef')
+
+    def fit(self, dstims_train_val, eeg_train_val):
+        stim = dstims_train_val[:, -1]
+        stim = stim.reshape([stim.shape[0], 1])
+
+        self.rf.fit(stim, eeg_train_val)
+        self.coefs = self.rf.coef_[:, 0, :-1]
+
+    def predict(self, dstims_test):
+        stim = dstims_test[:, -1]
+        stim = stim.reshape([stim.shape[0], 1])
+        predicted = self.rf.predict(stim)
+        return predicted
+
+
+class mne_mtrf_decoding:
+
+    def __init__(self, tmin, tmax, sr, info, alpha):
+        self.sr = sr
+        self.rf = ReceptiveField(tmin, tmax, sr, feature_names=info.ch_names, estimator=alpha, scoring='corrcoef', patterns=True)
+
+    def fit(self, dstims_train_val, eeg_train_val):
+        stim = dstims_train_val[:, -1]
+        stim = stim.reshape([stim.shape[0], 1])
+        self.rf.fit(eeg_train_val, stim)
+        self.coefs = self.rf.coef_[0, :, :-1]
+        self.patterns = self.rf.patterns_[0, :, :-1]
+
+    def predict(self, eeg_test):
+        predicted = self.rf.predict(eeg_test)
         return predicted

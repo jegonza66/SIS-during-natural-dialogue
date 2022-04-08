@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Jul  7 01:28:34 2021
-
-@author: joaco
-"""
 import numpy as np
 import pandas as pd
 from scipy import signal
@@ -142,7 +136,7 @@ def preproc_dict(momentos_escucha, delays, situacion, dict):
         situacion = 0
     elif situacion == 'Escucha':
         situacion = 1
-    elif situacion == 'Habla':
+    elif situacion == 'Habla' or situacion == 'Habla_Propia':
         situacion = 2
     elif situacion == 'Ambos':
         situacion = 3

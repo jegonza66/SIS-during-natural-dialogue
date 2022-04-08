@@ -16,7 +16,7 @@ import Funciones
 ## PARAMETROS
 s = 21
 trial = 1
-channel = 2
+channel = 1
 
 valores_faltantes_pitch = np.nan
 audio_sr = 16000
@@ -47,7 +47,8 @@ eeg = np.array(eeg._data * 1e6).transpose()  # 1e6 es por el factor de scaling d
 # Downsample
 eeg = Processing.subsamplear(eeg, int(eeg_freq / sr))
 
-# eeg.plot()
+eeg.plot()
+plt.savefig('gráficos/Raw_EEG.png')
 # plt.savefig('{}Theta.png'.format(s))
 
 ## PSD

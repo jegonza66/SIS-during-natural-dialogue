@@ -18,7 +18,11 @@ Plot_EEG_PSD = False
 Simulate_random_data = False
 Cov_Matrix = False
 Signal_vs_Pred = False
-Phase_Align = True
+Phase_Align = False
+Cortical_Entrainment = True
+average_phase_diff = np.zeros((18, 128))
+average_phase_consistency = np.zeros((18, 128))
+
 Pitch = False
 
 # Figures
@@ -71,7 +75,6 @@ if Pitch:
     pitch_mean, pitch_std = [], []
 
 sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
-sesiones = [21]
 sujeto_total = 0
 N_Samples = []
 for sesion in sesiones:
@@ -80,8 +83,7 @@ for sesion in sesiones:
     if Pitch:
         # LOAD DATA BY SUBJECT
         Sujeto_1, Sujeto_2 = Load.Load_Data(sesion=sesion, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
-                                            procesed_data_path=procesed_data_path, situacion=situacion,
-                                            valores_faltantes_pitch=None)
+                                            procesed_data_path=procesed_data_path)
         dstims_para_sujeto_1, dstims_para_sujeto_2, info = Load.Estimulos('Pitch', Sujeto_1, Sujeto_2)
         for sujeto, dstims in zip((1, 2), (dstims_para_sujeto_2, dstims_para_sujeto_1)):
             print('Sujeto {}'.format(sujeto))
@@ -101,9 +103,9 @@ for sesion in sesiones:
         dstims_para_sujeto_1, dstims_para_sujeto_2 = Load.Estimulos(stim, Sujeto_1, Sujeto_2)
         Len_Estimulos = [len(dstims_para_sujeto_1[i][0]) for i in range(len(dstims_para_sujeto_1))]
 
-        # for sujeto, eeg, dstims in zip((1, 2), (eeg_sujeto_1, eeg_sujeto_2),
-        #                                (dstims_para_sujeto_1, dstims_para_sujeto_2)):
-        for sujeto, eeg, dstims in zip([1], [eeg_sujeto_1], [dstims_para_sujeto_1]):
+        for sujeto, eeg, dstims in zip((1, 2), (eeg_sujeto_1, eeg_sujeto_2),
+                                       (dstims_para_sujeto_1, dstims_para_sujeto_2)):
+        # for sujeto, eeg, dstims in zip([1], [eeg_sujeto_1], [dstims_para_sujeto_1]):
             print('Sujeto {}'.format(sujeto))
             # Separo los datos en 5 y tomo test set de 20% de datos con kfold (5 iteraciones)
             n_splits = 5
@@ -264,7 +266,51 @@ for sesion in sesiones:
                 plt.colorbar()
                 plt.title('Phase sincronization {}'.format(situacion))
 
+
+            if Cortical_Entrainment:
+                # env phase
+                analytic_envelope_signal = sgn.hilbert(dstims[0][:, -1], axis=0)
+                env_phase = np.angle(analytic_envelope_signal).transpose()
+
+                # eeg phase
+                analytic_signal = sgn.hilbert(eeg, axis=0)
+                eeg_phase = np.angle(analytic_signal).transpose()
+
+                phase_diff = eeg_phase - env_phase
+                real_diff = np.cos(abs(phase_diff))
+                imaginary_diff = np.sin(abs(phase_diff))
+                vector_diff = imaginary_diff.mean(1) / real_diff.mean(1)
+
+                # mean phase difference
+                average_phase_diff[sujeto_total] = np.arctan(vector_diff)
+                # Inter-Site Phase Clustering:
+                average_phase_consistency[sujeto_total] = np.abs(np.mean(np.exp(1j * phase_diff), axis=1))
+
             sujeto_total += 1
+
+if Cortical_Entrainment:
+
+    fig = plt.figure()
+    plt.suptitle("Phase difference", fontsize=19)
+    plt.title('Mean = {:.3f} +/- {:.3f}'.format(average_phase_diff.mean(), average_phase_diff.std()),
+              fontsize=19)
+    im = mne.viz.plot_topomap(average_phase_diff.mean(0), info, cmap='Greys',
+                              vmin=average_phase_diff.mean(0).min(), vmax=average_phase_diff.mean(0).max(),
+                              show=False, sphere=0.07)
+    cb = plt.colorbar(im[0], shrink=0.85, orientation='vertical')
+    cb.ax.tick_params(labelsize=19)
+    fig.tight_layout()
+
+    fig = plt.figure()
+    plt.suptitle("Phase sincronization", fontsize=19)
+    plt.title('Mean = {:.3f} +/- {:.3f}'.format(average_phase_consistency.mean(), average_phase_consistency.std()),
+              fontsize=19)
+    im = mne.viz.plot_topomap(average_phase_consistency.mean(0), info, cmap='Greys',
+                              vmin=average_phase_consistency.mean(0).min(), vmax=average_phase_consistency.mean(0).max(),
+                              show=False, sphere=0.07)
+    cb = plt.colorbar(im[0], shrink=0.85, orientation='vertical')
+    cb.ax.tick_params(labelsize=19)
+    fig.tight_layout()
 
 if Pitch:
     f = open(Run_saves_path + 'Subjects_Pitch.pkl', 'wb')

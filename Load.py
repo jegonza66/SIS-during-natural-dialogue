@@ -291,12 +291,18 @@ class Sesion_class:
                                                 Causal_filter_EEG=self.Causal_filter_EEG,
                                                 Env_Filter=self.Env_Filter).load_trial()
 
-                # Load data to dictionary taking stimuli from speaker and eeg from listener
-                Trial_sujeto_1 = {key: Trial_channel_2[key] for key in Trial_channel_2.keys()}
-                Trial_sujeto_1['eeg'] = Trial_channel_1['eeg']
+                if self.situacion == 'Habla_Propia':
+                    # Load data to dictionary taking stimuli and eeg from speaker
+                    Trial_sujeto_1 = {key: Trial_channel_1[key] for key in Trial_channel_1.keys()}
+                    Trial_sujeto_2 = {key: Trial_channel_2[key] for key in Trial_channel_2.keys()}
 
-                Trial_sujeto_2 = {key: Trial_channel_1[key] for key in Trial_channel_1.keys()}
-                Trial_sujeto_2['eeg'] = Trial_channel_2['eeg']
+                else:
+                    # Load data to dictionary taking stimuli from speaker and eeg from listener
+                    Trial_sujeto_1 = {key: Trial_channel_2[key] for key in Trial_channel_2.keys()}
+                    Trial_sujeto_1['eeg'] = Trial_channel_1['eeg']
+
+                    Trial_sujeto_2 = {key: Trial_channel_1[key] for key in Trial_channel_1.keys()}
+                    Trial_sujeto_2['eeg'] = Trial_channel_2['eeg']
 
                 # Instant labeling of current speaker
                 momentos_sujeto_1_trial = Processing.labeling(self.sesion, trial, canal_hablante=2, sr=self.sr)

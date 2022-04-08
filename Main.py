@@ -12,33 +12,13 @@ from datetime import datetime
 startTime = datetime.now()
 
 # Define Parameters
-# Model parameters
 tmin, tmax = -0.6, -0.003
 sr = 128
 delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
 times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays))
 
-# Stimuli and EEG
-Stims = ['Spectrogram']
-Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'All']
-
-# Standarization
-Stims_preprocess = 'Normalize'
-EEG_preprocess = 'Standarize'
-
-# Random permutations
-Statistical_test = True
-
-# Figures
-Display_Ind_Figures = False
-Display_Total_Figures = False
-
-Save_Ind_Figures = True
-Save_Total_Figures = True
-
-Save_Final_Correlation = True
-
-# Files
+# Model parameters
+model = 'Ridge'
 set_alpha = None
 Alpha_Corr_limit = 0.01
 alphas_fname = 'saves/Alphas/Alphas_Corr{}.pkl'.format(Alpha_Corr_limit)
@@ -49,6 +29,25 @@ try:
 except:
     print('\n\nAlphas file not found.\n\n')
 
+# Stimuli and EEG
+Stims = ['Envelope']
+Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All']
+
+# Standarization
+Stims_preprocess = 'Normalize'
+EEG_preprocess = 'Standarize'
+
+# Random permutations
+Statistical_test = False
+
+# Save / Display Figures
+Display_Ind_Figures = False
+Display_Total_Figures = False
+Save_Ind_Figures = True
+Save_Total_Figures = True
+Save_Final_Correlation = True
+
+# Save mean correlations
 Mean_Correlations_fname = 'saves/Ridge/Final_Correlation/tmin{}_tmax{}/Mean_Correlations.pkl'.format(tmin, tmax)
 try:
     f = open(Mean_Correlations_fname, 'rb')
@@ -149,13 +148,23 @@ for Band in Bands:
                         alpha = set_alpha
 
                     # Ajusto el modelo y guardo
-                    Model = Models.Ridge(alpha)
-                    Model.fit(dstims_train_val, eeg_train_val)
-                    Pesos_ronda_canales[fold] = Model.coefs
+                    if model == 'Ridge':
+                        Model = Models.Ridge(alpha)
+                        Model.fit(dstims_train_val, eeg_train_val)
+                        Pesos_ronda_canales[fold] = Model.coefs
 
-                    # Predigo en test set y guardo
-                    predicted = Model.predict(dstims_test)
-                    Predicciones[fold] = predicted
+                        # Predigo en test set y guardo
+                        predicted = Model.predict(dstims_test)
+                        Predicciones[fold] = predicted
+
+                    elif model == 'mtrf':
+                        Model = Models.mne_mtrf(tmin, tmax, sr, alpha)
+                        Model.fit(dstims_train_val, eeg_train_val)
+                        Pesos_ronda_canales[fold] = Model.coefs
+
+                        # Predigo en test set y guardo
+                        predicted = Model.predict(dstims_test)
+                        Predicciones[fold] = predicted
 
                     # Calculo Correlacion y guardo
                     Rcorr = np.array(
