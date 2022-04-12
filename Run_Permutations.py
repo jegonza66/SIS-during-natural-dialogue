@@ -13,20 +13,21 @@ from datetime import datetime
 startTime = datetime.now()
 
 # Define Parameters
-# Model parameters
 tmin, tmax = -0.6, -0.003
 sr = 128
+situacion = 'Escucha'
+# Model parameters
+model = 'Decoding'
 
 # Stimuli and EEG
-Stims = ['Pitch']
-Bands = ['Beta_1', 'All']
-
+Stims = ['Envelope']
+Bands = ['Theta']
 
 # Standarization
 Stims_preprocess = 'Normalize'
 EEG_preprocess = 'Standarize'
 
-# Files
+# Model
 Corr_limit = 0.01
 alphas_fname = 'saves/Alphas/Alphas_Corr{}.pkl'.format(Corr_limit)
 try:
@@ -42,8 +43,8 @@ for Band in Bands:
         print('\n' + stim + '\n')
         # Paths
         procesed_data_path = 'saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
-        Path_it = 'saves/Ridge/Fake_it/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
-            Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
+        Path_it = 'saves/{}/Fake_it/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
+            model, Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
 
         # Start Run
         sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
@@ -52,7 +53,7 @@ for Band in Bands:
             print('Sesion {}'.format(sesion))
             # LOAD DATA BY SUBJECT
             Sujeto_1, Sujeto_2 = Load.Load_Data(sesion=sesion, stim=stim, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
-                                                procesed_data_path=procesed_data_path)
+                                                procesed_data_path=procesed_data_path, situacion=situacion)
             # LOAD EEG BY SUBJECT
             eeg_sujeto_1, eeg_sujeto_2, info = Sujeto_1['EEG'], Sujeto_2['EEG'], Sujeto_1['info']
 
@@ -71,8 +72,9 @@ for Band in Bands:
 
                 # Defino variables donde voy a guardar mil cosas
                 Pesos_fake = np.zeros((n_folds, iteraciones, info['nchan'], sum(Len_Estimulos)), dtype=np.float16)
-                Correlaciones_fake = np.zeros((n_folds, iteraciones, info['nchan']))
-                Errores_fake = np.zeros((n_folds, iteraciones, info['nchan']))
+                Patterns_fake = np.zeros((n_folds, iteraciones, info['nchan'], sum(Len_Estimulos)), dtype=np.float16)
+                Correlaciones_fake = np.zeros((n_folds, iteraciones))
+                Errores_fake = np.zeros((n_folds, iteraciones))
 
                 # Empiezo el KFold de test
                 kf_test = KFold(n_folds, shuffle=False)
@@ -101,11 +103,20 @@ for Band in Bands:
                         print('Alpha missing. Ussing default value: {}'.format(alpha))
 
                     # Run_permutations:
-                    Fake_Model = Models.Ridge(alpha)
-                    Pesos_fake, Correlaciones_fake, Errores_fake = \
-                        Permutations.simular_iteraciones_Ridge(Fake_Model, alpha, iteraciones, sesion, sujeto, fold,
-                                                               dstims_train_val, eeg_train_val, dstims_test, eeg_test,
-                                                               Pesos_fake, Correlaciones_fake, Errores_fake)
+                    if model == 'Ridge':
+                        Fake_Model = Models.Ridge(alpha)
+                        Pesos_fake, Correlaciones_fake, Errores_fake = \
+                            Permutations.simular_iteraciones_Ridge(Fake_Model, iteraciones, sesion, sujeto, fold,
+                                                                   dstims_train_val, eeg_train_val, dstims_test,
+                                                                   eeg_test, Pesos_fake, Correlaciones_fake,
+                                                                   Errores_fake)
+                    elif model == 'Decoding':
+                        Fake_Model = Models.mne_mtrf_decoding(tmin, tmax, sr, info, alpha)
+                        Pesos_fake, Patterns_fake, Correlaciones_fake, Errores_fake = \
+                            Permutations.simular_iteraciones_decoding(Fake_Model, iteraciones, sesion, sujeto, fold,
+                                                                   dstims_train_val, eeg_train_val, dstims_test,
+                                                                   eeg_test, Pesos_fake, Patterns_fake, Correlaciones_fake,
+                                                                   Errores_fake)
 
                 # Save permutations
                 os.makedirs(Path_it, exist_ok=True)
@@ -116,6 +127,11 @@ for Band in Bands:
                 f = open(Path_it + 'Pesos_fake_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto), 'wb')
                 pickle.dump(Pesos_fake.mean(0), f)
                 f.close()
+
+                if model == 'Decoding':
+                    f = open(Path_it + 'Patterns_fake_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto), 'wb')
+                    pickle.dump(Pesos_fake.mean(0), f)
+                    f.close()
 
 print('\n')
 print(datetime.now() - startTime)

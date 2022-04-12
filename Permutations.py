@@ -8,7 +8,7 @@ import copy
 import matplotlib.pyplot as plt
 import Models
 
-def simular_iteraciones_Ridge(Fake_Model, alpha, iteraciones, sesion, sujeto, fold, dstims_train_val, eeg_train_val,
+def simular_iteraciones_Ridge(Fake_Model, iteraciones, sesion, sujeto, fold, dstims_train_val, eeg_train_val,
                               dstims_test, eeg_test, Pesos_fake, Correlaciones_fake, Errores_fake):
     print("\nSesion {} - Sujeto {} - Fold {}".format(sesion, sujeto, fold + 1))
     for iteracion in np.arange(iteraciones):
@@ -35,6 +35,35 @@ def simular_iteraciones_Ridge(Fake_Model, alpha, iteraciones, sesion, sujeto, fo
 
         print("\rProgress: {}%".format(int((iteracion + 1) * 100 / iteraciones)), end='')
     return Pesos_fake, Correlaciones_fake, Errores_fake
+
+
+def simular_iteraciones_decoding(Fake_Model, iteraciones, sesion, sujeto, fold, dstims_train_val, eeg_train_val,
+                              dstims_test, eeg_test, Pesos_fake, Patterns_fake, Correlaciones_fake, Errores_fake):
+    print("\nSesion {} - Sujeto {} - Fold {}".format(sesion, sujeto, fold + 1))
+    for iteracion in np.arange(iteraciones):
+        # Random permutations of stimuli
+        eeg_train_random = copy.deepcopy(eeg_train_val)
+        np.random.shuffle(eeg_train_random)
+
+        # Fit Model
+        Fake_Model.fit(eeg_train_random, dstims_train_val)  # entreno el modelo
+        Pesos_fake[fold, iteracion] = Fake_Model.coefs
+        Patterns_fake[fold, iteracion] = Fake_Model.patterns
+
+        # Test
+        predicho_fake = Fake_Model.predict(eeg_test)
+
+        # Correlacion
+        Rcorr_fake = np.array(
+            [np.corrcoef(dstims_test[:, -1].ravel(), np.array(predicho_fake).ravel())[0, 1]])
+        Correlaciones_fake[fold, iteracion] = Rcorr_fake
+
+        # Error
+        Rmse_fake = np.sqrt(np.power((predicho_fake.ravel() - dstims_test[:, -1]), 2).mean(0))
+        Errores_fake[fold, iteracion] = Rmse_fake
+
+        print("\rProgress: {}%".format(int((iteracion + 1) * 100 / iteraciones)), end='')
+    return Pesos_fake, Patterns_fake, Correlaciones_fake, Errores_fake
 
 
 def simular_iteraciones_Ridge_plot(info, times, situacion, alpha, iteraciones, sesion, sujeto, fold,

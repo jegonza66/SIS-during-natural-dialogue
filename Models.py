@@ -40,14 +40,33 @@ class mne_mtrf_decoding:
 
     def __init__(self, tmin, tmax, sr, info, alpha):
         self.sr = sr
-        self.rf = ReceptiveField(tmin, tmax, sr, feature_names=info.ch_names, estimator=alpha, scoring='corrcoef', patterns=True)
+        self.rf = ReceptiveField(tmin, tmax, sr, feature_names=info.ch_names, estimator=alpha, scoring='corrcoef',
+                                 patterns=True, verbose=False)
 
-    def fit(self, dstims_train_val, eeg_train_val):
+    def fit(self, eeg_train_val, dstims_train_val):
         stim = dstims_train_val[:, -1]
         stim = stim.reshape([stim.shape[0], 1])
         self.rf.fit(eeg_train_val, stim)
         self.coefs = self.rf.coef_[0, :, :-1]
         self.patterns = self.rf.patterns_[0, :, :-1]
+
+    def predict(self, eeg_test):
+        predicted = self.rf.predict(eeg_test)
+        return predicted
+
+
+class mne_mtrf_decoding_inicial:
+
+    def __init__(self, tmin, tmax, sr, info, alpha):
+        self.sr = sr
+        self.rf = ReceptiveField(tmin, tmax, sr, feature_names=info.ch_names, estimator=alpha, scoring='corrcoef', patterns=True)
+
+    def fit(self, eeg_train_val, dstims_train_val):
+        stim = dstims_train_val[:, 0]
+        stim = stim.reshape([stim.shape[0], 1])
+        self.rf.fit(eeg_train_val, stim)
+        self.coefs = self.rf.coef_[0, :, 1:]
+        self.patterns = self.rf.patterns_[0, :, 1:]
 
     def predict(self, eeg_test):
         predicted = self.rf.predict(eeg_test)

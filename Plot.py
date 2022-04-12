@@ -17,59 +17,6 @@ def highlight_cell(x, y, ax=None, **kwargs):
     return rect
 
 
-def plot_alphas(alphas, correlaciones, best_alpha_overall, lista_Rmse, linea, fino):
-    # Plot correlations vs. alpha regularization value
-    # cada linea es un canal
-    fig = plt.figure(figsize=(10, 5))
-    fig.clf()
-    plt.subplot(1, 3, 1)
-    plt.subplots_adjust(wspace=1)
-    plt.plot(alphas, correlaciones, 'k')
-    plt.gca().set_xscale('log')
-    # en rojo: el maximo de las correlaciones
-    # la linea azul marca el mejor alfa
-
-    plt.plot([best_alpha_overall, best_alpha_overall], [plt.ylim()[0], plt.ylim()[1]])
-    plt.plot([best_alpha_overall, best_alpha_overall], [plt.ylim()[0], plt.ylim()[1]])
-
-    plt.plot(alphas, correlaciones.mean(1), '.r', linewidth=5)
-    plt.xlabel('Alfa', fontsize=16)
-    plt.ylabel('Correlación - Ridge set', fontsize=16)
-    plt.tick_params(axis='both', which='major', labelsize=13)
-    plt.tick_params(axis='both', which='minor', labelsize=13)
-
-    # Como se ve sola la correlacion maxima para los distintos alfas
-    plt.subplot(1, 3, 2)
-    plt.plot(alphas, np.array(correlaciones).mean(1), '.r', linewidth=5)
-    plt.plot(alphas, np.array(correlaciones).mean(1), '-r', linewidth=linea)
-
-    if fino:
-        plt.plot([best_alpha_overall, best_alpha_overall], [plt.ylim()[0], plt.ylim()[1]])
-        plt.plot([best_alpha_overall, best_alpha_overall], [plt.ylim()[0], plt.ylim()[1]])
-
-    plt.xlabel('Alfa', fontsize=16)
-    plt.gca().set_xscale('log')
-    plt.tick_params(axis='both', which='major', labelsize=13)
-    plt.tick_params(axis='both', which='minor', labelsize=13)
-    # el RMSE
-    plt.subplot(1, 3, 3)
-    plt.plot(alphas, np.array(lista_Rmse).min(1), '.r', linewidth=5)
-    plt.plot(alphas, np.array(lista_Rmse).min(1), '-r', linewidth=2)
-
-    if fino:
-        plt.plot([best_alpha_overall, best_alpha_overall], [plt.ylim()[0], plt.ylim()[1]])
-        plt.plot([best_alpha_overall, best_alpha_overall], [plt.ylim()[0], plt.ylim()[1]])
-
-    plt.xlabel('Alfa', fontsize=16)
-    plt.ylabel('RMSE - Ridge set', fontsize=16)
-    plt.gca().set_xscale('log')
-    plt.tick_params(axis='both', which='major', labelsize=13)
-    plt.tick_params(axis='both', which='minor', labelsize=13)
-
-    titulo = "El mejor alfa es de: " + str(best_alpha_overall)
-    plt.suptitle(titulo, fontsize=18)
-
-
 def plot_cabezas_canales(channel_names, info, sesion, sujeto, Valores_promedio, Display,
                          n_canales, name, Save, Run_graficos_path, Canales_sobrevivientes):
     if Display:
@@ -122,16 +69,42 @@ def plot_cabezas_canales(channel_names, info, sesion, sujeto, Valores_promedio, 
         fig.savefig(save_path_cabezas + '{}_Cabeza_Sesion{}_Sujeto{}.png'.format(name, sesion, sujeto))
 
 
+def corr_sujeto_decoding(sesion, sujeto, Valores_promedio, Display, name, Save, Run_graficos_path):
+    if Display:
+        plt.ion()
+    else:
+        plt.ioff()
+
+    data = pd.DataFrame({name: Valores_promedio})
+    if Display:
+        plt.ion()
+    else:
+        plt.ioff()
+
+    fig, ax = plt.subplots()
+    sn.violinplot(data=data, ax=ax)
+    plt.ylim([-0.2, 1])
+    plt.ylabel(name)
+    plt.title('{}:{:.3f} +/- {:.3f}'.format(name, np.mean(Valores_promedio), np.std(Valores_promedio), fontsize=19))
+
+    if Save:
+        save_path_cabezas = Run_graficos_path + 'Corr_sujetos/'
+        try:
+            os.makedirs(save_path_cabezas)
+        except:
+            pass
+        fig.savefig(save_path_cabezas + '{}_Sesion{}_Sujeto{}.png'.format(name, sesion, sujeto))
+
+
 def plot_grafico_pesos(Display, sesion, sujeto, best_alpha, Pesos_promedio,
                        info, times, Corr_promedio, Rmse_promedio, Save,
-                       Run_graficos_path, Len_Estimulos, stim, subjects_pitch, sujeto_total):
+                       Run_graficos_path, Len_Estimulos, stim, title=None):
     # Defino cosas que voy a graficar
-    mejor_canal_corr = Corr_promedio.argmax()
-    Corr_mejor_canal = Corr_promedio[mejor_canal_corr]
+    Corr_mejor_canal = Corr_promedio.max()
     # Correl_prom = np.mean(Corr_promedio)
 
-    mejor_canal_rmse = Rmse_promedio.argmax()
-    Rmse_mejor_canal = Rmse_promedio[mejor_canal_rmse]
+    # mejor_canal_rmse = Rmse_promedio.argmax()
+    Rmse_mejor_canal = Rmse_promedio.max()
     # Rmse_prom = np.mean(Rmse_promedio)
 
     if Display:
@@ -193,11 +166,11 @@ def plot_grafico_pesos(Display, sesion, sujeto, best_alpha, Pesos_promedio,
     # fig.tight_layout()
 
     if Save:
-        save_path_graficos = Run_graficos_path + 'Individual weights/'
-        try:
-            os.makedirs(save_path_graficos)
-        except:
-            pass
+        if title:
+            save_path_graficos = Run_graficos_path + 'Individual weights {}/'.format(title)
+        else:
+            save_path_graficos = Run_graficos_path + 'Individual weights/'
+        os.makedirs(save_path_graficos, exist_ok=True)
         fig.savefig(save_path_graficos + 'Sesion{}_Sujeto{}.png'.format(sesion, sujeto))
 
 
@@ -273,7 +246,9 @@ def Plot_PSD(sesion, sujeto, Band, situacion, Display, Save, save_path, info, da
         plt.savefig(save_path_graficos + 'Sesion{} - Sujeto{}.png'.format(sesion, sujeto, Band))
         plt.savefig(save_path_graficos + 'Sesion{} - Sujeto{}.svg'.format(sesion, sujeto, Band))
 
+
 def Cabezas_corr_promedio(Correlaciones_totales_sujetos, info, Display, Save, Run_graficos_path, title):
+
     Correlaciones_promedio = Correlaciones_totales_sujetos.mean(0)
 
     if Display:
@@ -299,6 +274,30 @@ def Cabezas_corr_promedio(Correlaciones_totales_sujetos, info, Display, Save, Ru
         fig.savefig(save_path_graficos + '{}_promedio.png'.format(title))
 
     return Correlaciones_promedio.mean(), Correlaciones_promedio.std()
+
+
+def corr_promedio_decoding(Correlaciones_totales_sujetos, info, Display, Save, Run_graficos_path, title):
+
+    data = pd.DataFrame({'Correlation': Correlaciones_totales_sujetos.ravel()})
+    if Display:
+        plt.ion()
+    else:
+        plt.ioff()
+
+    fig, ax = plt.subplots()
+    sn.violinplot(data=data, ax=ax)
+    plt.ylim([-0.2, 1])
+    plt.ylabel('Correlation')
+    plt.title('Correlation:{:.3f} +/- {:.3f}'.format(np.mean(Correlaciones_totales_sujetos),
+                                                     np.std(Correlaciones_totales_sujetos), fontsize=19))
+
+    if Save:
+        save_path_graficos = Run_graficos_path
+        os.makedirs(save_path_graficos, exist_ok=True)
+        fig.savefig(save_path_graficos + '{}_promedio.svg'.format(title))
+        fig.savefig(save_path_graficos + '{}_promedio.png'.format(title))
+
+    return Correlaciones_totales_sujetos.mean(), Correlaciones_totales_sujetos.std()
 
 
 def Cabezas_3d(Correlaciones_totales_sujetos, info, Display, Save, Run_graficos_path, title):
@@ -362,7 +361,7 @@ def Cabezas_canales_rep(Canales_repetidos_sujetos, info, Display, Save, Run_graf
 
 
 def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display, Save, Run_graficos_path,
-                       Len_Estimulos, stim, decorrelation_times=None):
+                       Len_Estimulos, stim, title=None, decorrelation_times=None):
     # Armo pesos promedio por canal de todos los sujetos que por lo menos tuvieron un buen canal
     Pesos_totales_sujetos_todos_canales_copy = Pesos_totales_sujetos_todos_canales.swapaxes(0, 2)
     Pesos_totales_sujetos_todos_canales_copy = Pesos_totales_sujetos_todos_canales_copy.mean(0).transpose()
@@ -433,15 +432,18 @@ def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display
         if Save:
             save_path_graficos = Run_graficos_path
             os.makedirs(save_path_graficos, exist_ok=True)
-
-            fig.savefig(save_path_graficos + 'Regression_Weights_{}.svg'.format(Stims_Order[i]))
-            fig.savefig(save_path_graficos + 'Regression_Weights_{}.png'.format(Stims_Order[i]))
+            if title:
+                fig.savefig(save_path_graficos + 'Regression_Weights_{}_{}.svg'.format(title, Stims_Order[i]))
+                fig.savefig(save_path_graficos + 'Regression_Weights_{}_{}.png'.format(title, Stims_Order[i]))
+            else:
+                fig.savefig(save_path_graficos + 'Regression_Weights_{}.svg'.format(Stims_Order[i]))
+                fig.savefig(save_path_graficos + 'Regression_Weights_{}.png'.format(Stims_Order[i]))
 
     return Pesos_totales_sujetos_todos_canales_copy
 
 
 def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, Display,
-                              Save, Run_graficos_path, Len_Estimulos, stim, Band):
+                              Save, Run_graficos_path, Len_Estimulos, stim, Band, title=None):
     # Armo pesos promedio por canal de todos los sujetos que por lo menos tuvieron un buen canal
     Pesos_totales_sujetos_todos_canales_copy = Pesos_totales_sujetos_todos_canales.swapaxes(0, 2)
     Pesos_totales_sujetos_todos_canales_copy = Pesos_totales_sujetos_todos_canales_copy.mean(0).transpose()
@@ -520,12 +522,13 @@ def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, 
 
         if Save:
             save_path_graficos = Run_graficos_path
-            try:
-                os.makedirs(save_path_graficos)
-            except:
-                pass
-            fig.savefig(save_path_graficos + 'Regression_Weights_matrix_{}.svg'.format(Stims_Order[i]))
-            fig.savefig(save_path_graficos + 'Regression_Weights_marix_{}.png'.format(Stims_Order[i]))
+            os.makedirs(save_path_graficos, exist_ok=True)
+            if title:
+                fig.savefig(save_path_graficos + 'Regression_Weights_matrix_{}_{}.svg'.format(title, Stims_Order[i]))
+                fig.savefig(save_path_graficos + 'Regression_Weights_marix_{}_{}.png'.format(title, Stims_Order[i]))
+            else:
+                fig.savefig(save_path_graficos + 'Regression_Weights_matrix_{}.svg'.format(Stims_Order[i]))
+                fig.savefig(save_path_graficos + 'Regression_Weights_marix_{}.png'.format(Stims_Order[i]))
 
 
 def Plot_cabezas_instantes(Pesos_totales_sujetos_todos_canales, info, Band, times, sr, Display_figure_instantes,
@@ -587,7 +590,7 @@ def pearsonr_pval(x, y):
     return stats.pearsonr(x, y)[1]
 
 
-def Matriz_corr_channel_wise(Pesos_totales_sujetos_todos_canales, Display, Save, Run_graficos_path):
+def Matriz_corr_channel_wise(Pesos_totales_sujetos_todos_canales, Display, Save, Run_graficos_path, title=None):
     Pesos_totales_sujetos_todos_canales_average = np.dstack(
         (Pesos_totales_sujetos_todos_canales, Pesos_totales_sujetos_todos_canales.mean(2)))
     Correlation_matrices = np.zeros((Pesos_totales_sujetos_todos_canales_average.shape[0],
@@ -642,8 +645,12 @@ def Matriz_corr_channel_wise(Pesos_totales_sujetos_todos_canales, Display, Save,
     if Save:
         save_path_graficos = Run_graficos_path
         os.makedirs(save_path_graficos, exist_ok=True)
-        fig.savefig(save_path_graficos + 'TRF_correlation_matrix.png')
-        fig.savefig(save_path_graficos + 'TRF_correlation_matrix.svg')
+        if title:
+            fig.savefig(save_path_graficos + 'TRF_correlation_matrix_{}.png'.format(title))
+            fig.savefig(save_path_graficos + 'TRF_correlation_matrix_{}.svg'.format(title))
+        else:
+            fig.savefig(save_path_graficos + 'TRF_correlation_matrix.png')
+            fig.savefig(save_path_graficos + 'TRF_correlation_matrix.svg')
 
 
 def Channel_wise_correlation_topomap(Pesos_totales_sujetos_todos_canales, info, Display, Save, Run_graficos_path):
@@ -1079,3 +1086,58 @@ def Plot_instantes_casera(Pesos_totales_sujetos_todos_canales, info, Band, times
         fig.savefig(save_path_graficos + 'Instantes_interes.png')
 
     return Pesos_totales_sujetos_todos_canales_copy.mean(1)
+
+
+
+
+def plot_alphas(alphas, correlaciones, best_alpha_overall, lista_Rmse, linea, fino):
+    # Plot correlations vs. alpha regularization value
+    # cada linea es un canal
+    fig = plt.figure(figsize=(10, 5))
+    fig.clf()
+    plt.subplot(1, 3, 1)
+    plt.subplots_adjust(wspace=1)
+    plt.plot(alphas, correlaciones, 'k')
+    plt.gca().set_xscale('log')
+    # en rojo: el maximo de las correlaciones
+    # la linea azul marca el mejor alfa
+
+    plt.plot([best_alpha_overall, best_alpha_overall], [plt.ylim()[0], plt.ylim()[1]])
+    plt.plot([best_alpha_overall, best_alpha_overall], [plt.ylim()[0], plt.ylim()[1]])
+
+    plt.plot(alphas, correlaciones.mean(1), '.r', linewidth=5)
+    plt.xlabel('Alfa', fontsize=16)
+    plt.ylabel('Correlación - Ridge set', fontsize=16)
+    plt.tick_params(axis='both', which='major', labelsize=13)
+    plt.tick_params(axis='both', which='minor', labelsize=13)
+
+    # Como se ve sola la correlacion maxima para los distintos alfas
+    plt.subplot(1, 3, 2)
+    plt.plot(alphas, np.array(correlaciones).mean(1), '.r', linewidth=5)
+    plt.plot(alphas, np.array(correlaciones).mean(1), '-r', linewidth=linea)
+
+    if fino:
+        plt.plot([best_alpha_overall, best_alpha_overall], [plt.ylim()[0], plt.ylim()[1]])
+        plt.plot([best_alpha_overall, best_alpha_overall], [plt.ylim()[0], plt.ylim()[1]])
+
+    plt.xlabel('Alfa', fontsize=16)
+    plt.gca().set_xscale('log')
+    plt.tick_params(axis='both', which='major', labelsize=13)
+    plt.tick_params(axis='both', which='minor', labelsize=13)
+    # el RMSE
+    plt.subplot(1, 3, 3)
+    plt.plot(alphas, np.array(lista_Rmse).min(1), '.r', linewidth=5)
+    plt.plot(alphas, np.array(lista_Rmse).min(1), '-r', linewidth=2)
+
+    if fino:
+        plt.plot([best_alpha_overall, best_alpha_overall], [plt.ylim()[0], plt.ylim()[1]])
+        plt.plot([best_alpha_overall, best_alpha_overall], [plt.ylim()[0], plt.ylim()[1]])
+
+    plt.xlabel('Alfa', fontsize=16)
+    plt.ylabel('RMSE - Ridge set', fontsize=16)
+    plt.gca().set_xscale('log')
+    plt.tick_params(axis='both', which='major', labelsize=13)
+    plt.tick_params(axis='both', which='minor', labelsize=13)
+
+    titulo = "El mejor alfa es de: " + str(best_alpha_overall)
+    plt.suptitle(titulo, fontsize=18)

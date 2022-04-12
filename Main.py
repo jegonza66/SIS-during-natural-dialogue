@@ -16,6 +16,7 @@ tmin, tmax = -0.6, -0.003
 sr = 128
 delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
 times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays))
+situacion = 'Habla_Propia'
 
 # Model parameters
 model = 'Ridge'
@@ -30,8 +31,8 @@ except:
     print('\n\nAlphas file not found.\n\n')
 
 # Stimuli and EEG
-Stims = ['Envelope']
-Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All']
+Stims = ['Envelope', 'Pitch', 'Spectrogram']
+Bands = ['Delta', 'Theta', 'Alpha']
 
 # Standarization
 Stims_preprocess = 'Normalize'
@@ -48,7 +49,7 @@ Save_Total_Figures = True
 Save_Final_Correlation = True
 
 # Save mean correlations
-Mean_Correlations_fname = 'saves/Ridge/Final_Correlation/tmin{}_tmax{}/Mean_Correlations.pkl'.format(tmin, tmax)
+Mean_Correlations_fname = 'saves/Ridge/{}/Final_Correlation/tmin{}_tmax{}/Mean_Correlations.pkl'.format(situacion, tmin, tmax)
 try:
     f = open(Mean_Correlations_fname, 'rb')
     Mean_Correlations = pickle.load(f)
@@ -71,14 +72,14 @@ for Band in Bands:
     for stim in Stims:
         print('\n' + stim + '\n')
         # Paths
-        save_path = 'saves/Ridge/Final_Correlation/tmin{}_tmax{}/'.format(tmin, tmax)
+        save_path = 'saves/Ridge/{}/Final_Correlation/tmin{}_tmax{}/'.format(situacion, tmin, tmax)
         procesed_data_path = 'saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
-        Run_graficos_path = 'gráficos/Ridge/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
-            Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
-        Path_origial = 'saves/Ridge/Original/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
-            Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
-        Path_it = 'saves/Ridge/Fake_it/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
-            Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
+        Run_graficos_path = 'gráficos/Ridge/{}/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
+            situacion, Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
+        Path_origial = 'saves/Ridge/{}/Original/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
+            situacion, Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
+        Path_it = 'saves/Ridge/{}/Fake_it/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
+            situacion, Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
 
         # Start Run
         sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
@@ -88,7 +89,7 @@ for Band in Bands:
 
             # LOAD DATA BY SUBJECT
             Sujeto_1, Sujeto_2 = Load.Load_Data(sesion=sesion, stim=stim, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
-                                                procesed_data_path=procesed_data_path)
+                                                procesed_data_path=procesed_data_path, situacion=situacion)
             # LOAD EEG BY SUBJECT
             eeg_sujeto_1, eeg_sujeto_2, info = Sujeto_1['EEG'], Sujeto_2['EEG'], Sujeto_1['info']
 
@@ -241,7 +242,7 @@ for Band in Bands:
                 # Grafico Pesos
                 Plot.plot_grafico_pesos(Display_Ind_Figures, sesion, sujeto, alpha, Pesos_promedio,
                                         info, times, Corr_promedio, Rmse_promedio, Save_Ind_Figures,
-                                        Run_graficos_path, Len_Estimulos, stim, subjects_pitch, sujeto_total)
+                                        Run_graficos_path, Len_Estimulos, stim)
 
                 # Guardo las correlaciones y los pesos promediados entre folds de cada canal del sujeto y lo adjunto a lista
                 # para promediar entre canales de sujetos

@@ -83,7 +83,7 @@ for sesion in sesiones:
     if Pitch:
         # LOAD DATA BY SUBJECT
         Sujeto_1, Sujeto_2 = Load.Load_Data(sesion=sesion, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
-                                            procesed_data_path=procesed_data_path)
+                                            procesed_data_path=procesed_data_path, situacion=situacion)
         dstims_para_sujeto_1, dstims_para_sujeto_2, info = Load.Estimulos('Pitch', Sujeto_1, Sujeto_2)
         for sujeto, dstims in zip((1, 2), (dstims_para_sujeto_2, dstims_para_sujeto_1)):
             print('Sujeto {}'.format(sujeto))
