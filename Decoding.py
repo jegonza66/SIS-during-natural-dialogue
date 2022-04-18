@@ -77,7 +77,7 @@ for Band in Bands:
             situacion, Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
         Path_origial = 'saves/Decoding/{}/Original/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
             situacion, Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
-        Path_it = 'saves/Ridge/Decoding/{}/Fake_it/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
+        Path_it = 'saves/Decoding/{}/Fake_it/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
             situacion, Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
 
         # Start Run
@@ -166,9 +166,7 @@ for Band in Bands:
 
                     if Statistical_test:
                         try:
-                            f = open(
-                                Path_it + 'Corr_Rmse_fake_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto),
-                                'rb')
+                            f = open(Path_it + 'Corr_Rmse_fake_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto),'rb')
                             Correlaciones_fake, Errores_fake = pickle.load(f)
                             f.close()
                         except:
@@ -178,13 +176,14 @@ for Band in Bands:
                         Rcorr_fake = Correlaciones_fake[fold]
                         Rmse_fake = Errores_fake[fold]
 
-                        p_corr = ((Rcorr_fake > Rcorr).sum(0) + 1) / (iteraciones + 1)
-                        p_rmse = ((Rmse_fake < Rmse).sum(0) + 1) / (iteraciones + 1)
+                        p_corr = ((Rcorr_fake > Rcorr).sum() + 1) / (iteraciones + 1)
+                        p_rmse = ((Rmse_fake < Rmse).sum() + 1) / (iteraciones + 1)
 
                         # Umbral
                         umbral = 0.01
-                        Prob_Corr_ronda[fold][p_corr < umbral] = p_corr[p_corr < umbral]
-                        Prob_Rmse_ronda[fold][p_rmse < umbral] = p_rmse[p_rmse < umbral]
+                        if p_corr < umbral:
+                            Prob_Corr_ronda[fold] = p_corr
+                            Prob_Rmse_ronda[fold] = p_rmse
 
                 # Save Model Weights and Correlations
                 os.makedirs(Path_origial, exist_ok=True)
@@ -229,8 +228,8 @@ for Band in Bands:
                         (Pesos_totales_sujetos_todos_canales, Pesos_promedio))
                     Patterns_totales_sujetos_todos_canales = np.dstack(
                         (Patterns_totales_sujetos_todos_canales, Patterns_promedio))
-                    Correlaciones_totales_sujetos = np.hstack((Correlaciones_totales_sujetos, Corr_buenas_ronda))
-                    Rmse_totales_sujetos = np.hstack((Rmse_totales_sujetos, Rmse_buenos_ronda))
+                    Correlaciones_totales_sujetos = np.vstack((Correlaciones_totales_sujetos, Corr_buenas_ronda))
+                    Rmse_totales_sujetos = np.vstack((Rmse_totales_sujetos, Rmse_buenos_ronda))
 
                     Folds_passed_corr_sujetos = np.vstack((Folds_passed_corr_sujetos, Prob_Corr_ronda))
                     Folds_passed_rmse_sujetos = np.vstack((Folds_passed_rmse_sujetos, Prob_Rmse_ronda))
@@ -244,7 +243,7 @@ for Band in Bands:
 
         # Armo cabecita con canales repetidos
         if Statistical_test:
-            Total_Folds_Passed = sum(Folds_passed_corr_sujetos < 1)
+            Total_Folds_Passed = sum(Folds_passed_corr_sujetos.ravel() < 1)
 
         # Grafico Pesos
         Pesos_totales = Plot.regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display_Total_Figures,

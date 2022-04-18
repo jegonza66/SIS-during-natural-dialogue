@@ -15,13 +15,20 @@ startTime = datetime.now()
 # Define Parameters
 tmin, tmax = -0.6, -0.003
 sr = 128
+n_folds = 5
 situacion = 'Escucha'
 # Model parameters
 model = 'Decoding'
 
+if model == 'Ridge':
+    iteraciones = 3000
+
+elif model == 'Decoding':
+    iteraciones = 100
+
 # Stimuli and EEG
 Stims = ['Envelope']
-Bands = ['Theta', 'Alpha']
+Bands = ['Delta', 'Theta', 'Alpha']
 
 # Standarization
 Stims_preprocess = 'Normalize'
@@ -61,12 +68,19 @@ for Band in Bands:
             dstims_para_sujeto_1, dstims_para_sujeto_2 = Load.Estimulos(stim=stim, Sujeto_1=Sujeto_1, Sujeto_2=Sujeto_2)
             Len_Estimulos = [len(dstims_para_sujeto_1[i][0]) for i in range(len(dstims_para_sujeto_1))]
 
+            # Defino variables donde voy a guardar mil cosas
+            Pesos_fake = np.zeros((n_folds, iteraciones, info['nchan'], sum(Len_Estimulos)),
+                                  dtype=np.float16)
+            Patterns_fake = np.zeros((n_folds, iteraciones, info['nchan'], sum(Len_Estimulos)),
+                                     dtype=np.float16)
+            Correlaciones_fake = np.zeros((n_folds, iteraciones))
+            Errores_fake = np.zeros((n_folds, iteraciones))
+
             for sujeto, eeg, dstims in zip((1, 2), (eeg_sujeto_1, eeg_sujeto_2),
                                            (dstims_para_sujeto_1, dstims_para_sujeto_2)):
                 # for sujeto, eeg, dstims in zip([2], [eeg_sujeto_2], [dstims_para_sujeto_2]):
                 print('Sujeto {}'.format(sujeto))
                 # Separo los datos en 5 y tomo test set de 20% de datos con kfold (5 iteraciones)
-                Predicciones = {}
                 n_folds = 5
 
                 # Empiezo el KFold de test
@@ -97,14 +111,6 @@ for Band in Bands:
 
                     # Run_permutations:
                     if model == 'Ridge':
-                        iteraciones = 3000
-
-                        # Defino variables donde voy a guardar mil cosas
-                        Pesos_fake = np.zeros((n_folds, iteraciones, info['nchan'], sum(Len_Estimulos)),
-                                              dtype=np.float16)
-                        Correlaciones_fake = np.zeros((n_folds, iteraciones))
-                        Errores_fake = np.zeros((n_folds, iteraciones))
-
                         Fake_Model = Models.Ridge(alpha)
                         Pesos_fake, Correlaciones_fake, Errores_fake = \
                             Permutations.simular_iteraciones_Ridge(Fake_Model, iteraciones, sesion, sujeto, fold,
@@ -112,16 +118,6 @@ for Band in Bands:
                                                                    eeg_test, Pesos_fake, Correlaciones_fake,
                                                                    Errores_fake)
                     elif model == 'Decoding':
-                        iteraciones = 100
-
-                        # Defino variables donde voy a guardar mil cosas
-                        Pesos_fake = np.zeros((n_folds, iteraciones, info['nchan'], sum(Len_Estimulos)),
-                                              dtype=np.float16)
-                        Patterns_fake = np.zeros((n_folds, iteraciones, info['nchan'], sum(Len_Estimulos)),
-                                                 dtype=np.float16)
-                        Correlaciones_fake = np.zeros((n_folds, iteraciones))
-                        Errores_fake = np.zeros((n_folds, iteraciones))
-
                         Fake_Model = Models.mne_mtrf_decoding(tmin, tmax, sr, info, alpha)
                         Pesos_fake, Patterns_fake, Correlaciones_fake, Errores_fake = \
                             Permutations.simular_iteraciones_decoding(Fake_Model, iteraciones, sesion, sujeto, fold,
@@ -141,7 +137,7 @@ for Band in Bands:
 
                 if model == 'Decoding':
                     f = open(Path_it + 'Patterns_fake_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto), 'wb')
-                    pickle.dump(Pesos_fake.mean(0), f)
+                    pickle.dump(Patterns_fake.mean(0), f)
                     f.close()
 
 print('\n')
