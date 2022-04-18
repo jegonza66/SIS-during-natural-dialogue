@@ -31,14 +31,14 @@ except:
 
 # Stimuli and EEG
 Stims = ['Envelope']
-Bands = ['Theta']
+Bands = ['Delta']
 
 # Standarization
 Stims_preprocess = 'Normalize'
 EEG_preprocess = 'Standarize'
 
 # Random permutations
-Statistical_test = False
+Statistical_test = True
 
 # Save / Display Figures
 Display_Ind_Figures = False
@@ -244,8 +244,7 @@ for Band in Bands:
 
         # Armo cabecita con canales repetidos
         if Statistical_test:
-            _ = Plot.violin_plot_decoding(Correlaciones_totales_sujetos, Display_Total_Figures, Save_Total_Figures,
-                                          Run_graficos_path, title='Correlation')
+            Total_Folds_Passed = sum(Folds_passed_corr_sujetos < 1)
 
         # Grafico Pesos
         Pesos_totales = Plot.regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display_Total_Figures,
