@@ -31,7 +31,7 @@ except:
 
 # Stimuli and EEG
 Stims = ['Envelope']
-Bands = ['Theta']
+Bands = ['Delta']
 
 # Standarization
 Stims_preprocess = 'Normalize'
