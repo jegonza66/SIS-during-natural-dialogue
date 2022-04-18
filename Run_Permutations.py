@@ -43,8 +43,8 @@ for Band in Bands:
         print('\n' + stim + '\n')
         # Paths
         procesed_data_path = 'saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
-        Path_it = 'saves/{}/Fake_it/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
-            model, Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
+        Path_it = 'saves/{}/{}/Fake_it/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
+            model, situacion, Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
 
         # Start Run
         sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
