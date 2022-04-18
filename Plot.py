@@ -276,9 +276,9 @@ def Cabezas_corr_promedio(Correlaciones_totales_sujetos, info, Display, Save, Ru
     return Correlaciones_promedio.mean(), Correlaciones_promedio.std()
 
 
-def corr_promedio_decoding(Correlaciones_totales_sujetos, info, Display, Save, Run_graficos_path, title):
+def violin_plot_decoding(Correlaciones_totales_sujetos, Display, Save, Run_graficos_path, title):
 
-    data = pd.DataFrame({'Correlation': Correlaciones_totales_sujetos.ravel()})
+    data = pd.DataFrame({title: Correlaciones_totales_sujetos.ravel()})
     if Display:
         plt.ion()
     else:
@@ -287,8 +287,8 @@ def corr_promedio_decoding(Correlaciones_totales_sujetos, info, Display, Save, R
     fig, ax = plt.subplots()
     sn.violinplot(data=data, ax=ax)
     plt.ylim([-0.2, 1])
-    plt.ylabel('Correlation')
-    plt.title('Correlation:{:.3f} +/- {:.3f}'.format(np.mean(Correlaciones_totales_sujetos),
+    plt.ylabel(title)
+    plt.title('{}:{:.3f} +/- {:.3f}'.format(title, np.mean(Correlaciones_totales_sujetos),
                                                      np.std(Correlaciones_totales_sujetos), fontsize=19))
 
     if Save:

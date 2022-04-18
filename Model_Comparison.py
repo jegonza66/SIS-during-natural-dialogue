@@ -102,7 +102,7 @@ for Band in Bands:
         plt.savefig(Run_graficos_path + '{}.png'.format(Band))
         plt.savefig(Run_graficos_path + '{}.svg'.format(Band))
 
-## Violin Plot Bandas
+## Violin Plot Bandas Ridge
 import pandas as pd
 import pickle
 import matplotlib.pyplot as plt
@@ -110,9 +110,11 @@ import os
 import seaborn as sn
 
 tmin, tmax = -0.6, -0.003
+model = 'Ridge'
+situacion = 'Escucha'
 
-Run_graficos_path = 'gráficos/Model_Comparison/tmin{}_tmax{}/Violin Plots/'.format(tmin, tmax)
-Save_fig = True
+Run_graficos_path = 'gráficos/Model_Comparison/{}/tmin{}_tmax{}/Violin Plots/'.format(model, tmin, tmax)
+Save_fig = False
 Correlaciones = {}
 
 stim = 'Envelope'
@@ -120,8 +122,8 @@ stim = 'Envelope'
 Bands = ['All', 'Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2']
 
 for Band in Bands:
-    f = open('saves/Ridge/Final_Correlation/tmin{}_tmax{}/{}_EEG_{}.pkl'.format(tmin, tmax, stim, Band), 'rb')
-    Corr, Pass = pickle.load(f)
+    f = open('saves/{}/{}/Final_Correlation/tmin{}_tmax{}/{}_EEG_{}.pkl'.format(model, situacion, tmin, tmax, stim, Band), 'rb')
+    Corr = pickle.load(f)
     f.close()
 
     Correlaciones[Band] = Corr.mean(0)
@@ -142,6 +144,46 @@ if Save_fig:
     plt.savefig(Run_graficos_path + '{}.png'.format(stim))
     plt.savefig(Run_graficos_path + '{}.svg'.format(stim))
 
+## Violin Plot Bandas Decoding
+import pandas as pd
+import pickle
+import matplotlib.pyplot as plt
+import os
+import seaborn as sn
+
+tmin, tmax = -0.6, -0.003
+model = 'Decoding'
+situacion = 'Escucha'
+
+Run_graficos_path = 'gráficos/Model_Comparison/{}/tmin{}_tmax{}/Violin Plots/'.format(model, tmin, tmax)
+Save_fig = True
+Correlaciones = {}
+
+stim = 'Envelope'
+
+Bands = ['Delta', 'Theta', 'Alpha']
+
+for Band in Bands:
+    f = open('saves/{}/{}/Final_Correlation/tmin{}_tmax{}/{}_EEG_{}.pkl'.format(model, situacion, tmin, tmax, stim, Band), 'rb')
+    Corr = pickle.load(f)
+    f.close()
+
+    Correlaciones[Band] = Corr
+
+plt.ion()
+plt.figure(figsize=(19, 5))
+sn.violinplot(data=pd.DataFrame(Correlaciones))
+plt.ylabel('Correlation', fontsize=24)
+plt.yticks(fontsize=20)
+plt.xticks(fontsize=20)
+plt.grid()
+plt.tight_layout()
+
+if Save_fig:
+    os.makedirs(Run_graficos_path, exist_ok=True)
+    plt.savefig(Run_graficos_path + '{}.png'.format(stim))
+    plt.savefig(Run_graficos_path + '{}.svg'.format(stim))
+
 ## Violin Plot Stims
 import pandas as pd
 import pickle
@@ -150,8 +192,9 @@ import os
 import seaborn as sn
 
 tmin, tmax = -0.6, -0.003
+model = 'Ridge'
 
-Run_graficos_path = 'gráficos/Model_Comparison/tmin{}_tmax{}/Violin Plots/'.format(tmin, tmax)
+Run_graficos_path = 'gráficos/Model_Comparison/{}/tmin{}_tmax{}/Violin Plots/'.format(model, tmin, tmax)
 Save_fig = True
 Correlaciones = {}
 

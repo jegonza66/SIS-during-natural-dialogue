@@ -103,7 +103,7 @@ for Band in Bands:
                 # Separo los datos en 5 y tomo test set de 20% de datos con kfold (5 iteraciones)
                 Predicciones = {}
                 n_folds = 5
-                iteraciones = 3000
+                iteraciones = 100
 
                 # Defino variables donde voy a guardar mil cosas
                 Pesos_ronda_canales = np.zeros((n_folds, info['nchan'], sum(Len_Estimulos)), dtype=np.float32)
@@ -182,7 +182,7 @@ for Band in Bands:
                         p_rmse = ((Rmse_fake < Rmse).sum(0) + 1) / (iteraciones + 1)
 
                         # Umbral
-                        umbral = 0.05/128
+                        umbral = 0.01
                         Prob_Corr_ronda[fold][p_corr < umbral] = p_corr[p_corr < umbral]
                         Prob_Rmse_ronda[fold][p_rmse < umbral] = p_rmse[p_rmse < umbral]
 
@@ -221,6 +221,9 @@ for Band in Bands:
                     Correlaciones_totales_sujetos = Corr_buenas_ronda
                     Rmse_totales_sujetos = Rmse_buenos_ronda
 
+                    Folds_passed_corr_sujetos = Prob_Corr_ronda
+                    Folds_passed_rmse_sujetos = Prob_Rmse_ronda
+
                 else:
                     Pesos_totales_sujetos_todos_canales = np.dstack(
                         (Pesos_totales_sujetos_todos_canales, Pesos_promedio))
@@ -229,16 +232,20 @@ for Band in Bands:
                     Correlaciones_totales_sujetos = np.hstack((Correlaciones_totales_sujetos, Corr_buenas_ronda))
                     Rmse_totales_sujetos = np.hstack((Rmse_totales_sujetos, Rmse_buenos_ronda))
 
+                    Folds_passed_corr_sujetos = np.vstack((Folds_passed_corr_sujetos, Prob_Corr_ronda))
+                    Folds_passed_rmse_sujetos = np.vstack((Folds_passed_rmse_sujetos, Prob_Rmse_ronda))
+
                 sujeto_total += 1
 
         # Armo cabecita con correlaciones promedio entre sujetos
-        Mean_Correlations_Band[stim] = Plot.corr_promedio_decoding(Correlaciones_totales_sujetos, info,
+        Mean_Correlations_Band[stim] = Plot.violin_plot_decoding(Correlaciones_totales_sujetos,
                                                                   Display_Total_Figures, Save_Total_Figures,
                                                                   Run_graficos_path, title='Correlation')
 
         # Armo cabecita con canales repetidos
         if Statistical_test:
-            x = 1
+            _ = Plot.violin_plot_decoding(Correlaciones_totales_sujetos, Display_Total_Figures, Save_Total_Figures,
+                                          Run_graficos_path, title='Correlation')
 
         # Grafico Pesos
         Pesos_totales = Plot.regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display_Total_Figures,
@@ -281,8 +288,13 @@ for Band in Bands:
             pickle.dump(Correlaciones_totales_sujetos, f)
             f.close()
 
+            f = open(save_path + 'Significance_{}_EEG_{}.pkl'.format(stim, Band), 'wb')
+            pickle.dump(Folds_passed_corr_sujetos, f)
+            f.close()
+
             f = open(Mean_Correlations_fname, 'wb')
             pickle.dump(Mean_Correlations, f)
             f.close()
+
 
 print(datetime.now() - startTime)

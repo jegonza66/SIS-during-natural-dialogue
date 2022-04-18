@@ -21,7 +21,7 @@ model = 'Decoding'
 
 # Stimuli and EEG
 Stims = ['Envelope']
-Bands = ['Theta']
+Bands = ['Theta', 'Alpha']
 
 # Standarization
 Stims_preprocess = 'Normalize'
@@ -68,13 +68,6 @@ for Band in Bands:
                 # Separo los datos en 5 y tomo test set de 20% de datos con kfold (5 iteraciones)
                 Predicciones = {}
                 n_folds = 5
-                iteraciones = 3000
-
-                # Defino variables donde voy a guardar mil cosas
-                Pesos_fake = np.zeros((n_folds, iteraciones, info['nchan'], sum(Len_Estimulos)), dtype=np.float16)
-                Patterns_fake = np.zeros((n_folds, iteraciones, info['nchan'], sum(Len_Estimulos)), dtype=np.float16)
-                Correlaciones_fake = np.zeros((n_folds, iteraciones))
-                Errores_fake = np.zeros((n_folds, iteraciones))
 
                 # Empiezo el KFold de test
                 kf_test = KFold(n_folds, shuffle=False)
@@ -104,6 +97,14 @@ for Band in Bands:
 
                     # Run_permutations:
                     if model == 'Ridge':
+                        iteraciones = 3000
+
+                        # Defino variables donde voy a guardar mil cosas
+                        Pesos_fake = np.zeros((n_folds, iteraciones, info['nchan'], sum(Len_Estimulos)),
+                                              dtype=np.float16)
+                        Correlaciones_fake = np.zeros((n_folds, iteraciones))
+                        Errores_fake = np.zeros((n_folds, iteraciones))
+
                         Fake_Model = Models.Ridge(alpha)
                         Pesos_fake, Correlaciones_fake, Errores_fake = \
                             Permutations.simular_iteraciones_Ridge(Fake_Model, iteraciones, sesion, sujeto, fold,
@@ -111,6 +112,16 @@ for Band in Bands:
                                                                    eeg_test, Pesos_fake, Correlaciones_fake,
                                                                    Errores_fake)
                     elif model == 'Decoding':
+                        iteraciones = 100
+
+                        # Defino variables donde voy a guardar mil cosas
+                        Pesos_fake = np.zeros((n_folds, iteraciones, info['nchan'], sum(Len_Estimulos)),
+                                              dtype=np.float16)
+                        Patterns_fake = np.zeros((n_folds, iteraciones, info['nchan'], sum(Len_Estimulos)),
+                                                 dtype=np.float16)
+                        Correlaciones_fake = np.zeros((n_folds, iteraciones))
+                        Errores_fake = np.zeros((n_folds, iteraciones))
+
                         Fake_Model = Models.mne_mtrf_decoding(tmin, tmax, sr, info, alpha)
                         Pesos_fake, Patterns_fake, Correlaciones_fake, Errores_fake = \
                             Permutations.simular_iteraciones_decoding(Fake_Model, iteraciones, sesion, sujeto, fold,
