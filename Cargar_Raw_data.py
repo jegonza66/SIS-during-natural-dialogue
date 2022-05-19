@@ -14,7 +14,7 @@ import librosa
 import Funciones
 
 ## PARAMETROS
-s = 21
+s = 22
 trial = 1
 channel = 1
 
@@ -31,8 +31,7 @@ delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
 Band = None
 l_freq_eeg, h_freq_eeg = Processing.band_freq(Band)
 
-eeg_fname = "Datos/EEG/S" + str(s) + "/s" + str(s) + "-" + str(channel) + "-Trial" + str(
-    trial) + "-Deci-Filter-Trim-ICA-Pruned.set"
+eeg_fname = "Datos/EEG/S" + str(s) + "/s" + str(s) + "-" + str(channel) + "-Trial" + str(trial) + "-Deci-Filter-Trim-ICA-Pruned.set"
 eeg = mne.io.read_raw_eeglab(eeg_fname)
 eeg_freq = eeg.info.get("sfreq")
 info = eeg.info
@@ -42,13 +41,13 @@ if Band: eeg = eeg.filter(l_freq=l_freq_eeg, h_freq=h_freq_eeg, phase='minimum')
 # eeg = eeg.to_data_frame()
 # eeg = np.array(eeg)[:, 1:129]  # paso a array y tomo tiro la primer columna de tiempos
 
-eeg = np.array(eeg._data * 1e6).transpose()  # 1e6 es por el factor de scaling del eeg.to_data_frame()
-
-# Downsample
-eeg = Processing.subsamplear(eeg, int(eeg_freq / sr))
+# eeg = np.array(eeg._data * 1e6).transpose()  # 1e6 es por el factor de scaling del eeg.to_data_frame()
+#
+# # Downsample
+# eeg = Processing.subsamplear(eeg, int(eeg_freq / sr))
 
 eeg.plot()
-plt.savefig('gráficos/Raw_EEG.png')
+# plt.savefig('gráficos/Raw_EEG.png')
 # plt.savefig('{}Theta.png'.format(s))
 
 ## PSD

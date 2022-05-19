@@ -31,14 +31,14 @@ def plot_cabezas_canales(channel_names, info, sesion, sujeto, Valores_promedio, 
                                                                         Valores_promedio.std()), fontsize=19)
         im = mne.viz.plot_topomap(Valores_promedio, info, axes=axs[0], show=False, sphere=0.07, cmap='Greys',
                                   vmin=Valores_promedio.min(), vmax=Valores_promedio.max())
-        surviving_channels_names = [channel_names[j] for j in Canales_sobrevivientes]
-        mask = []
-        for j in range(len(channel_names)):
-            if channel_names[j] in surviving_channels_names:
-                mask.append(True)
-            else:
-                mask.append(False)
-
+        # surviving_channels_names = [channel_names[j] for j in Canales_sobrevivientes]
+        # mask = []
+        # for j in range(len(channel_names)):
+        #     if channel_names[j] in surviving_channels_names:
+        #         mask.append(True)
+        #     else:
+        #         mask.append(False)
+        mask = [i in Canales_sobrevivientes for i in range(n_canales)]
         im2 = mne.viz.plot_topomap(np.zeros(n_canales), info, axes=axs[1], show=False, sphere=0.07,
                                    mask=np.array(mask), mask_params=dict(marker='o', markerfacecolor='g',
                                                                          markeredgecolor='k', linewidth=0,
@@ -273,6 +273,57 @@ def Cabezas_corr_promedio(Correlaciones_totales_sujetos, info, Display, Save, Ru
         fig.savefig(save_path_graficos + '{}_promedio.svg'.format(title))
         fig.savefig(save_path_graficos + '{}_promedio.png'.format(title))
 
+    # Lateralization comparison
+
+    good_channels_right = ['B27', 'B28', 'B29', 'B30', 'C4', 'C5', 'C6', 'C7', 'C9', 'C10', 'C13', 'C14']
+    good_channels_left = ['D8', 'D9', 'D10', 'D11', 'D7', 'D6', 'D5', 'D4', 'C31', 'C32', 'C27', 'C26']
+
+    # # Plot masked channels
+    # mask = [i in good_channels_right + good_channels_left for i in info['ch_names']]
+    # fig = plt.figure()
+    # plt.title('Masked channels for lateralization comparisson', fontsize=19)
+    # im = mne.viz.plot_topomap(np.zeros(info['nchan']), info, show=False, sphere=0.07,
+    #                            mask=np.array(mask), mask_params=dict(marker='o', markerfacecolor='g',
+    #                                                                  markeredgecolor='k', linewidth=0,
+    #                                                                  markersize=4))
+    # fig.tight_layout()
+    #
+    # if Save:
+    #     save_path_graficos = Run_graficos_path
+    #     os.makedirs(save_path_graficos, exist_ok=True)
+    #     fig.savefig(save_path_graficos + 'left_right_channels_{}.svg'.format(title))
+    #     fig.savefig(save_path_graficos + 'left_right_channels_{}.png'.format(title))
+
+
+    mask_right = [i in good_channels_right for i in info['ch_names']]
+    mask_left = [i in good_channels_left for i in info['ch_names']]
+    corr_right = Correlaciones_promedio[mask_right]
+    corr_left = Correlaciones_promedio[mask_left]
+    corr = [corr_left, corr_right]
+
+    # fig = plt.figure()
+    # plt.boxplot(corr)
+    # plt.xticks([1, 2], ['left', 'right'])
+    # plt.tick_params(labelsize=15)
+    # fig.tight_layout()
+
+    fig = plt.figure()
+    data = pd.DataFrame({'Left': corr_left, 'Right': corr_right})
+    # ax = sn.boxplot(data=data, width=0.35, boxprops=dict(alpha=.8))
+    ax = sn.boxplot(data=data, width=0.35)
+    for patch in ax.artists:
+        r, g, b, a = patch.get_facecolor()
+        patch.set_facecolor((r, g, b, .8))
+    sn.swarmplot(data=data, color=".25")
+    plt.tick_params(labelsize=15)
+    # fig.tight_layout()
+
+    if Save:
+        save_path_graficos = Run_graficos_path
+        os.makedirs(save_path_graficos, exist_ok=True)
+        fig.savefig(save_path_graficos + 'left_vs_right_{}.svg'.format(title))
+        fig.savefig(save_path_graficos + 'left_vs_right_{}.png'.format(title))
+
     return Correlaciones_promedio.mean(), Correlaciones_promedio.std()
 
 
@@ -313,13 +364,14 @@ def Cabezas_3d(Correlaciones_totales_sujetos, info, Display, Save, Run_graficos_
     sample_data_trans_file = os.path.join(sample_data_folder, 'MEG', 'sample',
                                           'sample_audvis_raw-trans.fif')
 
-    evoked = mne.EvokedArray(np.array([Correlaciones_promedio, ]).transpose(), info)
+    evoked = mne.EvokedArray(np.array([Correlaciones_promedio,]).transpose(), info)
     field_map = mne.make_field_map(evoked, trans=sample_data_trans_file,
                                    subject='sample', subjects_dir=subjects_dir, ch_type='eeg',
                                    meg_surf='head')
 
     fig = evoked.plot_field(field_map, time=0)
     xy, im = mne.viz.snapshot_brain_montage(fig, info)
+    # mne.viz.set_3d_view(figure=fig, azimuth=135, elevation=80)
     fig, ax = plt.subplots(figsize=(15, 10))
     ax.set_title('Correlation', size='large')
     ax.imshow(im)
@@ -380,13 +432,14 @@ def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display
         fig.suptitle('{}'.format(Stims_Order[i]), fontsize=23)
 
         if Stims_Order[i] == 'Spectrogram':
-            spectrogram_weights = Pesos_totales_sujetos_todos_canales_copy[:,
+
+            spectrogram_weights_bands = Pesos_totales_sujetos_todos_canales_copy[:,
                                   sum(Len_Estimulos[j] for j in range(i)):sum(
                                       Len_Estimulos[j] for j in range(i + 1))].mean(0)
-            spectrogram_weights = spectrogram_weights.reshape(16, len(times))
+            spectrogram_weights_bands = spectrogram_weights_bands.reshape(16, len(times))
 
-            im = ax.pcolormesh(times * 1000, np.arange(16), spectrogram_weights, cmap='jet',
-                               vmin=-spectrogram_weights.max(), vmax=spectrogram_weights.max(), shading='auto')
+            im = ax.pcolormesh(times * 1000, np.arange(16), spectrogram_weights_bands, cmap='jet',
+                               vmin=-spectrogram_weights_bands.max(), vmax=spectrogram_weights_bands.max(), shading='auto')
             ax.set(xlabel='Time (ms)', ylabel='Hz')
 
             Bands_center = librosa.mel_frequencies(n_mels=18, fmin=62, fmax=8000)[1:-1]
@@ -401,6 +454,8 @@ def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display
             cbar = fig.colorbar(im, ax=ax, orientation='vertical')
             cbar.set_label('TRF', fontsize=13)
             cbar.ax.tick_params(labelsize=12)
+
+            fig.tight_layout()
 
         else:
             evoked = mne.EvokedArray(Pesos_totales_sujetos_todos_canales_copy[:,
@@ -462,13 +517,19 @@ def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, 
         if Stims_Order[i] == 'Spectrogram':
             fig, axs = plt.subplots(2, 1, sharex=True, figsize=(6, 8), gridspec_kw={'height_ratios': [1, 4]})
             fig.suptitle('{} - {}'.format(Stims_Order[i], Band), fontsize=18)
-            spectrogram_weights = Pesos_totales_sujetos_todos_canales_copy[:,
-                                  sum(Len_Estimulos[j] for j in range(i)):sum(
-                                      Len_Estimulos[j] for j in range(i + 1))].mean(0)
-            spectrogram_weights = spectrogram_weights.reshape(16, len(times))
 
-            im = axs[1].pcolormesh(times * 1000, np.arange(16), spectrogram_weights, cmap='jet',
-                               vmin=-spectrogram_weights.max(), vmax=spectrogram_weights.max(), shading='auto')
+            spectrogram_weights_chanels = Pesos_totales_sujetos_todos_canales_copy[:,
+                                          sum(Len_Estimulos[j] for j in range(i)):sum(
+                                              Len_Estimulos[j] for j in range(i + 1))].\
+                reshape(info['nchan'], 16, len(times)).mean(1)
+
+            spectrogram_weights_bands = Pesos_totales_sujetos_todos_canales_copy[:,
+                                        sum(Len_Estimulos[j] for j in range(i)):sum(
+                                            Len_Estimulos[j] for j in range(i + 1))].mean(0)
+            spectrogram_weights_bands = spectrogram_weights_bands.reshape(16, len(times))
+
+            im = axs[1].pcolormesh(times * 1000, np.arange(16), spectrogram_weights_bands, cmap='jet',
+                               vmin=-spectrogram_weights_bands.max(), vmax=spectrogram_weights_bands.max(), shading='auto')
             axs[1].set(xlabel='Time (ms)', ylabel='Hz')
 
             Bands_center = librosa.mel_frequencies(n_mels=18, fmin=62, fmax=8000)[1:-1]
@@ -485,9 +546,19 @@ def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, 
             cbar.set_label('TRF', fontsize=13)
             cbar.ax.tick_params(labelsize=12)
 
-            axs[0].plot(times * 1000, spectrogram_weights.mean(0), "k-", label="Mean", zorder=130, linewidth=2)
+            evoked = mne.EvokedArray(spectrogram_weights_chanels, info)
+            evoked.times = times
+            evoked.plot(scalings=dict(eeg=1, grad=1, mag=1), zorder='std', time_unit='ms', titles=dict(eeg=''),
+                        show=False, spatial_colors=True, unit=False, units='w', axes=axs[0])
+            axs[0].plot(times * 1000, evoked._data.mean(0), "k--", label="Mean", zorder=130, linewidth=2)
             axs[0].axis('off')
-            axs[0].legend(fontsize=12, loc='lower left')
+            axs[0].legend(fontsize=12, loc="lower left")
+
+            # axs[0].plot(times * 1000, spectrogram_weights.mean(0), "k-", label="Mean", zorder=130, linewidth=2)
+            # axs[0].axis('off')
+            # axs[0].legend(fontsize=12, loc='lower left')
+
+            fig.tight_layout()
 
         else:
             mean_coefs = Pesos_totales_sujetos_todos_canales_copy[:,

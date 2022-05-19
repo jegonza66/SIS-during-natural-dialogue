@@ -31,7 +31,7 @@ except:
 
 # Stimuli and EEG
 Stims = ['Envelope']
-Bands = ['Delta']
+Bands = ['Beta_1']
 
 # Standarization
 Stims_preprocess = 'Normalize'
@@ -283,11 +283,7 @@ for Band in Bands:
         if Save_Final_Correlation and sujeto_total == 18:
             os.makedirs(save_path, exist_ok=True)
             f = open(save_path + '{}_EEG_{}.pkl'.format(stim, Band), 'wb')
-            pickle.dump(Correlaciones_totales_sujetos, f)
-            f.close()
-
-            f = open(save_path + 'Significance_{}_EEG_{}.pkl'.format(stim, Band), 'wb')
-            pickle.dump(Folds_passed_corr_sujetos, f)
+            pickle.dump([Correlaciones_totales_sujetos, Folds_passed_corr_sujetos], f)
             f.close()
 
             f = open(Mean_Correlations_fname, 'wb')

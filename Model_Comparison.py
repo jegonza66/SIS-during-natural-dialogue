@@ -114,16 +114,16 @@ model = 'Ridge'
 situacion = 'Escucha'
 
 Run_graficos_path = 'gráficos/Model_Comparison/{}/tmin{}_tmax{}/Violin Plots/'.format(model, tmin, tmax)
-Save_fig = False
+Save_fig = True
 Correlaciones = {}
 
-stim = 'Envelope'
+stim = 'Spectrogram'
 
-Bands = ['All', 'Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2']
+Bands = ['All', 'Delta', 'Theta', 'Alpha', 'Beta_1']
 
 for Band in Bands:
     f = open('saves/{}/{}/Final_Correlation/tmin{}_tmax{}/{}_EEG_{}.pkl'.format(model, situacion, tmin, tmax, stim, Band), 'rb')
-    Corr = pickle.load(f)
+    Corr, Pass = pickle.load(f)
     f.close()
 
     Correlaciones[Band] = Corr.mean(0)
@@ -135,8 +135,8 @@ plt.ylabel('Correlation', fontsize=24)
 plt.yticks(fontsize=20)
 plt.grid()
 ax = plt.gca()
-ax.set_xticklabels(['All\n(0.1 - 40 Hz)', 'Delta\n(1 - 4 Hz)', 'Theta\n(4 - 8 Hz)',
-                    'Alpha\n(8 - 13 Hz)', 'Low Beta\n(13 - 19 Hz)', 'High Beta\n(19 - 25 Hz)'], fontsize=24)
+ax.set_xticklabels(['All\n(0.1 - 40 Hz)', 'Delta\n(1 - 4 Hz)', 'Theta\n(4 - 8 Hz)', 'Alpha\n(8 - 13 Hz)', 'Low Beta\n(13 - 19 Hz)',
+                    ], fontsize=24)
 plt.tight_layout()
 
 if Save_fig:
@@ -191,11 +191,13 @@ import matplotlib.pyplot as plt
 import os
 import seaborn as sn
 
-tmin, tmax = -0.6, -0.003
 model = 'Ridge'
-
+situacion = 'Escucha'
 Run_graficos_path = 'gráficos/Model_Comparison/{}/tmin{}_tmax{}/Violin Plots/'.format(model, tmin, tmax)
 Save_fig = True
+
+tmin, tmax = -0.6, -0.003
+
 Correlaciones = {}
 
 Band = 'Theta'
@@ -203,7 +205,7 @@ Band = 'Theta'
 Stims = ['Spectrogram', 'Envelope', 'Pitch', 'Shimmer']
 
 for stim in Stims:
-    f = open('saves/Ridge/Final_Correlation/tmin{}_tmax{}/{}_EEG_{}.pkl'.format(tmin, tmax, stim, Band), 'rb')
+    f = open('saves/{}/{}/Final_Correlation/tmin{}_tmax{}/{}_EEG_{}.pkl'.format(model, situacion, tmin, tmax, stim, Band), 'rb')
     Corr, Pass = pickle.load(f)
     f.close()
 
@@ -230,12 +232,15 @@ import pickle
 import os
 import numpy as np
 
-tmin, tmax = -0.6, -0.003
-
+model = 'Ridge'
+situacion = 'Escucha'
 Run_graficos_path = 'gráficos/Model_Comparison/tmin{}_tmax{}/Venn_Diagrams/'.format(tmin, tmax)
 Save_fig = False
 
-f = open('saves/Ridge/Final_Correlation/tmin{}_tmax{}/Mean_Correlations.pkl'.format(tmin, tmax), 'rb')
+tmin, tmax = -0.6, -0.003
+
+
+f = open('saves/{}/{}/Final_Correlation/tmin{}_tmax{}/Mean_Correlations.pkl'.format(model, situacion, tmin, tmax), 'rb')
 Mean_Correlations = pickle.load(f)
 f.close()
 
@@ -300,7 +305,67 @@ for Band in Bands:
     Pitch_u_percent = r2u_2 * 100 /np.sum(sets_0)
     Spectrogram_u_percent = r2u_3 * 100 /np.sum(sets_0)
 
+## Heatmaps
+import numpy as np
+import matplotlib.pyplot as plt
+import pickle
 
+model = 'Ridge'
+situacion = 'Escucha'
+Run_graficos_path = 'gráficos/Model_Comparison/tmin{}_tmax{}/Heatmaps/'.format(tmin, tmax)
+Save_fig = True
+
+tmin, tmax = -0.6, -0.003
+
+Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'All']
+stims = ['Spectrogram', 'Envelope', 'Pitch', 'Shimmer']
+
+Corrs_map = np.zeros((len(stims),len(Bands)))
+Sig_map = np.zeros((len(stims),len(Bands)))
+
+for i, stim in enumerate(stims):
+    Corr_stim = []
+    Sig_stim = []
+    for Band in Bands:
+        f = open('saves/{}/{}/Final_Correlation/tmin{}_tmax{}/{}_EEG_{}.pkl'.format(model, situacion, tmin, tmax, stim, Band), 'rb')
+        Corr_Band, Sig_Band = pickle.load(f)
+        f.close()
+        Corr_stim.append(Corr_Band.mean())
+        Sig_stim.append(Sig_Band.mean())
+    Corrs_map[i] = Corr_stim
+    Sig_map[i] = Sig_stim
+
+fig, ax = plt.subplots()
+plt.imshow(Corrs_map)
+ax.set_yticks(np.arange(4))
+ax.set_yticklabels(stims, fontsize=13)
+ax.set_xticks(np.arange(5))
+ax.set_xticklabels(Bands, fontsize=13)
+ax.xaxis.tick_top()
+cbar = plt.colorbar(shrink=0.7)
+cbar.ax.tick_params(labelsize=13)
+fig.tight_layout()
+
+if Save_fig:
+    os.makedirs(Run_graficos_path, exist_ok=True)
+    plt.savefig(Run_graficos_path + 'Corr.png'.format(Band))
+    plt.savefig(Run_graficos_path + 'Corr.svg'.format(Band))
+
+fig, ax = plt.subplots()
+plt.imshow(Sig_map)
+ax.set_yticks(np.arange(4))
+ax.set_yticklabels(stims, fontsize=13)
+ax.set_xticks(np.arange(5))
+ax.set_xticklabels(Bands, fontsize=13)
+ax.xaxis.tick_top()
+cbar = plt.colorbar(shrink=0.7)
+cbar.ax.tick_params(labelsize=13)
+fig.tight_layout()
+
+if Save_fig:
+    os.makedirs(Run_graficos_path, exist_ok=True)
+    plt.savefig(Run_graficos_path + 'Stat.png'.format(Band))
+    plt.savefig(Run_graficos_path + 'Stat.svg'.format(Band))
 
 
 ## Plot por subjects
