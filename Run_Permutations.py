@@ -18,7 +18,7 @@ sr = 128
 n_folds = 5
 situacion = 'Habla_Propia'
 # Model parameters
-model = 'Ridge'
+model = 'Decoding'
 
 if model == 'Ridge':
     iteraciones = 3000
@@ -27,7 +27,7 @@ elif model == 'Decoding':
     iteraciones = 100
 
 # Stimuli and EEG
-Stims = ['Envelope']
+Stims = ['Spectrogram']
 Bands = ['Theta']
 
 # Standarization
