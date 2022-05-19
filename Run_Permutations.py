@@ -16,9 +16,9 @@ startTime = datetime.now()
 tmin, tmax = -0.6, -0.003
 sr = 128
 n_folds = 5
-situacion = 'Escucha'
+situacion = 'Habla_Propia'
 # Model parameters
-model = 'Decoding'
+model = 'Ridge'
 
 if model == 'Ridge':
     iteraciones = 3000
@@ -28,7 +28,7 @@ elif model == 'Decoding':
 
 # Stimuli and EEG
 Stims = ['Envelope']
-Bands = ['Delta', 'Theta', 'Alpha']
+Bands = ['Theta']
 
 # Standarization
 Stims_preprocess = 'Normalize'
@@ -69,12 +69,19 @@ for Band in Bands:
             Len_Estimulos = [len(dstims_para_sujeto_1[i][0]) for i in range(len(dstims_para_sujeto_1))]
 
             # Defino variables donde voy a guardar mil cosas
-            Pesos_fake = np.zeros((n_folds, iteraciones, info['nchan'], sum(Len_Estimulos)),
-                                  dtype=np.float16)
-            Patterns_fake = np.zeros((n_folds, iteraciones, info['nchan'], sum(Len_Estimulos)),
-                                     dtype=np.float16)
-            Correlaciones_fake = np.zeros((n_folds, iteraciones))
-            Errores_fake = np.zeros((n_folds, iteraciones))
+            if model == 'Ridge':
+                Pesos_fake = np.zeros((n_folds, iteraciones, info['nchan'], sum(Len_Estimulos)),
+                                      dtype=np.float16)
+                Correlaciones_fake = np.zeros((n_folds, iteraciones, info['nchan']))
+                Errores_fake = np.zeros((n_folds, iteraciones, info['nchan']))
+
+            elif model == 'Decoding':
+                Pesos_fake = np.zeros((n_folds, iteraciones, info['nchan'], sum(Len_Estimulos)),
+                                      dtype=np.float16)
+                Patterns_fake = np.zeros((n_folds, iteraciones, info['nchan'], sum(Len_Estimulos)),
+                                         dtype=np.float16)
+                Correlaciones_fake = np.zeros((n_folds, iteraciones))
+                Errores_fake = np.zeros((n_folds, iteraciones))
 
             for sujeto, eeg, dstims in zip((1, 2), (eeg_sujeto_1, eeg_sujeto_2),
                                            (dstims_para_sujeto_1, dstims_para_sujeto_2)):

@@ -16,7 +16,7 @@ tmin, tmax = -0.6, -0.003
 sr = 128
 delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
 times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays))
-situacion = 'Escucha'
+situacion = 'Habla_Propia'
 
 # Model parameters
 model = 'Ridge'
@@ -39,7 +39,7 @@ Stims_preprocess = 'Normalize'
 EEG_preprocess = 'Standarize'
 
 # Random permutations
-Statistical_test = True
+Statistical_test = False
 
 # Save / Display Figures
 Display_Ind_Figures = False
@@ -144,7 +144,7 @@ for Band in Bands:
                             alpha = Alphas[Band][stim][sesion][sujeto]
                         except:
                             alpha = 1000
-                            print('Alpha missing. Using default value: {}'.format(alpha))
+                            print('Alpha missing. Ussing default value: {}'.format(alpha))
                     else:
                         alpha = set_alpha
 
