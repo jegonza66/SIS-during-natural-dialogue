@@ -18,7 +18,7 @@ sr = 128
 n_folds = 5
 situacion = 'Habla_Propia'
 # Model parameters
-model = 'Decoding'
+model = 'Ridge'
 
 if model == 'Ridge':
     iteraciones = 3000
