@@ -316,7 +316,7 @@ def Cabezas_corr_promedio(Correlaciones_totales_sujetos, info, Display, Save, Ru
         patch.set_facecolor((r, g, b, .8))
     sn.swarmplot(data=data, color=".25")
     plt.tick_params(labelsize=15)
-    # fig.tight_layout()
+    fig.tight_layout()
 
     if Save:
         save_path_graficos = Run_graficos_path
@@ -433,28 +433,54 @@ def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display
 
         if Stims_Order[i] == 'Spectrogram':
 
-            spectrogram_weights_bands = Pesos_totales_sujetos_todos_canales_copy[:,
-                                  sum(Len_Estimulos[j] for j in range(i)):sum(
-                                      Len_Estimulos[j] for j in range(i + 1))].mean(0)
-            spectrogram_weights_bands = spectrogram_weights_bands.reshape(16, len(times))
+            # spectrogram_weights_bands = Pesos_totales_sujetos_todos_canales_copy[:,
+            #                       sum(Len_Estimulos[j] for j in range(i)):sum(
+            #                           Len_Estimulos[j] for j in range(i + 1))].mean(0)
+            # spectrogram_weights_bands = spectrogram_weights_bands.reshape(16, len(times))
+            #
+            # im = ax.pcolormesh(times * 1000, np.arange(16), spectrogram_weights_bands, cmap='jet',
+            #                    vmin=-spectrogram_weights_bands.max(), vmax=spectrogram_weights_bands.max(), shading='auto')
+            # ax.set(xlabel='Time (ms)', ylabel='Hz')
+            #
+            # Bands_center = librosa.mel_frequencies(n_mels=18, fmin=62, fmax=8000)[1:-1]
+            # ticks_positions = np.arange(0, 16, 2)
+            # ticks_labels = [int(Bands_center[i]) for i in np.arange(0, len(Bands_center), 2)]
+            # ax.set_yticks(ticks_positions)
+            # ax.set_yticklabels(ticks_labels)
+            # ax.xaxis.label.set_size(14)
+            # ax.yaxis.label.set_size(14)
+            # ax.tick_params(axis='both', labelsize=14)
+            #
+            # cbar = fig.colorbar(im, ax=ax, orientation='vertical')
+            # cbar.set_label('TRF', fontsize=13)
+            # cbar.ax.tick_params(labelsize=12)
+            #
+            # fig.tight_layout()
 
-            im = ax.pcolormesh(times * 1000, np.arange(16), spectrogram_weights_bands, cmap='jet',
-                               vmin=-spectrogram_weights_bands.max(), vmax=spectrogram_weights_bands.max(), shading='auto')
-            ax.set(xlabel='Time (ms)', ylabel='Hz')
+            spectrogram_weights_chanels = Pesos_totales_sujetos_todos_canales_copy[:,
+                                          sum(Len_Estimulos[j] for j in range(i)):sum(
+                                              Len_Estimulos[j] for j in range(i + 1))]. \
+                reshape(info['nchan'], 16, len(times)).mean(1)
 
-            Bands_center = librosa.mel_frequencies(n_mels=18, fmin=62, fmax=8000)[1:-1]
-            ticks_positions = np.arange(0, 16, 2)
-            ticks_labels = [int(Bands_center[i]) for i in np.arange(0, len(Bands_center), 2)]
-            ax.set_yticks(ticks_positions)
-            ax.set_yticklabels(ticks_labels)
+            evoked = mne.EvokedArray(spectrogram_weights_chanels, info)
+            evoked.times = times
+            evoked.plot(scalings=dict(eeg=1, grad=1, mag=1), zorder='std', time_unit='ms', titles=dict(eeg=''),
+                        show=False, spatial_colors=True, unit=False, units='w', axes=ax)
+            ax.plot(times * 1000, evoked._data.mean(0), "k--", label="Mean", zorder=130, linewidth=2)
+            if times[-1] > 0: ax.axvspan(0, ax.get_xlim()[1], alpha=0.4, color='grey', label='Unheard stimuli')
+            if decorrelation_times and times[-1] > 0:
+                ax.vlines(np.mean(decorrelation_times), ax.get_ylim()[0], ax.get_ylim()[1], linestyle='dashed',
+                          color='red',
+                          label='Decorrelation time')
+                ax.axvspan(np.mean(decorrelation_times) - np.std(decorrelation_times) / 2,
+                           np.mean(decorrelation_times) + np.std(decorrelation_times) / 2,
+                           alpha=0.4, color='red', label='Decorrelation time std.')
+
             ax.xaxis.label.set_size(14)
             ax.yaxis.label.set_size(14)
             ax.tick_params(axis='both', labelsize=14)
-
-            cbar = fig.colorbar(im, ax=ax, orientation='vertical')
-            cbar.set_label('TRF', fontsize=13)
-            cbar.ax.tick_params(labelsize=12)
-
+            ax.grid()
+            ax.legend(fontsize=12, loc='lower left')
             fig.tight_layout()
 
         else:
