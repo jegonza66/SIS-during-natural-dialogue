@@ -501,12 +501,8 @@ class Sesion_class:
                     stimuli_para_sujeto_1[stimuli_para_sujeto_1 == 0], stimuli_para_sujeto_2[
                         stimuli_para_sujeto_2 == 0] = self.valores_faltantes, self.valores_faltantes  # cambio 0s
 
-            if self.situacion == 'Ambos_Habla':
-                Sujeto_1[stimuli] = stimuli_para_sujeto_2
-                Sujeto_2[stimuli] = stimuli_para_sujeto_1
-            else:
-                Sujeto_1[stimuli] = stimuli_para_sujeto_1
-                Sujeto_2[stimuli] = stimuli_para_sujeto_2
+            Sujeto_1[stimuli] = stimuli_para_sujeto_1
+            Sujeto_2[stimuli] = stimuli_para_sujeto_2
 
         Sesion = {'Sujeto_1': Sujeto_1, 'Sujeto_2': Sujeto_2}
 
