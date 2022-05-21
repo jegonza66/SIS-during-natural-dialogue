@@ -138,7 +138,7 @@ def preproc_dict(momentos_escucha, delays, situacion, dict):
         situacion = 1
     elif situacion == 'Habla' or situacion == 'Habla_Propia':
         situacion = 2
-    elif situacion == 'Ambos':
+    elif situacion == 'Ambos' or situacion == 'Ambos_Habla':
         situacion = 3
 
     momentos_escucha_matriz[momentos_escucha_matriz == situacion] = float("nan")

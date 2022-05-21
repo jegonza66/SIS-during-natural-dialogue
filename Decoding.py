@@ -16,7 +16,7 @@ tmin, tmax = -0.6, -0.003
 sr = 128
 delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
 times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays))
-situacion = 'Escucha'
+situacion = 'Habla_Propia'
 
 # Model parameters
 set_alpha = None
@@ -31,14 +31,14 @@ except:
 
 # Stimuli and EEG
 Stims = ['Envelope']
-Bands = ['Delta']
+Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'All']
 
 # Standarization
 Stims_preprocess = 'Normalize'
 EEG_preprocess = 'Standarize'
 
 # Random permutations
-Statistical_test = True
+Statistical_test = False
 
 # Save / Display Figures
 Display_Ind_Figures = False

@@ -256,11 +256,11 @@ class Sesion_class:
     def load_from_raw(self):
         # Armo estructura de datos de sujeto
         Sujeto_1 = {'EEG': pd.DataFrame(), 'Envelope': pd.DataFrame(), 'Pitch': pd.DataFrame(),
-                    'Pitch_der': pd.DataFrame(), 'Spectrogram': pd.DataFrame(),
+                    'Spectrogram': pd.DataFrame(),
                     'Jitter': pd.DataFrame(), 'Shimmer': pd.DataFrame()}#, 'Cssp': pd.DataFrame()}
 
         Sujeto_2 = {'EEG': pd.DataFrame(), 'Envelope': pd.DataFrame(), 'Pitch': pd.DataFrame(),
-                    'Pitch_der': pd.DataFrame(), 'Spectrogram': pd.DataFrame(),
+                    'Spectrogram': pd.DataFrame(),
                     'Jitter': pd.DataFrame(), 'Shimmer': pd.DataFrame()}
 
         run = True
@@ -291,7 +291,7 @@ class Sesion_class:
                                                 Causal_filter_EEG=self.Causal_filter_EEG,
                                                 Env_Filter=self.Env_Filter).load_trial()
 
-                if self.situacion == 'Habla_Propia':
+                if self.situacion == 'Habla_Propia' or self.situacion == 'Ambos_Habla':
                     # Load data to dictionary taking stimuli and eeg from speaker
                     Trial_sujeto_1 = {key: Trial_channel_1[key] for key in Trial_channel_1.keys()}
                     Trial_sujeto_2 = {key: Trial_channel_2[key] for key in Trial_channel_2.keys()}
@@ -361,8 +361,6 @@ class Sesion_class:
 
         Pitch_path = self.procesed_data_path + 'Pitch/Sit_{}_Faltantes_{}/'.format(self.situacion,
                                                                                    self.valores_faltantes)
-        Pitch_der_path = self.procesed_data_path + 'Pitch_der/Sit_{}_Faltantes_{}/'.format(self.situacion,
-                                                                                           self.valores_faltantes)
         Spectrogram_path = self.procesed_data_path + 'Spectrogram/Sit_{}/'.format(self.situacion)
 
         Jitter_path = self.procesed_data_path + 'Jitter/Sit_{}_Faltantes_{}/'.format(self.situacion,
@@ -371,7 +369,7 @@ class Sesion_class:
                                                                                    self.valores_faltantes)
         # Cssp_path = self.procesed_data_path + 'Cssp/Sit_{}/'.format(self.situacion)
 
-        for path in [EEG_path, Envelope_path, Pitch_path, Pitch_der_path, Spectrogram_path, Jitter_path, Shimmer_path]:
+        for path in [EEG_path, Envelope_path, Pitch_path, Spectrogram_path, Jitter_path, Shimmer_path]:
             try:
                 os.makedirs(path)
             except:
@@ -503,8 +501,12 @@ class Sesion_class:
                     stimuli_para_sujeto_1[stimuli_para_sujeto_1 == 0], stimuli_para_sujeto_2[
                         stimuli_para_sujeto_2 == 0] = self.valores_faltantes, self.valores_faltantes  # cambio 0s
 
-            Sujeto_1[stimuli] = stimuli_para_sujeto_1
-            Sujeto_2[stimuli] = stimuli_para_sujeto_2
+            if self.situacion == 'Ambos_Habla':
+                Sujeto_1[stimuli] = stimuli_para_sujeto_2
+                Sujeto_2[stimuli] = stimuli_para_sujeto_1
+            else:
+                Sujeto_1[stimuli] = stimuli_para_sujeto_1
+                Sujeto_2[stimuli] = stimuli_para_sujeto_2
 
         Sesion = {'Sujeto_1': Sujeto_1, 'Sujeto_2': Sujeto_2}
 
