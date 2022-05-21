@@ -146,8 +146,9 @@ for Band in Bands:
                         alpha = set_alpha
 
                     # Ajusto el modelo y guardo
+                    t_lag = -1 #Most recent audio sample
                     Model = Models.mne_mtrf_decoding(tmin, tmax, sr, info, alpha)
-                    Model.fit(eeg_train_val, dstims_train_val)
+                    Model.fit(eeg_train_val, dstims_train_val, t_lag)
                     Pesos_ronda_canales[fold] = Model.coefs
                     Patterns_ronda_canales[fold] = Model.patterns
 
