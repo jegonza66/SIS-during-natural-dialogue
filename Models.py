@@ -1,6 +1,7 @@
 from sklearn import linear_model
 from mne.decoding import ReceptiveField
 
+
 class Ridge:
     
     def __init__(self, alpha):
@@ -18,19 +19,20 @@ class Ridge:
 
 class mne_mtrf:
 
-    def __init__(self, tmin, tmax, sr, alpha):
+    def __init__(self, tmin, tmax, sr, alpha, present_stim_index):
         self.sr = sr
-        self.rf = ReceptiveField(tmin, tmax, sr, estimator=alpha, scoring='corrcoef')
+        self.rf = ReceptiveField(tmin, tmax, sr, estimator=alpha, scoring='corrcoef', verbose=False)
+        self.present_stim_index = present_stim_index
 
     def fit(self, dstims_train_val, eeg_train_val):
-        stim = dstims_train_val[:, -1]
+        stim = dstims_train_val[:, self.present_stim_index]
         stim = stim.reshape([stim.shape[0], 1])
 
         self.rf.fit(stim, eeg_train_val)
-        self.coefs = self.rf.coef_[:, 0, :-1]
+        self.coefs = self.rf.coef_[:, 0, :]
 
     def predict(self, dstims_test):
-        stim = dstims_test[:, -1]
+        stim = dstims_test[:, self.present_stim_index]
         stim = stim.reshape([stim.shape[0], 1])
         predicted = self.rf.predict(stim)
         return predicted

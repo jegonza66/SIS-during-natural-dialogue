@@ -634,7 +634,7 @@ def Plot_cabezas_instantes(Pesos_totales_sujetos_todos_canales, info, Band, time
     Pesos_totales_sujetos_todos_canales_copy = Pesos_totales_sujetos_todos_canales.swapaxes(0, 2)
     Pesos_totales_sujetos_todos_canales_copy = Pesos_totales_sujetos_todos_canales_copy.mean(0)
 
-    offset = 40
+    offset = 0
     instantes_index = sgn.find_peaks(np.abs(Pesos_totales_sujetos_todos_canales_copy.mean(1)[offset:]),
                                 height=np.abs(Pesos_totales_sujetos_todos_canales_copy.mean(1)).max() * 0.3)[0] + offset
 
@@ -863,6 +863,7 @@ def weights_ERP(Pesos_totales_sujetos_todos_canales, info, times, Display,
                 Run_graficos_path + 'Regression_Weights_{}.svg'.format(Stims_Order[j] if Cant_Estimulos > 1 else stim))
             fig.savefig(
                 Run_graficos_path + 'Regression_Weights_{}.png'.format(Stims_Order[j] if Cant_Estimulos > 1 else stim))
+
 
 def decoding_t_lags(Correlaciones_totales_sujetos, times, Display, Save, Run_graficos_path):
     Corr_time_sub = Correlaciones_totales_sujetos.mean(0)

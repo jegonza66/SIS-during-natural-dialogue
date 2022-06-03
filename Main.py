@@ -4,7 +4,7 @@ import numpy as np
 from sklearn.model_selection import KFold
 
 import Load
-# import Load_light as Load
+import Load_light as Load
 import Models
 import Plot
 import Processing
@@ -13,14 +13,18 @@ from datetime import datetime
 startTime = datetime.now()
 
 # Define Parameters
-tmin, tmax = -0.6, -0.003
+tmin, tmax = -0.4, 0.1
 sr = 128
 delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
 times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays))
-situacion = 'Ambos'
+situacion = 'Escucha'
 
 # Model parameters
-model = 'Ridge'
+# model = 'Ridge'
+model = 'mtrf'
+if model == 'mtrf':
+    times = np.flip(-times)
+
 set_alpha = None
 Alpha_Corr_limit = 0.01
 alphas_fname = 'saves/Alphas/Alphas_Corr{}.pkl'.format(Alpha_Corr_limit)
@@ -32,8 +36,8 @@ except:
     print('\n\nAlphas file not found.\n\n')
 
 # Stimuli and EEG
-Stims = ['Spectrogram']
-Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'All']
+Stims = ['Envelope']
+Bands = ['Delta', 'Alpha', 'Beta_1', 'All', (1, 8), (1, 12)]
 
 # Standarization
 Stims_preprocess = 'Normalize'
@@ -50,7 +54,7 @@ Save_Total_Figures = True
 Save_Final_Correlation = True
 
 # Save mean correlations
-Mean_Correlations_fname = 'saves/Ridge/{}/Final_Correlation/tmin{}_tmax{}/Mean_Correlations.pkl'.format(situacion, tmin, tmax)
+Mean_Correlations_fname = 'saves/{}/{}/Final_Correlation/tmin{}_tmax{}/Mean_Correlations.pkl'.format(model, situacion, tmin, tmax)
 try:
     f = open(Mean_Correlations_fname, 'rb')
     Mean_Correlations = pickle.load(f)
@@ -73,14 +77,14 @@ for Band in Bands:
     for stim in Stims:
         print('\n' + stim + '\n')
         # Paths
-        save_path = 'saves/Ridge/{}/Final_Correlation/tmin{}_tmax{}/'.format(situacion, tmin, tmax)
+        save_path = 'saves/{}/{}/Final_Correlation/tmin{}_tmax{}/'.format(model, situacion, tmin, tmax)
         procesed_data_path = 'saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
-        Run_graficos_path = 'gráficos/Ridge/{}/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
-            situacion, Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
-        Path_origial = 'saves/Ridge/{}/Original/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
-            situacion, Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
-        Path_it = 'saves/Ridge/{}/Fake_it/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
-            situacion, Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
+        Run_graficos_path = 'gráficos/{}/{}/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
+            model, situacion, Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
+        Path_origial = 'saves/{}/{}/Original/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
+            model, situacion, Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
+        Path_it = 'saves/{}/{}/Fake_it/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
+            model, situacion, Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
 
         # Start Run
         sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
@@ -160,7 +164,10 @@ for Band in Bands:
                         Predicciones[fold] = predicted
 
                     elif model == 'mtrf':
-                        Model = Models.mne_mtrf(tmin, tmax, sr, alpha)
+                        # get the time lag of the present index to take from the delayed matrix stimuli
+                        present_stim_index = np.where(delays==0)[0][0]
+
+                        Model = Models.mne_mtrf(-tmax, -tmin, sr, alpha, present_stim_index)
                         Model.fit(dstims_train_val, eeg_train_val)
                         Pesos_ronda_canales[fold] = Model.coefs
 
