@@ -3,7 +3,7 @@ import pickle
 import numpy as np
 from sklearn.model_selection import KFold
 
-import Load
+import Load_light as Load
 import Models
 import Plot
 import Processing
@@ -12,11 +12,15 @@ from datetime import datetime
 startTime = datetime.now()
 
 # Define Parameters
-tmin, tmax = -0.4, -0.003
+tmin, tmax = -0.4, 0.195
 sr = 128
 delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
-times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays))
-situacion = 'Escucha'
+times = list(np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays)))
+# take lower time rolution to run faster
+skip = 4
+times = times[::skip]
+t_lags = np.arange(len(times))*skip
+situacion = 'Habla_Propia'
 
 # Model parameters
 set_alpha = None
@@ -42,7 +46,7 @@ Statistical_test = False
 
 # Save / Display Figures
 Display_Ind_Figures = False
-Display_Total_Figures = True
+Display_Total_Figures = False
 Save_Ind_Figures = True
 Save_Total_Figures = True
 Save_Final_Correlation = True
@@ -77,8 +81,6 @@ for Band in Bands:
             situacion, Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
         Path_origial = 'saves/Decoding_t_lag/{}/Original/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
             situacion, Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
-        Path_it = 'saves/Decoding_t_lag/{}/Fake_it/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
-            situacion, Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
 
         # Start Run
         sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
@@ -101,23 +103,11 @@ for Band in Bands:
                 # for sujeto, eeg, dstims in zip([2], [eeg_sujeto_2], [dstims_para_sujeto_2]):
                 print('Sujeto {}'.format(sujeto))
                 # Separo los datos en 5 y tomo test set de 20% de datos con kfold (5 iteraciones)
-                # Predicciones = {}
                 n_folds = 5
                 iteraciones = 100
 
-                # Defino variables donde voy a guardar mil cosas
-                # Pesos_ronda_canales = np.zeros((n_folds, info['nchan'], sum(Len_Estimulos)), dtype=np.float32)
-                # Patterns_ronda_canales = np.zeros((n_folds, info['nchan'], sum(Len_Estimulos)), dtype=np.float32)
-                Corr_buenas_ronda = np.zeros((n_folds, times))
-                # Rmse_buenos_ronda = np.zeros((times, n_folds))
-
-                if Statistical_test:
-                    Pesos_fake = np.zeros((n_folds, iteraciones, info['nchan'], sum(Len_Estimulos)), dtype=np.float32)
-                    Correlaciones_fake = np.zeros((n_folds, iteraciones))
-                    Errores_fake = np.zeros((n_folds, iteraciones))
-
-                Prob_Corr_ronda = np.ones((n_folds, times))
-                # Prob_Rmse_ronda = np.ones((n_folds))
+                # Defino variables donde voy a guardar cosas
+                Corr_buenas_ronda = np.zeros((n_folds, len(t_lags)))
 
                 # Empiezo el KFold de test
                 kf_test = KFold(n_folds, shuffle=False)
@@ -145,158 +135,51 @@ for Band in Bands:
                     else:
                         alpha = set_alpha
 
-                    for t_lag in times:
+                    for i, t_lag in enumerate(t_lags):
                         # Ajusto el modelo y guardo
                         Model = Models.mne_mtrf_decoding(tmin, tmax, sr, info, alpha)
                         Model.fit(eeg_train_val, dstims_train_val, t_lag)
-                        # Pesos_ronda_canales[fold] = Model.coefs
-                        # Patterns_ronda_canales[fold] = Model.patterns
 
                         # Predigo en test set y guardo
                         predicted = Model.predict(eeg_test)
-                        # Predicciones[fold] = predicted
 
                         # Calculo Correlacion y guardo
                         Rcorr = np.array(
-                            [np.corrcoef(dstims_test[:, -1].ravel(), np.array(predicted).ravel())[0, 1]])
-                        Corr_buenas_ronda[fold, t_lag] = Rcorr
-
-                        # Calculo Error y guardo
-                        # Rmse = np.sqrt(np.power((predicted.ravel() - dstims_test[:, -1]).ravel(), 2).mean(0))
-                        # Rmse_buenos_ronda[fold] = Rmse
-
-                        if Statistical_test:
-                            try:
-                                f = open(Path_it + 'Corr_Rmse_fake_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto),'rb')
-                                Correlaciones_fake, Errores_fake = pickle.load(f)
-                                f.close()
-                            except:
-                                Statistical_test = False
-
-                            # TEST ESTADISTICO
-                            Rcorr_fake = Correlaciones_fake[fold]
-                            # Rmse_fake = Errores_fake[fold]
-
-                            p_corr = ((Rcorr_fake > Rcorr).sum() + 1) / (iteraciones + 1)
-                            # p_rmse = ((Rmse_fake < Rmse).sum() + 1) / (iteraciones + 1)
-
-                            # Umbral
-                            umbral = 0.01
-                            if p_corr < umbral:
-                                Prob_Corr_ronda[fold, t_lag] = p_corr
-                                # Prob_Rmse_ronda[fold] = p_rmse
+                            [np.corrcoef(dstims_test[:, t_lag].ravel(), np.array(predicted).ravel())[0, 1]])
+                        Corr_buenas_ronda[fold, i] = Rcorr
 
                 # Save Model Weights and Correlations
                 os.makedirs(Path_origial, exist_ok=True)
                 f = open(Path_origial + 'Corr_Rmse_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto), 'wb')
                 pickle.dump([Corr_buenas_ronda], f)
                 f.close()
-                # os.makedirs(Path_origial, exist_ok=True)
-                # f = open(Path_origial + 'Corr_Rmse_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto), 'wb')
-                # pickle.dump([Corr_buenas_ronda, Rmse_buenos_ronda], f)
-                # f.close()
-
-                # f = open(Path_origial + 'Pesos_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto), 'wb')
-                # pickle.dump([Pesos_ronda_canales.mean(0), Patterns_ronda_canales.mean(0)], f)
-                # f.close()
-
-                # # Tomo promedio de pesos Corr y Rmse entre los folds para todos los canales
-                # Pesos_promedio = Pesos_ronda_canales.mean(0)
-                # Patterns_promedio = Patterns_ronda_canales.mean(0)
 
                 # Grafico cabezas y canales
-                Plot.corr_sujeto_decoding(sesion, sujeto, Corr_buenas_ronda, Display_Ind_Figures, 'Correlation', Save_Ind_Figures, Run_graficos_path)
-                # Plot.corr_sujeto_decoding(sesion, sujeto, Rmse_buenos_ronda, Display_Ind_Figures, 'Rmse', Save_Ind_Figures, Run_graficos_path)
-
-                # # Grafico Pesos
-                # Plot.plot_grafico_pesos(Display_Ind_Figures, sesion, sujeto, alpha, Pesos_promedio,
-                #                         info, times, Corr_buenas_ronda, Rmse_buenos_ronda, Save_Ind_Figures,
-                #                         Run_graficos_path, Len_Estimulos, stim)
-                # # Grafico Patterns
-                # Plot.plot_grafico_pesos(Display_Ind_Figures, sesion, sujeto, alpha, Patterns_promedio,
-                #                         info, times, Corr_buenas_ronda, Rmse_buenos_ronda, Save_Ind_Figures,
-                #                         Run_graficos_path, Len_Estimulos, stim, title='Patterns')
+                Plot.corr_sujeto_decoding(sesion, sujeto, Corr_buenas_ronda.mean(0), Display_Ind_Figures, 'Correlation', Save_Ind_Figures, Run_graficos_path)
 
                 # Guardo las correlaciones y los pesos promediados entre folds de cada canal del sujeto y lo adjunto a lista
                 # para promediar entre canales de sujetos
                 if not sujeto_total:
-                    # Pesos_totales_sujetos_todos_canales = Pesos_promedio
-                    # Patterns_totales_sujetos_todos_canales = Patterns_promedio
                     Correlaciones_totales_sujetos = Corr_buenas_ronda # Save correlation per timelag
-                    # Rmse_totales_sujetos = Rmse_buenos_ronda
-
-                    Folds_passed_corr_sujetos = Prob_Corr_ronda
-                    # Folds_passed_rmse_sujetos = Prob_Rmse_ronda
-
                 else:
-                    # Pesos_totales_sujetos_todos_canales = np.dstack(
-                        # (Pesos_totales_sujetos_todos_canales, Pesos_promedio))
-                    # Patterns_totales_sujetos_todos_canales = np.dstack(
-                        # (Patterns_totales_sujetos_todos_canales, Patterns_promedio))
                     Correlaciones_totales_sujetos = np.dstack((Correlaciones_totales_sujetos, Corr_buenas_ronda))
-                    # Rmse_totales_sujetos = np.vstack((Rmse_totales_sujetos, Rmse_buenos_ronda))
-
-                    Folds_passed_corr_sujetos = np.dstack((Folds_passed_corr_sujetos, Prob_Corr_ronda))
-                    # Folds_passed_rmse_sujetos = np.vstack((Folds_passed_rmse_sujetos, Prob_Rmse_ronda))
 
                 sujeto_total += 1
 
-        # Armo cabecita con correlaciones promedio entre sujetos
-        # Mean_Correlations_Band[stim] = Plot.violin_plot_decoding(Correlaciones_totales_sujetos,
-        #                                                           Display_Total_Figures, Save_Total_Figures,
-        #                                                           Run_graficos_path, title='Correlation')
-
-        Plot.decoding_t_lags(Correlaciones_totales_sujetos, times, Display_Total_Figures, Save_Total_Figures,
+         # Plots
+        Plot.decoding_t_lags(Correlaciones_totales_sujetos, times, Band, Display_Total_Figures, Save_Total_Figures,
                              Run_graficos_path)
-
-        # Armo cabecita con canales repetidos
-        if Statistical_test:
-            Total_Folds_Passed = sum(Folds_passed_corr_sujetos.ravel() < 1)
-
-        # # Grafico Pesos
-        # Pesos_totales = Plot.regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display_Total_Figures,
-        #                                         Save_Total_Figures, Run_graficos_path, Len_Estimulos, stim)
-        # # Grafico Patterns
-        # Patterns_totales = Plot.regression_weights(Patterns_totales_sujetos_todos_canales, info, times,
-        #                                            Display_Total_Figures, Save_Total_Figures, Run_graficos_path,
-        #                                            Len_Estimulos, stim, title='Patterns')
-
-        # Plot.regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, Display_Total_Figures,
-        #                                Save_Total_Figures, Run_graficos_path, Len_Estimulos, stim, Band)
-        # Plot.regression_weights_matrix(Patterns_totales_sujetos_todos_canales, info, times, Display_Total_Figures,
-        #                                Save_Total_Figures, Run_graficos_path, Len_Estimulos, stim, Band,  title='Patterns')
-
-        # # Matriz de Correlacion
-        # Plot.Matriz_corr_channel_wise(Pesos_totales_sujetos_todos_canales, Display_Total_Figures, Save_Total_Figures,
-        #                               Run_graficos_path)
-        # # Matriz de Correlacion
-        # Plot.Matriz_corr_channel_wise(Patterns_totales_sujetos_todos_canales, Display_Total_Figures, Save_Total_Figures,
-        #                               Run_graficos_path, title='Patterns')
-        # try:
-        #     _ = Plot.Plot_cabezas_instantes(Pesos_totales_sujetos_todos_canales, info, Band, times, sr, Display_Total_Figures,
-        #                                     Save_Total_Figures, Run_graficos_path)
-        # except:
-        #     pass
-        # # Cabezas de correlacion de pesos por canal
-        # Plot.Channel_wise_correlation_topomap(Pesos_totales_sujetos_todos_canales, info, Display_Total_Figures,
-        #                                       Save_Total_Figures, Run_graficos_path)
-
-        # # Save final weights
-        # f = open(Path_origial + 'Pesos_Totales_{}_{}.pkl'.format(stim, Band), 'wb')
-        # pickle.dump([Pesos_totales, Patterns_totales], f)
-        # f.close()
 
         # SAVE FINAL CORRELATION
         Mean_Correlations[Band] = Mean_Correlations_Band
         if Save_Final_Correlation and sujeto_total == 18:
             os.makedirs(save_path, exist_ok=True)
             f = open(save_path + '{}_EEG_{}.pkl'.format(stim, Band), 'wb')
-            pickle.dump([Correlaciones_totales_sujetos, Folds_passed_corr_sujetos], f)
+            pickle.dump(Correlaciones_totales_sujetos, f)
             f.close()
 
             f = open(Mean_Correlations_fname, 'wb')
             pickle.dump(Mean_Correlations, f)
             f.close()
-
 
 print(datetime.now() - startTime)

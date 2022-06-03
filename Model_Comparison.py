@@ -111,9 +111,9 @@ import seaborn as sn
 
 tmin, tmax = -0.6, -0.003
 model = 'Ridge'
-situacion = 'Escucha'
+situacion = 'Habla_Propia'
 
-Run_graficos_path = 'gráficos/Model_Comparison/{}/tmin{}_tmax{}/Violin Plots/'.format(model, tmin, tmax)
+Run_graficos_path = 'gráficos/Model_Comparison/{}/{}/tmin{}_tmax{}/Violin Plots/'.format(model, situacion, tmin, tmax)
 Save_fig = True
 Correlaciones = {}
 
@@ -130,6 +130,7 @@ for Band in Bands:
 
 plt.ion()
 plt.figure(figsize=(19, 5))
+plt.title(situacion, fontsize=24)
 sn.violinplot(data=pd.DataFrame(Correlaciones))
 plt.ylabel('Correlation', fontsize=24)
 plt.yticks(fontsize=20)
@@ -153,7 +154,7 @@ import seaborn as sn
 
 model = 'Ridge'
 situacion = 'Escucha'
-Run_graficos_path = 'gráficos/Model_Comparison/{}/tmin{}_tmax{}/Violin Plots/'.format(model, tmin, tmax)
+Run_graficos_path = 'gráficos/Model_Comparison/{}/{}/tmin{}_tmax{}/Violin Plots/'.format(model, situacion, tmin, tmax)
 Save_fig = True
 
 tmin, tmax = -0.6, -0.003
@@ -369,7 +370,7 @@ Save_fig = True
 
 tmin, tmax = -0.6, -0.003
 
-Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'All']
+Bands = ['All', 'Delta', 'Theta', 'Alpha', 'Beta_1']
 stims = ['Spectrogram', 'Envelope', 'Pitch', 'Shimmer']
 
 Corrs_map = np.zeros((len(stims),len(Bands)))

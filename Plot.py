@@ -865,7 +865,7 @@ def weights_ERP(Pesos_totales_sujetos_todos_canales, info, times, Display,
                 Run_graficos_path + 'Regression_Weights_{}.png'.format(Stims_Order[j] if Cant_Estimulos > 1 else stim))
 
 
-def decoding_t_lags(Correlaciones_totales_sujetos, times, Display, Save, Run_graficos_path):
+def decoding_t_lags(Correlaciones_totales_sujetos, times, Band, Display, Save, Run_graficos_path):
     Corr_time_sub = Correlaciones_totales_sujetos.mean(0)
     mean_time_corr = Corr_time_sub.mean(1)
     std_time_corr = Corr_time_sub.std(1)
@@ -875,19 +875,27 @@ def decoding_t_lags(Correlaciones_totales_sujetos, times, Display, Save, Run_gra
     else:
         plt.ioff()
 
+     # get max correlation t_lag
+    max_t_lag = np.argmax(mean_time_corr)
+
     fig, ax = plt.subplots()
     plt.plot(times, mean_time_corr)
-    plt.fill_between(times, mean_time_corr - std_time_corr/2, mean_time_corr + std_time_corr/2)
-    plt.xlabel('Time lag [ms]')
+    plt.title('{}'.format(Band))
+    plt.fill_between(times, mean_time_corr - std_time_corr/2, mean_time_corr + std_time_corr/2, alpha=.5)
+    plt.vlines(times[max_t_lag], ax.get_ylim()[0], ax.get_ylim()[1], linestyle='dashed', color='k',
+               label='Max. correlation delay: {}s'.format(times[max_t_lag]))
+    plt.xlabel('Time lag [s]')
     plt.ylabel('Correlation')
     ax.xaxis.label.set_size(15)
     ax.yaxis.label.set_size(15)
     ax.tick_params(axis='both', labelsize=15)
+    plt.grid()
+    plt.legend()
 
     if Save:
         os.makedirs(Run_graficos_path, exist_ok=True)
-        fig.savefig(Run_graficos_path + 'Correlation_time_lags.svg')
-        fig.savefig(Run_graficos_path + 'Correlation_time_lags.png')
+        fig.savefig(Run_graficos_path + 'Correlation_time_lags_{}.svg'.format(Band))
+        fig.savefig(Run_graficos_path + 'Correlation_time_lags_{}.png'.format(Band))
 
 
 ## VIEJAS NO SE USAN
