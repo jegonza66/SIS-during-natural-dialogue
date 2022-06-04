@@ -13,6 +13,8 @@ from datetime import datetime
 startTime = datetime.now()
 
 # Define Parameters
+sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
+total_subjects = len(sesiones)*2
 tmin, tmax = -0.4, 0.1
 sr = 128
 delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
@@ -76,6 +78,8 @@ for Band in Bands:
 
     for stim in Stims:
         print('\n' + stim + '\n')
+        print(situacion)
+        print('tmin{}_tmax{}'.format(tmin, tmax))
         # Paths
         save_path = 'saves/{}/{}/Final_Correlation/tmin{}_tmax{}/'.format(model, situacion, tmin, tmax)
         procesed_data_path = 'saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
@@ -87,7 +91,6 @@ for Band in Bands:
             model, situacion, Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
 
         # Start Run
-        sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
         sujeto_total = 0
         for sesion in sesiones:
             print('Sesion {}'.format(sesion))

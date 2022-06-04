@@ -74,6 +74,8 @@ for Band in Bands:
 
     for stim in Stims:
         print('\n' + stim + '\n')
+        print(situacion)
+        print('tmin{}_tmax{}'.format(tmin, tmax))
         # Paths
         save_path = 'saves/Decoding_t_lag/{}/Final_Correlation/tmin{}_tmax{}/'.format(situacion, tmin, tmax)
         procesed_data_path = 'saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)

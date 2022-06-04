@@ -31,13 +31,7 @@ def plot_cabezas_canales(channel_names, info, sesion, sujeto, Valores_promedio, 
                                                                         Valores_promedio.std()), fontsize=19)
         im = mne.viz.plot_topomap(Valores_promedio, info, axes=axs[0], show=False, sphere=0.07, cmap='Greys',
                                   vmin=Valores_promedio.min(), vmax=Valores_promedio.max())
-        # surviving_channels_names = [channel_names[j] for j in Canales_sobrevivientes]
-        # mask = []
-        # for j in range(len(channel_names)):
-        #     if channel_names[j] in surviving_channels_names:
-        #         mask.append(True)
-        #     else:
-        #         mask.append(False)
+
         mask = [i in Canales_sobrevivientes for i in range(n_canales)]
         im2 = mne.viz.plot_topomap(np.zeros(n_canales), info, axes=axs[1], show=False, sphere=0.07,
                                    mask=np.array(mask), mask_params=dict(marker='o', markerfacecolor='g',
@@ -101,11 +95,7 @@ def plot_grafico_pesos(Display, sesion, sujeto, best_alpha, Pesos_promedio,
                        Run_graficos_path, Len_Estimulos, stim, title=None):
     # Defino cosas que voy a graficar
     Corr_mejor_canal = Corr_promedio.max()
-    # Correl_prom = np.mean(Corr_promedio)
-
-    # mejor_canal_rmse = Rmse_promedio.argmax()
     Rmse_mejor_canal = Rmse_promedio.max()
-    # Rmse_prom = np.mean(Rmse_promedio)
 
     if Display:
         plt.ion()
@@ -136,13 +126,6 @@ def plot_grafico_pesos(Display, sesion, sujeto, best_alpha, Pesos_promedio,
             ax.set_yticks(ticks_positions)
             ax.set_yticklabels(ticks_labels)
 
-            # Pitch = subjects_pitch[0][sujeto_total]
-            # Pitch_std = subjects_pitch[1][sujeto_total]
-            # ax.hlines(Pitch, ax.get_xlim()[0], ax.get_xlim()[1], linestyle='dashed', color='black', label='Speaker\'s Pitch')
-            # ax.hlines(Pitch + Pitch_std/2, ax.get_xlim()[0], ax.get_xlim()[1], linestyle='dashed', color='black')
-            # ax.hlines(Pitch - Pitch_std / 2, ax.get_xlim()[0], ax.get_xlim()[1], linestyle='dashed', color='black')
-            # ax.legend()
-
             fig.colorbar(im, ax=ax, orientation='vertical')
 
         else:
@@ -162,8 +145,6 @@ def plot_grafico_pesos(Display, sesion, sujeto, best_alpha, Pesos_promedio,
             ax.legend(fontsize=13)
             ax.grid()
             ax.set_title('{}'.format(Stims_Order[i]))
-
-    # fig.tight_layout()
 
     if Save:
         if title:
@@ -299,13 +280,6 @@ def Cabezas_corr_promedio(Correlaciones_totales_sujetos, info, Display, Save, Ru
     mask_left = [i in good_channels_left for i in info['ch_names']]
     corr_right = Correlaciones_promedio[mask_right]
     corr_left = Correlaciones_promedio[mask_left]
-    corr = [corr_left, corr_right]
-
-    # fig = plt.figure()
-    # plt.boxplot(corr)
-    # plt.xticks([1, 2], ['left', 'right'])
-    # plt.tick_params(labelsize=15)
-    # fig.tight_layout()
 
     fig = plt.figure()
     data = pd.DataFrame({'Left': corr_left, 'Right': corr_right})
@@ -433,30 +407,6 @@ def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display
 
         if Stims_Order[i] == 'Spectrogram':
 
-            # spectrogram_weights_bands = Pesos_totales_sujetos_todos_canales_copy[:,
-            #                       sum(Len_Estimulos[j] for j in range(i)):sum(
-            #                           Len_Estimulos[j] for j in range(i + 1))].mean(0)
-            # spectrogram_weights_bands = spectrogram_weights_bands.reshape(16, len(times))
-            #
-            # im = ax.pcolormesh(times * 1000, np.arange(16), spectrogram_weights_bands, cmap='jet',
-            #                    vmin=-spectrogram_weights_bands.max(), vmax=spectrogram_weights_bands.max(), shading='auto')
-            # ax.set(xlabel='Time (ms)', ylabel='Hz')
-            #
-            # Bands_center = librosa.mel_frequencies(n_mels=18, fmin=62, fmax=8000)[1:-1]
-            # ticks_positions = np.arange(0, 16, 2)
-            # ticks_labels = [int(Bands_center[i]) for i in np.arange(0, len(Bands_center), 2)]
-            # ax.set_yticks(ticks_positions)
-            # ax.set_yticklabels(ticks_labels)
-            # ax.xaxis.label.set_size(14)
-            # ax.yaxis.label.set_size(14)
-            # ax.tick_params(axis='both', labelsize=14)
-            #
-            # cbar = fig.colorbar(im, ax=ax, orientation='vertical')
-            # cbar.set_label('TRF', fontsize=13)
-            # cbar.ax.tick_params(labelsize=12)
-            #
-            # fig.tight_layout()
-
             spectrogram_weights_chanels = Pesos_totales_sujetos_todos_canales_copy[:,
                                           sum(Len_Estimulos[j] for j in range(i)):sum(
                                               Len_Estimulos[j] for j in range(i + 1))]. \
@@ -580,10 +530,6 @@ def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, 
             axs[0].axis('off')
             axs[0].legend(fontsize=12, loc="lower left")
 
-            # axs[0].plot(times * 1000, spectrogram_weights.mean(0), "k-", label="Mean", zorder=130, linewidth=2)
-            # axs[0].axis('off')
-            # axs[0].legend(fontsize=12, loc='lower left')
-
             fig.tight_layout()
 
         else:
@@ -657,7 +603,7 @@ def Plot_cabezas_instantes(Pesos_totales_sujetos_todos_canales, info, Band, time
             ax = axs[i]
         else:
             ax = axs
-        ax.set_title('{} ms'.format(int(instantes_de_interes[i] * 1000)), fontsize = 18)
+        ax.set_title('{} ms'.format(int(instantes_de_interes[i] * 1000)), fontsize=18)
         fig.tight_layout()
         im = mne.viz.plot_topomap(Pesos_totales_sujetos_todos_canales_copy[instantes_index[i]].ravel(), info, axes=ax,
                                   show=False,
@@ -883,7 +829,7 @@ def decoding_t_lags(Correlaciones_totales_sujetos, times, Band, Display, Save, R
     plt.title('{}'.format(Band))
     plt.fill_between(times, mean_time_corr - std_time_corr/2, mean_time_corr + std_time_corr/2, alpha=.5)
     plt.vlines(times[max_t_lag], ax.get_ylim()[0], ax.get_ylim()[1], linestyle='dashed', color='k',
-               label='Max. correlation delay: {}s'.format(times[max_t_lag]))
+               label='Max. correlation delay: {:.2f}s'.format(times[max_t_lag]))
     plt.xlabel('Time lag [s]')
     plt.ylabel('Correlation')
     ax.xaxis.label.set_size(15)
@@ -897,6 +843,112 @@ def decoding_t_lags(Correlaciones_totales_sujetos, times, Band, Display, Save, R
         fig.savefig(Run_graficos_path + 'Correlation_time_lags_{}.svg'.format(Band))
         fig.savefig(Run_graficos_path + 'Correlation_time_lags_{}.png'.format(Band))
 
+
+def Brain_sync(data, Band, info, Display, Save, graficos_save_path, total_subjects, sesion=None, sujeto=None):
+
+    if Display:
+        plt.ion()
+    else:
+        plt.ioff()
+
+    if data.shape == (total_subjects, info['nchan'], info['nchan']):
+        data_ch = data.mean(0)
+    elif data.shape == (info['nchan'], info['nchan']):
+        data_ch = data
+
+    plt.figure(figsize=(10, 8))
+    plt.title('Inter Brain Phase Synchornization - {}'.format(Band), fontsize=14)
+    plt.imshow(data_ch)
+    plt.xticks(np.arange(0, info['nchan'], 4), labels=info['ch_names'][0:-1:4], rotation=45)
+    plt.yticks(np.arange(0, info['nchan'], 4), labels=info['ch_names'][0:-1:4])
+    plt.ylabel('Speaker', fontsize=13)
+    plt.xlabel('Listener', fontsize=13)
+    cbar = plt.colorbar()
+    cbar.ax.tick_params(labelsize=12)
+
+    if Save:
+        os.makedirs(graficos_save_path, exist_ok=True)
+        if data.shape == (total_subjects, info['nchan'], info['nchan']):
+            plt.savefig(graficos_save_path + 'Inter Brain sync - {}.png'.format(Band))
+            plt.savefig(graficos_save_path + 'Inter Brain sync - {}.svg'.format(Band))
+        elif data.shape == (info['nchan'], info['nchan']):
+            plt.savefig(graficos_save_path + 'Inter Brain sync - Sesion{}_Sujeto{}.png'.format(sesion, sujeto))
+            plt.savefig(graficos_save_path + 'Inter Brain sync - Sesion{}_Sujeto{}.svg'.format(sesion, sujeto))
+
+
+
+def ch_heatmap_topo(total_data, Band, info, delays, times, Display, Save, graficos_save_path, title, total_subjects,
+                    sesion=None, sujeto=None):
+
+    if total_data.shape == (info['nchan'], len(delays)):
+        phase_sync_ch = total_data
+        phase_sync_std = phase_sync_ch.std(0)
+        phase_sync = phase_sync_ch.mean(0)
+    elif total_data.shape == (total_subjects, info['nchan'], len(delays)):
+        phase_sync_ch = total_data.mean(0)
+        phase_sync_std = phase_sync_ch.std(0)
+        phase_sync = phase_sync_ch.mean(0)
+
+    max_t_lag = np.argmax(phase_sync)
+
+    if Display:
+        plt.ion()
+    else:
+        plt.ioff()
+
+    fig, axs = plt.subplots(2)
+    plt.suptitle("Time lagged {} {}\n"
+                 "Max = {:.3f} +/- {:.3f}".format(title, Band, phase_sync[max_t_lag],
+                                                  phase_sync_std[max_t_lag], fontsize=15))
+
+    im = axs[0].pcolormesh(times, np.arange(info['nchan']), phase_sync_ch, shading='auto')
+    cbar = fig.colorbar(im, ax=axs[0], orientation='vertical')
+    cbar.ax.tick_params(labelsize=12)
+
+    axs[1].plot(times, phase_sync)
+    plt.fill_between(times, phase_sync - phase_sync_std / 2, phase_sync + phase_sync_std / 2, alpha=.5)
+    plt.vlines(times[max_t_lag], axs[1].get_ylim()[0], axs[1].get_ylim()[1], linestyle='dashed', color='k',
+               label='Max. sync delay: {:.2f}s'.format(times[max_t_lag]))
+    plt.xlabel('Time lag [s]')
+    plt.ylabel('{}'.format(title))
+    axs[1].xaxis.label.set_size(12)
+    axs[1].yaxis.label.set_size(12)
+    axs[1].tick_params(axis='both', labelsize=12)
+    plt.grid()
+    plt.legend()
+    fig.tight_layout()
+
+    if Save:
+        os.makedirs(graficos_save_path, exist_ok=True)
+        if total_data.shape == (info['nchan'], len(delays)):
+            plt.savefig(graficos_save_path + 't_lags_{}_Sesion{}_Sujeto{}.png'.format(title, sesion, sujeto))
+            plt.savefig(graficos_save_path + 't_lags_{}_Sesion{}_Sujeto{}.svg'.format(title, sesion, sujeto))
+        elif total_data.shape == (total_subjects, info['nchan'], len(delays)):
+            plt.savefig(graficos_save_path + 't_lags_{}.png'.format(title))
+            plt.savefig(graficos_save_path + 't_lags_{}.svg'.format(title))
+
+    # Plot topo
+    max_pahse_sync = phase_sync_ch[:, max_t_lag]
+    fig = plt.figure()
+    plt.suptitle("{}".format(title), fontsize=19)
+    plt.title('Mean = {:.3f} +/- {:.3f}'.format(max_pahse_sync.mean(), max_pahse_sync.std()),
+              fontsize=19)
+    im = mne.viz.plot_topomap(max_pahse_sync, info, cmap='Greys',
+                              vmin=max_pahse_sync.min(),
+                              vmax=max_pahse_sync.max(),
+                              show=False, sphere=0.07)
+    cb = plt.colorbar(im[0], shrink=0.85, orientation='vertical')
+    cb.ax.tick_params(labelsize=19)
+    fig.tight_layout()
+
+    if Save:
+        os.makedirs(graficos_save_path, exist_ok=True)
+        if total_data.shape == (info['nchan'], len(delays)):
+            plt.savefig(graficos_save_path + 'Topo_{}_Sesion{}_Sujeto{}.png'.format(title, sesion, sujeto))
+            plt.savefig(graficos_save_path + 'Topo_{}_Sesion{}_Sujeto{}.svg'.format(title, sesion, sujeto))
+        elif total_data.shape == (total_subjects, info['nchan'], len(delays)):
+            plt.savefig(graficos_save_path + 'Topo_{}.png'.format(title))
+            plt.savefig(graficos_save_path + 'Topo_{}.svg'.format(title))
 
 ## VIEJAS NO SE USAN
 

@@ -4,10 +4,8 @@ import matplotlib.pyplot as plt
 import mne
 import numpy as np
 from sklearn.model_selection import KFold
-from scipy import signal as sgn
 
-
-import Load
+import Load_Envelope as Load
 import Models
 import Plot
 import Processing
@@ -16,19 +14,12 @@ import Permutations
 # WHAT TO DO
 Plot_EEG_PSD = False
 Simulate_random_data = False
-Cov_Matrix = False
 Signal_vs_Pred = False
-Phase_Align = False
-Cortical_Entrainment = True
-average_phase_diff = np.zeros((18, 128))
-average_phase_consistency = np.zeros((18, 128))
-
 Pitch = False
 
 # Figures
-Display = True
+Display = False
 Save = False
-
 if Display:
     plt.ion()
 else:
@@ -58,7 +49,7 @@ Bands = ['Theta']
 stim = 'Envelope'
 Band = 'Theta'
 situacion = 'Escucha'
-tmin, tmax = -0.6, -0.003
+tmin, tmax = -0.4, 0.2
 sr = 128
 delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
 times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays))
@@ -68,7 +59,7 @@ procesed_data_path = 'saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
 Run_saves_path = 'saves/'
 graficos_save_path = 'gráficos/Signals_vs_Pred/tmin{}_tmax{}/'.format(tmin, tmax, stim, Band)
 
-# Save Variables
+
 if Simulate_random_data:
     psd_pred_correlations, psd_rand_correlations = [], []
 if Pitch:
@@ -78,7 +69,7 @@ sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
 sujeto_total = 0
 N_Samples = []
 for sesion in sesiones:
-    print('Sesion {}'.format(sesion))
+    print('\nSesion {}'.format(sesion))
 
     if Pitch:
         # LOAD DATA BY SUBJECT
@@ -91,6 +82,7 @@ for sesion in sesiones:
             pitch = dstims[0][1:, -1]
             pitch_mean.append(np.mean(pitch))
             pitch_std.append(np.std(pitch))
+
     else:
         # LOAD DATA BY SUBJECT
         Sujeto_1, Sujeto_2 = Load.Load_Data(sesion=sesion, stim=stim, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
@@ -105,8 +97,8 @@ for sesion in sesiones:
 
         for sujeto, eeg, dstims in zip((1, 2), (eeg_sujeto_1, eeg_sujeto_2),
                                        (dstims_para_sujeto_1, dstims_para_sujeto_2)):
-        # for sujeto, eeg, dstims in zip([1], [eeg_sujeto_1], [dstims_para_sujeto_1]):
-            print('Sujeto {}'.format(sujeto))
+            # for sujeto, eeg, dstims in zip([1], [eeg_sujeto_1], [dstims_para_sujeto_1]):
+            print('\nSujeto {}'.format(sujeto))
             # Separo los datos en 5 y tomo test set de 20% de datos con kfold (5 iteraciones)
             n_splits = 5
 
@@ -114,7 +106,7 @@ for sesion in sesiones:
             if Plot_EEG_PSD:
                 fmin, fmax = 0, 40
                 Plot.Plot_PSD(sesion, sujeto, Band, situacion, Display, Save, situacion, info,
-                                           eeg.transpose(), fmin, fmax)
+                              eeg.transpose(), fmin, fmax)
 
             if Simulate_random_data or Signal_vs_Pred:
                 # Empiezo el KFold de test
@@ -160,7 +152,7 @@ for sesion in sesiones:
                     Rmse = np.array(np.sqrt(np.power((predicted - eeg_test), 2).mean(0)))
 
                     if Signal_vs_Pred:
-                        eeg_x= np.linspace(0, len(eeg_test) / sr, len(eeg_test))
+                        eeg_x = np.linspace(0, len(eeg_test) / sr, len(eeg_test))
                         # SINGAL AND PREDICTION PLOT
                         fig = plt.figure()
                         fig.suptitle('Original prediction')
@@ -175,8 +167,12 @@ for sesion in sesiones:
                         plt.legend()
                         plt.tight_layout()
 
-                        os.makedirs(graficos_save_path+'Original/Stim_{}_EEG_Band{}/'.format(stim, Band), exist_ok=True)
-                        plt.savefig(graficos_save_path + 'Original/Stim_{}_EEG_Band{}/Sesion{}_Sujeto{}.png'.format(stim, Band, sesion, sujeto))
+                        os.makedirs(graficos_save_path + 'Original/Stim_{}_EEG_Band{}/'.format(stim, Band),
+                                    exist_ok=True)
+                        plt.savefig(
+                            graficos_save_path + 'Original/Stim_{}_EEG_Band{}/Sesion{}_Sujeto{}.png'.format(stim, Band,
+                                                                                                            sesion,
+                                                                                                            sujeto))
                         plt.savefig(
                             graficos_save_path + 'Original/Stim_{}_EEG_Band{}/Sesion{}_Sujeto{}.svg'.format(stim, Band,
                                                                                                             sesion,
@@ -186,11 +182,14 @@ for sesion in sesiones:
                         fmin, fmax = 3, 25
                         # SIMULACIONES PERMUTADAS PARA COMPARAR
                         toy_iterations = 1
-                        psd_rand_correlation = Permutations.simular_iteraciones_Ridge_plot(info, times, situacion, alpha,
-                                                                                           toy_iterations, sesion, sujeto,
+                        psd_rand_correlation = Permutations.simular_iteraciones_Ridge_plot(info, times, situacion,
+                                                                                           alpha,
+                                                                                           toy_iterations, sesion,
+                                                                                           sujeto,
                                                                                            fold, dstims_train_val,
                                                                                            eeg_train_val, dstims_test,
-                                                                                           eeg_test, fmin, fmax, stim, Band,
+                                                                                           eeg_test, fmin, fmax, stim,
+                                                                                           Band,
                                                                                            save_path=False,
                                                                                            Display=False)
                         psd_rand_correlations.append(psd_rand_correlation)
@@ -212,105 +211,6 @@ for sesion in sesiones:
                              for ii in range(len(psds_test))])
                         # save average of channels psd correlation
                         psd_pred_correlations.append(np.mean(psds_channel_corr))
-
-            if Cov_Matrix:
-                # Matriz de Covarianza
-                raw = mne.io.RawArray(predicted.transpose(), info)
-                cov_mat = mne.compute_raw_covariance(raw)
-                ax1, ax2 = cov_mat.plot(info)
-
-                try:
-                    os.makedirs('gráficos/Covariance/Cov_prediccion')
-                except:
-                    pass
-                ax1.savefig(
-                    'gráficos/Covariance/Cov_prediccion/Sesion{} - Sujeto{} - {}'.format(sesion, sujeto, situacion))
-
-                raw = mne.io.RawArray(eeg_test.transpose(), info)
-                cov_mat = mne.compute_raw_covariance(raw)
-                plt.ion()
-                ax1, ax2 = cov_mat.plot(info)
-                try:
-                    os.makedirs('gráficos/Covariance/Cov_test')
-                except:
-                    pass
-                ax1.savefig('gráficos/Covariance/Cov_test/Sesion{} - Sujeto{} - {}'.format(sesion, sujeto, situacion))
-
-            if Phase_Align:
-                analytic_signal = sgn.hilbert(eeg, axis=0)
-                phase = np.angle(analytic_signal).transpose()
-                average_phase_diff = np.zeros((len(phase), len(phase)))
-                average_phase_consistency = np.zeros((len(phase), len(phase)))
-
-                for channel in range(len(phase)):
-                    print(channel)
-                    phase_diff = phase - phase[channel]
-
-                    # Phase difference (forma mili):
-                    # angle: arg(complex) = arctan(imaginary/real)
-                    real_diff = np.cos(abs(phase_diff))
-                    imaginary_diff = np.sin(abs(phase_diff))
-                    vector_diff = imaginary_diff.mean(1) / real_diff.mean(1)
-                    average_phase_diff[channel] = np.arctan(vector_diff)
-
-                    # Inter-Site Phase Clustering:
-                    average_phase_consistency[channel] = np.abs(np.mean(np.exp(1j * phase_diff), axis=1))
-
-                plt.figure()
-                plt.imshow(average_phase_diff)
-                plt.colorbar()
-                plt.title('Phase difference {}'.format(situacion))
-
-                plt.figure()
-                plt.imshow(average_phase_consistency)
-                plt.colorbar()
-                plt.title('Phase sincronization {}'.format(situacion))
-
-
-            if Cortical_Entrainment:
-                # env phase
-                analytic_envelope_signal = sgn.hilbert(dstims[0][:, -1], axis=0)
-                env_phase = np.angle(analytic_envelope_signal).transpose()
-
-                # eeg phase
-                analytic_signal = sgn.hilbert(eeg, axis=0)
-                eeg_phase = np.angle(analytic_signal).transpose()
-
-                phase_diff = eeg_phase - env_phase
-                real_diff = np.cos(abs(phase_diff))
-                imaginary_diff = np.sin(abs(phase_diff))
-                vector_diff = imaginary_diff.mean(1) / real_diff.mean(1)
-
-                # mean phase difference
-                average_phase_diff[sujeto_total] = np.arctan(vector_diff)
-                # Inter-Site Phase Clustering:
-                average_phase_consistency[sujeto_total] = np.abs(np.mean(np.exp(1j * phase_diff), axis=1))
-
-            sujeto_total += 1
-
-if Cortical_Entrainment:
-
-    fig = plt.figure()
-    plt.suptitle("Phase difference", fontsize=19)
-    plt.title('Mean = {:.3f} +/- {:.3f}'.format(average_phase_diff.mean(), average_phase_diff.std()),
-              fontsize=19)
-    im = mne.viz.plot_topomap(average_phase_diff.mean(0), info, cmap='Greys',
-                              vmin=average_phase_diff.mean(0).min(), vmax=average_phase_diff.mean(0).max(),
-                              show=False, sphere=0.07)
-    cb = plt.colorbar(im[0], shrink=0.85, orientation='vertical')
-    cb.ax.tick_params(labelsize=19)
-    fig.tight_layout()
-
-    fig = plt.figure()
-    plt.suptitle("Phase sincronization", fontsize=19)
-    plt.title('Mean = {:.3f} +/- {:.3f}'.format(average_phase_consistency.mean(), average_phase_consistency.std()),
-              fontsize=19)
-    im = mne.viz.plot_topomap(average_phase_consistency.mean(0), info, cmap='Greys',
-                              vmin=average_phase_consistency.mean(0).min(), vmax=average_phase_consistency.mean(0).max(),
-                              show=False, sphere=0.07)
-    cb = plt.colorbar(im[0], shrink=0.85, orientation='vertical')
-    cb.ax.tick_params(labelsize=19)
-    fig.tight_layout()
 
 if Pitch:
     f = open(Run_saves_path + 'Subjects_Pitch.pkl', 'wb')
