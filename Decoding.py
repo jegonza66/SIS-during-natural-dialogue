@@ -3,7 +3,7 @@ import pickle
 import numpy as np
 from sklearn.model_selection import KFold
 
-import Load
+import Load_Envelope as Load
 import Models
 import Plot
 import Processing
@@ -62,16 +62,15 @@ subjects_pitch = pickle.load(f)
 f.close()
 
 for Band in Bands:
-    print('\n{}\n'.format(Band))
     try:
         Mean_Correlations_Band = Mean_Correlations[Band]
     except:
         Mean_Correlations_Band = {}
-
     for stim in Stims:
-        print('\n' + stim + '\n')
-        print(situacion)
-        print('tmin{}_tmax{}'.format(tmin, tmax))
+        print('\nBand: ' + Band)
+        print('Stimulus: ' + stim)
+        print('Status: ' + situacion)
+        print('tmin: {} - tmax: {}'.format(tmin, tmax))
         # Paths
         save_path = 'saves/Decoding/{}/Final_Correlation/tmin{}_tmax{}/'.format(situacion, tmin, tmax)
         procesed_data_path = 'saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)

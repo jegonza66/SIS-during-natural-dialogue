@@ -2,6 +2,7 @@ import os
 import pickle
 import numpy as np
 from sklearn.model_selection import KFold
+from datetime import datetime
 
 import Load
 import Load_light as Load
@@ -9,23 +10,20 @@ import Models
 import Plot
 import Processing
 
-from datetime import datetime
-startTime = datetime.now()
 
+startTime = datetime.now()
 # Define Parameters
 sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
 total_subjects = len(sesiones)*2
-tmin, tmax = -0.4, 0.1
+tmin, tmax = -0.4, 0.2
 sr = 128
 delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
 times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays))
+times = np.flip(-times)
 situacion = 'Escucha'
 
-# Model parameters
-# model = 'Ridge'
-model = 'mtrf'
-if model == 'mtrf':
-    times = np.flip(-times)
+# Model parameters ('Ridge' or 'mtrf')
+model = 'Ridge'
 
 set_alpha = None
 Alpha_Corr_limit = 0.01
@@ -38,8 +36,8 @@ except:
     print('\n\nAlphas file not found.\n\n')
 
 # Stimuli and EEG
-Stims = ['Envelope']
-Bands = ['Delta', 'Alpha', 'Beta_1', 'All', (1, 8), (1, 12)]
+Stims = ['Spectrogram']
+Bands = ['Delta']
 
 # Standarization
 Stims_preprocess = 'Normalize'
@@ -70,16 +68,17 @@ subjects_pitch = pickle.load(f)
 f.close()
 
 for Band in Bands:
-    print('\n{}\n'.format(Band))
     try:
         Mean_Correlations_Band = Mean_Correlations[Band]
     except:
         Mean_Correlations_Band = {}
 
     for stim in Stims:
-        print('\n' + stim + '\n')
-        print(situacion)
-        print('tmin{}_tmax{}'.format(tmin, tmax))
+        print('\nModel: ' + model)
+        print('Band: ' + Band)
+        print('Stimulus: ' + stim)
+        print('Status: ' + situacion)
+        print('tmin: {} - tmax: {}'.format(tmin, tmax))
         # Paths
         save_path = 'saves/{}/{}/Final_Correlation/tmin{}_tmax{}/'.format(model, situacion, tmin, tmax)
         procesed_data_path = 'saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
@@ -93,7 +92,7 @@ for Band in Bands:
         # Start Run
         sujeto_total = 0
         for sesion in sesiones:
-            print('Sesion {}'.format(sesion))
+            print('\nSession {}'.format(sesion))
 
             # LOAD DATA BY SUBJECT
             Sujeto_1, Sujeto_2 = Load.Load_Data(sesion=sesion, stim=stim, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
@@ -108,7 +107,7 @@ for Band in Bands:
             for sujeto, eeg, dstims in zip((1, 2), (eeg_sujeto_1, eeg_sujeto_2),
                                            (dstims_para_sujeto_1, dstims_para_sujeto_2)):
                 # for sujeto, eeg, dstims in zip([2], [eeg_sujeto_2], [dstims_para_sujeto_2]):
-                print('Sujeto {}'.format(sujeto))
+                print('Subject {}'.format(sujeto))
                 # Separo los datos en 5 y tomo test set de 20% de datos con kfold (5 iteraciones)
                 Predicciones = {}
                 n_folds = 5
@@ -288,10 +287,10 @@ for Band in Bands:
 
         # Grafico Pesos
         Pesos_totales = Plot.regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display_Total_Figures,
-                                                Save_Total_Figures, Run_graficos_path, Len_Estimulos, stim)
+                                                Save_Total_Figures, Run_graficos_path, Len_Estimulos, stim, ERP=True)
 
         Plot.regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, Display_Total_Figures,
-                                       Save_Total_Figures, Run_graficos_path, Len_Estimulos, stim, Band)
+                                       Save_Total_Figures, Run_graficos_path, Len_Estimulos, stim, Band, ERP=True)
 
         # Matriz de Correlacion
         Plot.Matriz_corr_channel_wise(Pesos_totales_sujetos_todos_canales, Display_Total_Figures, Save_Total_Figures,

@@ -387,7 +387,7 @@ def Cabezas_canales_rep(Canales_repetidos_sujetos, info, Display, Save, Run_graf
 
 
 def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display, Save, Run_graficos_path,
-                       Len_Estimulos, stim, title=None, decorrelation_times=None):
+                       Len_Estimulos, stim, ERP=False, title=None, decorrelation_times=None):
     # Armo pesos promedio por canal de todos los sujetos que por lo menos tuvieron un buen canal
     Pesos_totales_sujetos_todos_canales_copy = Pesos_totales_sujetos_todos_canales.swapaxes(0, 2)
     Pesos_totales_sujetos_todos_canales_copy = Pesos_totales_sujetos_todos_canales_copy.mean(0).transpose()
@@ -412,12 +412,18 @@ def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display
                                               Len_Estimulos[j] for j in range(i + 1))]. \
                 reshape(info['nchan'], 16, len(times)).mean(1)
 
+            if ERP:
+                # Adapt for ERP
+                spectrogram_weights_chanels = np.flip(spectrogram_weights_chanels, axis=1)
+
             evoked = mne.EvokedArray(spectrogram_weights_chanels, info)
+            # evoked = mne.EvokedArray(spectrogram_weights_chanels, info)
             evoked.times = times
             evoked.plot(scalings=dict(eeg=1, grad=1, mag=1), zorder='std', time_unit='ms', titles=dict(eeg=''),
                         show=False, spatial_colors=True, unit=False, units='w', axes=ax)
             ax.plot(times * 1000, evoked._data.mean(0), "k--", label="Mean", zorder=130, linewidth=2)
-            if times[-1] > 0: ax.axvspan(0, ax.get_xlim()[1], alpha=0.4, color='grey', label='Unheard stimuli')
+            # if times[-1] > 0: ax.axvspan(0, ax.get_xlim()[1], alpha=0.4, color='grey', label='Unheard stimuli')
+            # if times[0] < 0: ax.axvspan(ax.get_xlim()[0], 0, alpha=0.4, color='grey', label='Pre-Stimuli')
             if decorrelation_times and times[-1] > 0:
                 ax.vlines(np.mean(decorrelation_times), ax.get_ylim()[0], ax.get_ylim()[1], linestyle='dashed',
                           color='red',
@@ -428,22 +434,29 @@ def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display
 
             ax.xaxis.label.set_size(14)
             ax.yaxis.label.set_size(14)
+            # ax.set_ylim([-0.01, 0.008])
             ax.tick_params(axis='both', labelsize=14)
             ax.grid()
             ax.legend(fontsize=12, loc='lower left')
             fig.tight_layout()
 
         else:
-            evoked = mne.EvokedArray(Pesos_totales_sujetos_todos_canales_copy[:,
+            mean_coefs = Pesos_totales_sujetos_todos_canales_copy[:,
                                      sum(Len_Estimulos[j] for j in range(i)):sum(
-                                         Len_Estimulos[j] for j in range(i + 1))], info)
+                                         Len_Estimulos[j] for j in range(i + 1))]
+            if ERP:
+                # Adapt for ERP
+                mean_coefs = np.flip(mean_coefs, axis=1)
+
+            evoked = mne.EvokedArray(mean_coefs, info)
             evoked.times = times
 
             evoked.plot(scalings=dict(eeg=1, grad=1, mag=1), zorder='std', time_unit='ms',
                         show=False, spatial_colors=True, unit=True, units='W', axes=ax)
 
             ax.plot(times * 1000, evoked._data.mean(0), 'k--', label='Mean', zorder=130, linewidth=2)
-            if times[-1] > 0: ax.axvspan(0, ax.get_xlim()[1], alpha=0.4, color='grey', label='Unheard stimuli')
+            # if times[-1] > 0: ax.axvspan(0, ax.get_xlim()[1], alpha=0.4, color='grey', label='Unheard stimuli')
+            # if times[0] < 0: ax.axvspan(ax.get_xlim()[0], 0, alpha=0.4, color='grey', label='Pre-Stimuli')
             if decorrelation_times and times[-1] > 0:
                 ax.vlines(np.mean(decorrelation_times), ax.get_ylim()[0], ax.get_ylim()[1], linestyle='dashed',
                           color='red',
@@ -474,7 +487,7 @@ def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display
 
 
 def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, Display,
-                              Save, Run_graficos_path, Len_Estimulos, stim, Band, title=None):
+                              Save, Run_graficos_path, Len_Estimulos, stim, Band, ERP=False, title=None):
     # Armo pesos promedio por canal de todos los sujetos que por lo menos tuvieron un buen canal
     Pesos_totales_sujetos_todos_canales_copy = Pesos_totales_sujetos_todos_canales.swapaxes(0, 2)
     Pesos_totales_sujetos_todos_canales_copy = Pesos_totales_sujetos_todos_canales_copy.mean(0).transpose()
@@ -504,6 +517,11 @@ def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, 
                                             Len_Estimulos[j] for j in range(i + 1))].mean(0)
             spectrogram_weights_bands = spectrogram_weights_bands.reshape(16, len(times))
 
+            if ERP:
+                # Adapt for ERP
+                spectrogram_weights_chanels = np.flip(spectrogram_weights_chanels, axis=1)
+                spectrogram_weights_bands = np.flip(spectrogram_weights_bands, axis=1)
+
             im = axs[1].pcolormesh(times * 1000, np.arange(16), spectrogram_weights_bands, cmap='jet',
                                vmin=-spectrogram_weights_bands.max(), vmax=spectrogram_weights_bands.max(), shading='auto')
             axs[1].set(xlabel='Time (ms)', ylabel='Hz')
@@ -513,7 +531,6 @@ def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, 
             ticks_labels = [int(Bands_center[i]) for i in np.arange(0, len(Bands_center), 2)]
             axs[1].set_yticks(ticks_positions)
             axs[1].set_yticklabels(ticks_labels)
-
             axs[1].xaxis.label.set_size(14)
             axs[1].yaxis.label.set_size(14)
             axs[1].tick_params(axis='both', labelsize=14)
@@ -527,6 +544,7 @@ def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, 
             evoked.plot(scalings=dict(eeg=1, grad=1, mag=1), zorder='std', time_unit='ms', titles=dict(eeg=''),
                         show=False, spatial_colors=True, unit=False, units='w', axes=axs[0])
             axs[0].plot(times * 1000, evoked._data.mean(0), "k--", label="Mean", zorder=130, linewidth=2)
+            # if times[0] < 0: axs[0].axvspan(axs[0].get_xlim()[0], 0, alpha=0.4, color='grey', label='Pre-Stimuli')
             axs[0].axis('off')
             axs[0].legend(fontsize=12, loc="lower left")
 
@@ -535,6 +553,10 @@ def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, 
         else:
             mean_coefs = Pesos_totales_sujetos_todos_canales_copy[:,
                          sum(Len_Estimulos[j] for j in range(i)):sum(Len_Estimulos[j] for j in range(i + 1))]
+
+            if ERP:
+                # Adapt for ERP
+                mean_coefs = np.flip(mean_coefs, axis=1)
 
             evoked = mne.EvokedArray(mean_coefs, info)
             evoked.times = times
@@ -844,7 +866,7 @@ def decoding_t_lags(Correlaciones_totales_sujetos, times, Band, Display, Save, R
         fig.savefig(Run_graficos_path + 'Correlation_time_lags_{}.png'.format(Band))
 
 
-def Brain_sync(data, Band, info, Display, Save, graficos_save_path, total_subjects, sesion=None, sujeto=None):
+def Brain_sync(data, Band, info, Display, Save, graficos_save_path, total_subjects=18, sesion=None, sujeto=None):
 
     if Display:
         plt.ion()
@@ -876,8 +898,7 @@ def Brain_sync(data, Band, info, Display, Save, graficos_save_path, total_subjec
             plt.savefig(graficos_save_path + 'Inter Brain sync - Sesion{}_Sujeto{}.svg'.format(sesion, sujeto))
 
 
-
-def ch_heatmap_topo(total_data, Band, info, delays, times, Display, Save, graficos_save_path, title, total_subjects,
+def ch_heatmap_topo(total_data, Band, info, delays, times, Display, Save, graficos_save_path, title, total_subjects=18,
                     sesion=None, sujeto=None):
 
     if total_data.shape == (info['nchan'], len(delays)):
@@ -896,27 +917,35 @@ def ch_heatmap_topo(total_data, Band, info, delays, times, Display, Save, grafic
     else:
         plt.ioff()
 
-    fig, axs = plt.subplots(2)
-    plt.suptitle("Time lagged {} {}\n"
+    fig = plt.figure()
+    plt.suptitle("Time lagged {} - Band: {}\n"
                  "Max = {:.3f} +/- {:.3f}".format(title, Band, phase_sync[max_t_lag],
                                                   phase_sync_std[max_t_lag], fontsize=15))
 
-    im = axs[0].pcolormesh(times, np.arange(info['nchan']), phase_sync_ch, shading='auto')
-    cbar = fig.colorbar(im, ax=axs[0], orientation='vertical')
+    axs1 = fig.add_axes([.2, 0.5, 0.65, 0.35])
+    im = axs1.pcolormesh(times, np.arange(info['nchan']), phase_sync_ch, shading='auto')
+    axs1.set_ylabel('{}'.format(title))
+    axs1.yaxis.label.set_size(12)
+    axs1.tick_params(axis='y', labelsize=12)
+    axs1.set_xticks([])
+
+    cb_ax = fig.add_axes([.87, .5, .02, .35])
+    cbar = fig.colorbar(im, orientation='vertical', cax=cb_ax)
     cbar.ax.tick_params(labelsize=12)
 
-    axs[1].plot(times, phase_sync)
-    plt.fill_between(times, phase_sync - phase_sync_std / 2, phase_sync + phase_sync_std / 2, alpha=.5)
-    plt.vlines(times[max_t_lag], axs[1].get_ylim()[0], axs[1].get_ylim()[1], linestyle='dashed', color='k',
+    axs2 = fig.add_axes([.2, .1, 0.65, 0.35])
+    axs2.plot(times, phase_sync)
+    axs2.fill_between(times, phase_sync - phase_sync_std / 2, phase_sync + phase_sync_std / 2, alpha=.5)
+    axs2.vlines(times[max_t_lag], axs2.get_ylim()[0], axs2.get_ylim()[1], linestyle='dashed', color='k',
                label='Max. sync delay: {:.2f}s'.format(times[max_t_lag]))
-    plt.xlabel('Time lag [s]')
-    plt.ylabel('{}'.format(title))
-    axs[1].xaxis.label.set_size(12)
-    axs[1].yaxis.label.set_size(12)
-    axs[1].tick_params(axis='both', labelsize=12)
-    plt.grid()
-    plt.legend()
-    fig.tight_layout()
+    axs2.set_xlabel('Time lag [s]')
+    axs2.set_ylabel('Mean {}'.format(title))
+    axs2.xaxis.label.set_size(12)
+    axs2.yaxis.label.set_size(12)
+    axs2.tick_params(axis='both', labelsize=12)
+    axs2.set_xlim([times[0], times[-1]])
+    axs2.grid()
+    axs2.legend()
 
     if Save:
         os.makedirs(graficos_save_path, exist_ok=True)
@@ -1055,10 +1084,6 @@ def Plot_instantes_interes(Pesos_totales_sujetos_todos_canales, info, Band, time
                 save_path_graficos + 'Instantes_interes_{}.svg'.format(Stims_Order[j] if Cant_Estimulos > 1 else stim))
 
     return returns
-
-
-
-
 
 
 def Matriz_corr(Pesos_totales_sujetos_promedio, Pesos_totales_sujetos_todos_canales, sujeto_total, Display, Save,

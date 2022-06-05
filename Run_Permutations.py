@@ -45,9 +45,12 @@ except:
     print('\n\nAlphas file not found.\n\n')
 
 for Band in Bands:
-    print('\n{}\n'.format(Band))
     for stim in Stims:
-        print('\n' + stim + '\n')
+        print('\nModel: ' + model)
+        print('Band: ' + Band)
+        print('Stimulus: ' + stim)
+        print('Status: ' + situacion)
+        print('tmin: {} - tmax: {}'.format(tmin, tmax))
         # Paths
         procesed_data_path = 'saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
         Path_it = 'saves/{}/{}/Fake_it/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
