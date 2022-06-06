@@ -61,7 +61,7 @@ def plot_cabezas_canales(channel_names, info, sesion, sujeto, Valores_promedio, 
         except:
             pass
         fig.savefig(save_path_cabezas + '{}_Cabeza_Sesion{}_Sujeto{}.png'.format(name, sesion, sujeto))
-
+    plt.close()
 
 def corr_sujeto_decoding(sesion, sujeto, Valores_promedio, Display, name, Save, Run_graficos_path):
     if Display:
@@ -88,7 +88,7 @@ def corr_sujeto_decoding(sesion, sujeto, Valores_promedio, Display, name, Save, 
         except:
             pass
         fig.savefig(save_path_cabezas + '{}_Sesion{}_Sujeto{}.png'.format(name, sesion, sujeto))
-
+    plt.close()
 
 def plot_grafico_pesos(Display, sesion, sujeto, best_alpha, Pesos_promedio,
                        info, times, Corr_promedio, Rmse_promedio, Save,
@@ -153,7 +153,7 @@ def plot_grafico_pesos(Display, sesion, sujeto, best_alpha, Pesos_promedio,
             save_path_graficos = Run_graficos_path + 'Individual weights/'
         os.makedirs(save_path_graficos, exist_ok=True)
         fig.savefig(save_path_graficos + 'Sesion{}_Sujeto{}.png'.format(sesion, sujeto))
-
+    plt.close()
 
 def plot_grafico_shadows(Display, sesion, sujeto, best_alpha,
                          Canales_sobrevivientes_corr, info, sr,
@@ -201,7 +201,7 @@ def plot_grafico_shadows(Display, sesion, sujeto, best_alpha,
         except:
             pass
         fig.savefig(save_path_graficos + 'Sesion{}_Sujeto{}.png'.format(sesion, sujeto))
-
+    plt.close()
 
 def Plot_PSD(sesion, sujeto, Band, situacion, Display, Save, save_path, info, data, fmin=0, fmax=40):
     psds_welch_mean, freqs_mean = mne.time_frequency.psd_array_welch(data, info['sfreq'], fmin, fmax)
@@ -226,7 +226,7 @@ def Plot_PSD(sesion, sujeto, Band, situacion, Display, Save, save_path, info, da
         os.makedirs(save_path_graficos, exist_ok=True)
         plt.savefig(save_path_graficos + 'Sesion{} - Sujeto{}.png'.format(sesion, sujeto, Band))
         plt.savefig(save_path_graficos + 'Sesion{} - Sujeto{}.svg'.format(sesion, sujeto, Band))
-
+    plt.close()
 
 def Cabezas_corr_promedio(Correlaciones_totales_sujetos, info, Display, Save, Run_graficos_path, title):
 
@@ -253,9 +253,9 @@ def Cabezas_corr_promedio(Correlaciones_totales_sujetos, info, Display, Save, Ru
         os.makedirs(save_path_graficos, exist_ok=True)
         fig.savefig(save_path_graficos + '{}_promedio.svg'.format(title))
         fig.savefig(save_path_graficos + '{}_promedio.png'.format(title))
+    plt.close()
 
     # Lateralization comparison
-
     good_channels_right = ['B27', 'B28', 'B29', 'B30', 'C4', 'C5', 'C6', 'C7', 'C9', 'C10', 'C13', 'C14']
     good_channels_left = ['D8', 'D9', 'D10', 'D11', 'D7', 'D6', 'D5', 'D4', 'C31', 'C32', 'C27', 'C26']
 
@@ -297,6 +297,7 @@ def Cabezas_corr_promedio(Correlaciones_totales_sujetos, info, Display, Save, Ru
         os.makedirs(save_path_graficos, exist_ok=True)
         fig.savefig(save_path_graficos + 'left_vs_right_{}.svg'.format(title))
         fig.savefig(save_path_graficos + 'left_vs_right_{}.png'.format(title))
+    plt.close()
 
     return Correlaciones_promedio.mean(), Correlaciones_promedio.std()
 
@@ -321,6 +322,7 @@ def violin_plot_decoding(Correlaciones_totales_sujetos, Display, Save, Run_grafi
         os.makedirs(save_path_graficos, exist_ok=True)
         fig.savefig(save_path_graficos + '{}_promedio.svg'.format(title))
         fig.savefig(save_path_graficos + '{}_promedio.png'.format(title))
+    plt.close()
 
     return Correlaciones_totales_sujetos.mean(), Correlaciones_totales_sujetos.std()
 
@@ -358,6 +360,7 @@ def Cabezas_3d(Correlaciones_totales_sujetos, info, Display, Save, Run_graficos_
         fig.savefig(Run_graficos_path + '{}.svg'.format(title))
         fig.savefig(Run_graficos_path + '{}.png'.format(title))
 
+    plt.close()
     return Correlaciones_promedio.mean(), Correlaciones_promedio.std()
 
 
@@ -384,7 +387,7 @@ def Cabezas_canales_rep(Canales_repetidos_sujetos, info, Display, Save, Run_graf
         os.makedirs(save_path_graficos, exist_ok=True)
         fig.savefig(save_path_graficos + 'Canales_repetidos_{}.png'.format(title))
         fig.savefig(save_path_graficos + 'Canales_repetidos_{}.svg'.format(title))
-
+    plt.close()
 
 def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display, Save, Run_graficos_path,
                        Len_Estimulos, stim, ERP=False, title=None, decorrelation_times=None):
@@ -482,7 +485,7 @@ def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display
             else:
                 fig.savefig(save_path_graficos + 'Regression_Weights_{}.svg'.format(Stims_Order[i]))
                 fig.savefig(save_path_graficos + 'Regression_Weights_{}.png'.format(Stims_Order[i]))
-
+    plt.close()
     return Pesos_totales_sujetos_todos_canales_copy
 
 
@@ -594,7 +597,7 @@ def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, 
             else:
                 fig.savefig(save_path_graficos + 'Regression_Weights_matrix_{}.svg'.format(Stims_Order[i]))
                 fig.savefig(save_path_graficos + 'Regression_Weights_marix_{}.png'.format(Stims_Order[i]))
-
+    plt.close()
 
 def Plot_cabezas_instantes(Pesos_totales_sujetos_todos_canales, info, Band, times, sr, Display_figure_instantes,
                           Save_figure_instantes, Run_graficos_path):
@@ -647,6 +650,7 @@ def Plot_cabezas_instantes(Pesos_totales_sujetos_todos_canales, info, Band, time
         os.makedirs(save_path_graficos, exist_ok=True)
         fig.savefig(save_path_graficos + 'Instantes_interes.png')
         fig.savefig(save_path_graficos + 'Instantes_interes.svg')
+    plt.close()
 
     return Pesos_totales_sujetos_todos_canales_copy.mean(1)
 
@@ -716,7 +720,7 @@ def Matriz_corr_channel_wise(Pesos_totales_sujetos_todos_canales, Display, Save,
         else:
             fig.savefig(save_path_graficos + 'TRF_correlation_matrix.png')
             fig.savefig(save_path_graficos + 'TRF_correlation_matrix.svg')
-
+    plt.close()
 
 def Channel_wise_correlation_topomap(Pesos_totales_sujetos_todos_canales, info, Display, Save, Run_graficos_path):
     Correlation_matrices = np.zeros((Pesos_totales_sujetos_todos_canales.shape[0],
@@ -754,7 +758,7 @@ def Channel_wise_correlation_topomap(Pesos_totales_sujetos_todos_canales, info, 
         os.makedirs(save_path_graficos, exist_ok=True)
         fig.savefig(save_path_graficos + 'Channel_correlation_topo.png')
         fig.savefig(save_path_graficos + 'Channel_correlation_topo.svg')
-
+    plt.close()
 
 def PSD_boxplot(psd_pred_correlations, psd_rand_correlations, Display, Save, Run_graficos_path):
     psd_rand_correlations = Funciones.flatten_list(psd_rand_correlations)
@@ -780,7 +784,7 @@ def PSD_boxplot(psd_pred_correlations, psd_rand_correlations, Display, Save, Run
         os.makedirs(save_path_graficos, exist_ok=True)
         fig.savefig(save_path_graficos + 'PSD Boxplot.png')
         fig.savefig(save_path_graficos + 'PSD Boxplot.svg')
-
+    plt.close()
 
 def weights_ERP(Pesos_totales_sujetos_todos_canales, info, times, Display,
                 Save, Run_graficos_path, Cant_Estimulos, Stims_Order, stim, decorrelation_times=None):
@@ -831,7 +835,7 @@ def weights_ERP(Pesos_totales_sujetos_todos_canales, info, times, Display,
                 Run_graficos_path + 'Regression_Weights_{}.svg'.format(Stims_Order[j] if Cant_Estimulos > 1 else stim))
             fig.savefig(
                 Run_graficos_path + 'Regression_Weights_{}.png'.format(Stims_Order[j] if Cant_Estimulos > 1 else stim))
-
+    plt.close()
 
 def decoding_t_lags(Correlaciones_totales_sujetos, times, Band, Display, Save, Run_graficos_path):
     Corr_time_sub = Correlaciones_totales_sujetos.mean(0)
@@ -864,6 +868,7 @@ def decoding_t_lags(Correlaciones_totales_sujetos, times, Band, Display, Save, R
         os.makedirs(Run_graficos_path, exist_ok=True)
         fig.savefig(Run_graficos_path + 'Correlation_time_lags_{}.svg'.format(Band))
         fig.savefig(Run_graficos_path + 'Correlation_time_lags_{}.png'.format(Band))
+    plt.close()
 
 
 def Brain_sync(data, Band, info, Display, Save, graficos_save_path, total_subjects=18, sesion=None, sujeto=None):
@@ -896,6 +901,7 @@ def Brain_sync(data, Band, info, Display, Save, graficos_save_path, total_subjec
         elif data.shape == (info['nchan'], info['nchan']):
             plt.savefig(graficos_save_path + 'Inter Brain sync - Sesion{}_Sujeto{}.png'.format(sesion, sujeto))
             plt.savefig(graficos_save_path + 'Inter Brain sync - Sesion{}_Sujeto{}.svg'.format(sesion, sujeto))
+    plt.close()
 
 
 def ch_heatmap_topo(total_data, Band, info, delays, times, Display, Save, graficos_save_path, title, total_subjects=18,
@@ -955,6 +961,7 @@ def ch_heatmap_topo(total_data, Band, info, delays, times, Display, Save, grafic
         elif total_data.shape == (total_subjects, info['nchan'], len(delays)):
             plt.savefig(graficos_save_path + 't_lags_{}.png'.format(title))
             plt.savefig(graficos_save_path + 't_lags_{}.svg'.format(title))
+    plt.close()
 
     # Plot topo
     max_pahse_sync = phase_sync_ch[:, max_t_lag]
@@ -978,7 +985,7 @@ def ch_heatmap_topo(total_data, Band, info, delays, times, Display, Save, grafic
         elif total_data.shape == (total_subjects, info['nchan'], len(delays)):
             plt.savefig(graficos_save_path + 'Topo_{}.png'.format(title))
             plt.savefig(graficos_save_path + 'Topo_{}.svg'.format(title))
-
+    plt.close()
 ## VIEJAS NO SE USAN
 
 def Plot_instantes_interes(Pesos_totales_sujetos_todos_canales, info, Band, times, sr, Display_figure_instantes,
