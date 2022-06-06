@@ -60,7 +60,7 @@ for Band in Bands:
         sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
         sujeto_total = 0
         for sesion in sesiones:
-            print('Sesion {}'.format(sesion))
+            print('\nSesion {}'.format(sesion))
             # LOAD DATA BY SUBJECT
             Sujeto_1, Sujeto_2 = Load.Load_Data(sesion=sesion, stim=stim, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
                                                 procesed_data_path=procesed_data_path, situacion=situacion)

@@ -12,15 +12,15 @@ from datetime import datetime
 startTime = datetime.now()
 
 # Define Parameters
-tmin, tmax = -0.4, 0.195
+tmin, tmax = -0.4, 0.2
 sr = 128
 delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
 times = list(np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays)))
 # take lower time rolution to run faster
-skip = 4
+skip = 2
 times = times[::skip]
 t_lags = np.arange(len(times))*skip
-situacion = 'Habla_Propia'
+situacion = 'Escucha'
 
 # Model parameters
 set_alpha = None
@@ -87,7 +87,7 @@ for Band in Bands:
         sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
         sujeto_total = 0
         for sesion in sesiones:
-            print('Sesion {}'.format(sesion))
+            print('\nSesion {}'.format(sesion))
 
             # LOAD DATA BY SUBJECT
             Sujeto_1, Sujeto_2 = Load.Load_Data(sesion=sesion, stim=stim, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
