@@ -102,7 +102,7 @@ for Band in Bands:
         plt.savefig(Run_graficos_path + '{}.png'.format(Band))
         plt.savefig(Run_graficos_path + '{}.svg'.format(Band))
 
-## Violin Plot Bandas Ridge
+## Violin Plot Bands
 import pandas as pd
 import pickle
 import matplotlib.pyplot as plt
@@ -111,14 +111,13 @@ import seaborn as sn
 
 tmin, tmax = -0.6, -0.003
 model = 'Ridge'
-situacion = 'Silencio'
+situacion = 'Escucha'
 
 Run_graficos_path = 'gráficos/Model_Comparison/{}/{}/tmin{}_tmax{}/Violin Plots/'.format(model, situacion, tmin, tmax)
 Save_fig = True
 Correlaciones = {}
 
-stim = 'Spectrogram'
-
+stim = 'Envelope'
 Bands = ['All', 'Delta', 'Theta', 'Alpha', 'Beta_1']
 
 for Band in Bands:
@@ -136,6 +135,7 @@ plt.title(situacion, fontsize=24)
 sn.violinplot(data=pd.DataFrame(Correlaciones), palette=my_pal)
 plt.ylabel('Correlation', fontsize=24)
 plt.yticks(fontsize=20)
+plt.ylim([-0, 0.5])
 plt.grid()
 ax = plt.gca()
 ax.set_xticklabels(['All\n(0.1 - 40 Hz)', 'Delta\n(1 - 4 Hz)', 'Theta\n(4 - 8 Hz)', 'Alpha\n(8 - 13 Hz)',
@@ -164,7 +164,6 @@ tmin, tmax = -0.6, -0.003
 Correlaciones = {}
 
 Band = 'Theta'
-
 Stims = ['Spectrogram', 'Envelope', 'Pitch', 'Shimmer']
 
 for stim in Stims:
@@ -284,7 +283,6 @@ Save_fig = True
 Correlaciones = {}
 
 stim = 'Envelope'
-
 Bands = ['Delta', 'Theta', 'Alpha']
 
 for Band in Bands:
@@ -364,21 +362,21 @@ if Save_fig:
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle
+import os
 
 model = 'Ridge'
 situacion = 'Escucha'
+tmin, tmax = -0.6, -0.003
 Run_graficos_path = 'gráficos/Model_Comparison/tmin{}_tmax{}/Heatmaps/'.format(tmin, tmax)
 Save_fig = True
 
-tmin, tmax = -0.6, -0.003
-
 Bands = ['All', 'Delta', 'Theta', 'Alpha', 'Beta_1']
-stims = ['Spectrogram', 'Envelope', 'Pitch', 'Shimmer']
+Stims = ['Spectrogram', 'Envelope', 'Pitch', 'Shimmer']
 
-Corrs_map = np.zeros((len(stims),len(Bands)))
-Sig_map = np.zeros((len(stims),len(Bands)))
+Corrs_map = np.zeros((len(stims), len(Bands)))
+Sig_map = np.zeros((len(stims), len(Bands)))
 
-for i, stim in enumerate(stims):
+for i, stim in enumerate(Stims):
     Corr_stim = []
     Sig_stim = []
     for Band in Bands:
@@ -392,12 +390,13 @@ for i, stim in enumerate(stims):
 
 fig, ax = plt.subplots()
 plt.imshow(Corrs_map)
-ax.set_yticks(np.arange(4))
+plt.title('Correlation', fontsize=15)
+ax.set_yticks(np.arange(len(Stims)))
 ax.set_yticklabels(stims, fontsize=13)
-ax.set_xticks(np.arange(5))
+ax.set_xticks(np.arange(len(Bands)))
 ax.set_xticklabels(Bands, fontsize=13)
-ax.xaxis.tick_top()
-cbar = plt.colorbar(shrink=0.7)
+# ax.xaxis.tick_top()
+cbar = plt.colorbar(shrink=0.4, aspect=15)
 cbar.ax.tick_params(labelsize=13)
 fig.tight_layout()
 
@@ -408,12 +407,13 @@ if Save_fig:
 
 fig, ax = plt.subplots()
 plt.imshow(Sig_map)
-ax.set_yticks(np.arange(4))
+plt.title('Significance', fontsize=15)
+ax.set_yticks(np.arange(len(Stims)))
 ax.set_yticklabels(stims, fontsize=13)
-ax.set_xticks(np.arange(5))
+ax.set_xticks(np.arange(len(Bands)))
 ax.set_xticklabels(Bands, fontsize=13)
-ax.xaxis.tick_top()
-cbar = plt.colorbar(shrink=0.7)
+# ax.xaxis.tick_top()
+cbar = plt.colorbar(shrink=0.4, aspect=15)
 cbar.ax.tick_params(labelsize=13)
 fig.tight_layout()
 

@@ -15,7 +15,7 @@ startTime = datetime.now()
 # Define Parameters
 sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
 total_subjects = len(sesiones)*2
-tmin, tmax = -0.4, 0.2
+tmin, tmax = -0.6, -0.003
 sr = 128
 delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
 times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays))
@@ -36,15 +36,15 @@ except:
     print('\n\nAlphas file not found.\n\n')
 
 # Stimuli and EEG
-Stims = ['Spectrogram']
-Bands = ['Delta']
+Stims = ['Envelope']
+Bands = ['Delta', 'Alpha', 'Beta_1', 'All']
 
 # Standarization
 Stims_preprocess = 'Normalize'
 EEG_preprocess = 'Standarize'
 
 # Random permutations
-Statistical_test = False
+Statistical_test = True
 
 # Save / Display Figures
 Display_Ind_Figures = False
@@ -280,10 +280,16 @@ for Band in Bands:
                                                                   Display_Total_Figures, Save_Total_Figures,
                                                                   Run_graficos_path, title='Correlation')
 
+        Mean_Correlations_Band[stim] = Plot.Cabezas_corr_promedio(Correlaciones_totales_sujetos, info,
+                                                                  Display_Total_Figures, Save_Total_Figures,
+                                                                  Run_graficos_path, title='Rmse')
+
         # Armo cabecita con canales repetidos
         if Statistical_test:
             Plot.Cabezas_canales_rep(Canales_repetidos_corr_sujetos.sum(0), info, Display_Total_Figures,
                                      Save_Total_Figures, Run_graficos_path, title='Correlation')
+            Plot.Cabezas_canales_rep(Canales_repetidos_corr_sujetos.sum(0), info, Display_Total_Figures,
+                                     Save_Total_Figures, Run_graficos_path, title='Rmse')
 
         # Grafico Pesos
         Pesos_totales = Plot.regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display_Total_Figures,
