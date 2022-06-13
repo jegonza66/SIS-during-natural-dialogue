@@ -138,8 +138,8 @@ for Band in Bands:
 
                     for i, t_lag in enumerate(t_lags):
                         # Ajusto el modelo y guardo
-                        Model = Models.mne_mtrf_decoding(tmin, tmax, sr, info, alpha)
-                        Model.fit(eeg_train_val, dstims_train_val, t_lag)
+                        Model = Models.mne_mtrf_decoding(tmin, tmax, sr, info, alpha, t_lag)
+                        Model.fit(eeg_train_val, dstims_train_val)
 
                         # Predigo en test set y guardo
                         predicted = Model.predict(eeg_test)

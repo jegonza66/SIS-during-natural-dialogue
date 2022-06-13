@@ -40,13 +40,14 @@ class mne_mtrf:
 
 class mne_mtrf_decoding:
 
-    def __init__(self, tmin, tmax, sr, info, alpha):
+    def __init__(self, tmin, tmax, sr, info, alpha, t_lag):
         self.sr = sr
+        self.t_lag = t_lag
         self.rf = ReceptiveField(tmin, tmax, sr, feature_names=info.ch_names, estimator=alpha, scoring='corrcoef',
                                  patterns=True, verbose=False)
 
-    def fit(self, eeg_train_val, dstims_train_val, t_lag):
-        stim = dstims_train_val[:, t_lag]
+    def fit(self, eeg_train_val, dstims_train_val):
+        stim = dstims_train_val[:, self.t_lag]
         stim = stim.reshape([stim.shape[0], 1])
         self.rf.fit(eeg_train_val, stim)
         self.coefs = self.rf.coef_[0, :, :]
