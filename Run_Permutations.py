@@ -24,7 +24,7 @@ if model == 'Ridge':
     iteraciones = 3000
 
 elif model == 'Decoding':
-    iteraciones = 100
+    iteraciones = 200
 
 # Stimuli and EEG
 Stims = ['Spectrogram']

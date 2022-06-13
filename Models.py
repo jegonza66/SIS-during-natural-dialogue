@@ -49,8 +49,8 @@ class mne_mtrf_decoding:
         stim = dstims_train_val[:, t_lag]
         stim = stim.reshape([stim.shape[0], 1])
         self.rf.fit(eeg_train_val, stim)
-        self.coefs = self.rf.coef_[0, :, :t_lag]
-        self.patterns = self.rf.patterns_[0, :, :t_lag]
+        self.coefs = self.rf.coef_[0, :, :]
+        self.patterns = self.rf.patterns_[0, :, :]
 
     def predict(self, eeg_test):
         predicted = self.rf.predict(eeg_test)

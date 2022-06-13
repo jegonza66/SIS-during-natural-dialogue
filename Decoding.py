@@ -12,11 +12,11 @@ from datetime import datetime
 startTime = datetime.now()
 
 # Define Parameters
-tmin, tmax = -0.6, -0.003
+tmin, tmax = -0.4, 0.2
 sr = 128
 delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
 times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays))
-situacion = 'Habla_Propia'
+situacion = 'Escucha'
 
 # Model parameters
 set_alpha = None
@@ -32,13 +32,14 @@ except:
 # Stimuli and EEG
 Stims = ['Envelope']
 Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'All']
+Bands = ['Delta']
 
 # Standarization
 Stims_preprocess = 'Normalize'
 EEG_preprocess = 'Standarize'
 
 # Random permutations
-Statistical_test = False
+Statistical_test = True
 
 # Save / Display Figures
 Display_Ind_Figures = False
@@ -49,6 +50,15 @@ Save_Final_Correlation = True
 
 # Save mean correlations
 Mean_Correlations_fname = 'saves/Decoding/{}/Final_Correlation/tmin{}_tmax{}/Mean_Correlations.pkl'.format(situacion, tmin, tmax)
+Max_t_lags_fname = 'saves/Decoding_t_lag/{}/Final_Correlation/tmin{}_tmax{}/Max_t_lags.pkl'.format(situacion, tmin, tmax)
+try:
+    f = open(Max_t_lags_fname, 'rb')
+    Max_t_lags = pickle.load(f)
+    f.close()
+except:
+    print('\n\nMean_Correlations file not found\n\n')
+    Max_t_lags = {}
+
 try:
     f = open(Mean_Correlations_fname, 'rb')
     Mean_Correlations = pickle.load(f)
@@ -66,6 +76,7 @@ for Band in Bands:
         Mean_Correlations_Band = Mean_Correlations[Band]
     except:
         Mean_Correlations_Band = {}
+    Max_t_lag = np.where(times == Max_t_lags[Band])[0][0]
     for stim in Stims:
         print('\nBand: ' + Band)
         print('Stimulus: ' + stim)
@@ -147,7 +158,7 @@ for Band in Bands:
                         alpha = set_alpha
 
                     # Ajusto el modelo y guardo
-                    t_lag = -1 #Most recent audio sample
+                    t_lag = Max_t_lag #Most recent audio sample
                     Model = Models.mne_mtrf_decoding(tmin, tmax, sr, info, alpha)
                     Model.fit(eeg_train_val, dstims_train_val, t_lag)
                     Pesos_ronda_canales[fold] = Model.coefs

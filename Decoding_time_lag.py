@@ -184,3 +184,44 @@ for Band in Bands:
             f.close()
 
 print(datetime.now() - startTime)
+
+##
+
+# Define Parameters
+tmin, tmax = -0.4, 0.2
+sr = 128
+delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
+times = list(np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays)))
+# take lower time rolution to run faster
+skip = 2
+times = times[::skip]
+t_lags = np.arange(len(times))*skip
+situacion = 'Escucha'
+
+Stims = ['Envelope']
+Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'All']
+
+max_t_lags = {}
+
+for stim in Stims:
+    for Band in Bands:
+        print(Band)
+        save_path = 'saves/Decoding_t_lag/{}/Final_Correlation/tmin{}_tmax{}/'.format(situacion, tmin, tmax)
+
+        f = open(save_path + '{}_EEG_{}.pkl'.format(stim, Band), 'rb')
+        Correlaciones_totales_sujetos = pickle.load(f)
+        f.close()
+
+        Corr_time_sub = Correlaciones_totales_sujetos.mean(0)
+        mean_time_corr = Corr_time_sub.mean(1)
+
+        # get max correlation t_lag
+        max_t_lag = np.argmax(mean_time_corr)
+        print(times[max_t_lag])
+        print(max_t_lag)
+
+        max_t_lags[Band] = times[max_t_lag]
+
+f = open(save_path + 'Max_t_lags.pkl', 'wb')
+pickle.dump(max_t_lags, f)
+f.close()
