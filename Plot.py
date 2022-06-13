@@ -453,7 +453,7 @@ def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display
             # ax.set_ylim([-0.01, 0.008])
             ax.tick_params(axis='both', labelsize=14)
             ax.grid()
-            ax.legend(fontsize=12, loc='auto')
+            ax.legend(fontsize=12)
             fig.tight_layout()
 
         else:
@@ -485,7 +485,7 @@ def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display
             ax.yaxis.label.set_size(14)
             ax.tick_params(axis='both', labelsize=14)
             ax.grid()
-            ax.legend(fontsize=12, loc='auto')
+            ax.legend(fontsize=12)
 
             fig.tight_layout()
 
@@ -547,7 +547,7 @@ def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, 
             axs[0].plot(times * 1000, evoked._data.mean(0), "k--", label="Mean", zorder=130, linewidth=2)
             # if times[0] < 0: axs[0].axvspan(axs[0].get_xlim()[0], 0, alpha=0.4, color='grey', label='Pre-Stimuli')
             axs[0].axis('off')
-            axs[0].legend(fontsize=10, loc="auto")
+            axs[0].legend(fontsize=10)
 
             im = axs[1].pcolormesh(times * 1000, np.arange(16), spectrogram_weights_bands, cmap='jet',
                                vmin=-spectrogram_weights_bands.max(), vmax=spectrogram_weights_bands.max(), shading='auto')
@@ -591,7 +591,7 @@ def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, 
                         show=False, spatial_colors=True, unit=False, units='w', axes=axs[0])
             axs[0].plot(times * 1000, evoked._data.mean(0), "k--", label="Mean", zorder=130, linewidth=2)
             axs[0].axis('off')
-            axs[0].legend(fontsize=12, loc="auto")
+            axs[0].legend(fontsize=12)
 
             im = axs[1].pcolormesh(times * 1000, np.arange(info['nchan']), mean_coefs, cmap='jet',
                                    vmin=-(mean_coefs).max(), vmax=(mean_coefs).max(), shading='auto')
