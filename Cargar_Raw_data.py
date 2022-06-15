@@ -14,7 +14,7 @@ import librosa
 import Funciones
 
 ## PARAMETROS
-s = 22
+s = 21
 trial = 1
 channel = 1
 
@@ -103,6 +103,18 @@ plt.title('Hilbert + Butter + Prom')
 plt.xlabel('Frecuency [Hz]')
 plt.ylabel('Amplitud')
 
+## PITCH Pablo
+path = r"C:\Users\joaco\Desktop\Joac\Facultad\Tesis\Código\Datos\Pitch\Pablo\tracks_generales"
+subject_letter = 'A' if channel else 'B'
+pitch_name = path + '\{}_{}.csv'.format(s,subject_letter)
+
+df = pd.read_csv(pitch_name)
+trial_changes = [i for i, value in enumerate(np.diff(df['time'].values)<0) if value]
+pitch = df['pitch'].values
+
+pitch_trial = pitch[:trial_changes[0]]
+plt.plot(pitch_trial, label='Pablo')
+
 ## PITCH
 pitch_fname = "Datos/Pitch/S" + str(s) + "/s" + str(s) + ".objects." + "{:02d}".format(trial) + ".channel" + str(
     channel) + ".txt"
@@ -115,6 +127,10 @@ intensity = np.array(read_file['intensity'])
 
 pitch[pitch == '--undefined--'] = np.nan
 pitch = np.array(pitch, dtype=float)
+
+plt.plot(pitch, label='Nos')
+plt.legend()
+plt.grid()
 
 pitch_der = []
 for i in range(len(pitch) - 1):
@@ -129,14 +145,13 @@ pitch_der = np.array(pitch_der, dtype=float)
 if not valores_faltantes_pitch:
     pitch[np.isnan(pitch)] = valores_faltantes_pitch
     pitch_der[np.isnan(pitch_der)] = valores_faltantes_pitch
-elif not np.isfinite(valores_faltantes_pitch):
-    pitch[np.isnan(pitch)] = float(valores_faltantes_pitch)
-    pitch_der[np.isnan(pitch_der)] = float(valores_faltantes_pitch)
-elif np.isfinite(valores_faltantes_pitch):
-    pitch[np.isnan(pitch)] = float(valores_faltantes_pitch)
-    pitch_der[np.isnan(pitch_der)] = float(valores_faltantes_pitch)
 else:
-    print('Invalid missing value for pitch {}'.format(valores_faltantes_pitch) + '\nMust be finite.')
+    pitch[np.isnan(pitch)] = float(valores_faltantes_pitch)
+    pitch_der[np.isnan(pitch_der)] = float(valores_faltantes_pitch)
+    pitch[np.isnan(pitch)] = float(valores_faltantes_pitch)
+    pitch_der[np.isnan(pitch_der)] = float(valores_faltantes_pitch)
+# else:
+#     print('Invalid missing value for pitch {}'.format(valores_faltantes_pitch) + '\nMust be finite.')
 
 pitch = np.array(np.repeat(pitch, audio_sr * sampleStep), dtype=float)
 pitch = Processing.subsamplear(pitch, 125)

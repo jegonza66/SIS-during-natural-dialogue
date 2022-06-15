@@ -36,22 +36,22 @@ except:
     print('\n\nAlphas file not found.\n\n')
 
 # Stimuli and EEG
-Stims = ['Envelope']
-Bands = ['Delta', 'Alpha', 'Beta_1', 'All']
+Stims = ['Pitch_PitchMask']
+Bands = ['Theta']
 
 # Standarization
 Stims_preprocess = 'Normalize'
 EEG_preprocess = 'Standarize'
 
 # Random permutations
-Statistical_test = True
+Statistical_test = False
 
 # Save / Display Figures
 Display_Ind_Figures = False
 Display_Total_Figures = False
 Save_Ind_Figures = True
 Save_Total_Figures = True
-Save_Final_Correlation = True
+Save_Final_Correlation = False
 
 # Save mean correlations
 Mean_Correlations_fname = 'saves/{}/{}/Final_Correlation/tmin{}_tmax{}/Mean_Correlations.pkl'.format(model, situacion, tmin, tmax)
@@ -96,7 +96,8 @@ for Band in Bands:
 
             # LOAD DATA BY SUBJECT
             Sujeto_1, Sujeto_2 = Load.Load_Data(sesion=sesion, stim=stim, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
-                                                procesed_data_path=procesed_data_path, situacion=situacion)
+                                                procesed_data_path=procesed_data_path, situacion=situacion,
+                                                SilenceThreshold=0.03)
             # LOAD EEG BY SUBJECT
             eeg_sujeto_1, eeg_sujeto_2, info = Sujeto_1['EEG'], Sujeto_2['EEG'], Sujeto_1['info']
 
@@ -280,7 +281,7 @@ for Band in Bands:
                                                                   Display_Total_Figures, Save_Total_Figures,
                                                                   Run_graficos_path, title='Correlation')
 
-        Mean_Correlations_Band[stim] = Plot.Cabezas_corr_promedio(Correlaciones_totales_sujetos, info,
+        Mean_Correlations_Band[stim] = Plot.Cabezas_corr_promedio(Rmse_totales_sujetos, info,
                                                                   Display_Total_Figures, Save_Total_Figures,
                                                                   Run_graficos_path, title='Rmse')
 
