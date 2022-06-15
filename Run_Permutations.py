@@ -13,14 +13,14 @@ from datetime import datetime
 startTime = datetime.now()
 
 # Define Parameters
-tmin, tmax = -0.4, 0.2
+tmin, tmax = -0.6, -0.003
 sr = 128
 n_folds = 5
 delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
 times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays))
-situacion = 'Escucha'
+situacion = 'Ambos'
 # Model parameters
-model = 'Decoding'
+model = 'Ridge'
 
 if model == 'Ridge':
     iteraciones = 3000
@@ -38,8 +38,8 @@ elif model == 'Decoding':
         Max_t_lags = {}
 
 # Stimuli and EEG
-Stims = ['Envelope']
-Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'All']
+Stims = ['Spectrogram']
+Bands = ['Theta']
 
 # Standarization
 Stims_preprocess = 'Normalize'
@@ -56,7 +56,6 @@ except:
     print('\n\nAlphas file not found.\n\n')
 
 for Band in Bands:
-    Max_t_lag = np.where(times == Max_t_lags[Band])[0][0]
     for stim in Stims:
         print('\nModel: ' + model)
         print('Band: ' + Band)
@@ -140,7 +139,7 @@ for Band in Bands:
                                                                    eeg_test, Pesos_fake, Correlaciones_fake,
                                                                    Errores_fake)
                     elif model == 'Decoding':
-                        t_lag = Max_t_lag
+                        t_lag = np.where(times == Max_t_lags[Band])[0][0]
                         Fake_Model = Models.mne_mtrf_decoding(tmin, tmax, sr, info, alpha, t_lag)
                         Pesos_fake, Patterns_fake, Correlaciones_fake, Errores_fake = \
                             Permutations.simular_iteraciones_decoding(Fake_Model, iteraciones, sesion, sujeto, fold,
