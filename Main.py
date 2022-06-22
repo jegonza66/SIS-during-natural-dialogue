@@ -4,7 +4,7 @@ import numpy as np
 from sklearn.model_selection import KFold
 from datetime import datetime
 
-import Load
+import Load_All
 import Load_light as Load
 import Models
 import Plot
@@ -36,7 +36,7 @@ except:
     print('\n\nAlphas file not found.\n\n')
 
 # Stimuli and EEG
-Stims = ['Pitch_PitchMask']
+Stims = ['PitchDer']
 Bands = ['Theta']
 
 # Standarization
