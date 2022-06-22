@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.model_selection import KFold
 import matplotlib.pyplot as plt
 
-import Load
+import Load_All
 import Models
 
 import Processing
@@ -67,15 +67,15 @@ for Band in Bands:
             print('Sesion {}'.format(sesion))
 
             # LOAD DATA BY SUBJECT
-            Sujeto_1, Sujeto_2 = Load.Load_Data(sesion=sesion, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
-                                                procesed_data_path=procesed_data_path)
+            Sujeto_1, Sujeto_2 = Load_All.Load_Data(sesion=sesion, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
+                                                    procesed_data_path=procesed_data_path)
 
             # LOAD EEG BY SUBJECT
             eeg_sujeto_1, eeg_sujeto_2 = Sujeto_1['EEG'], Sujeto_2['EEG']
 
             # LOAD STIMULUS BY SUBJECT
-            dstims_para_sujeto_1, dstims_para_sujeto_2, info = Load.Estimulos(stim=stim, Sujeto_1=Sujeto_1,
-                                                                              Sujeto_2=Sujeto_2)
+            dstims_para_sujeto_1, dstims_para_sujeto_2, info = Load_All.Estimulos(stim=stim, Sujeto_1=Sujeto_1,
+                                                                                  Sujeto_2=Sujeto_2)
             Len_Estimulos = [len(dstims_para_sujeto_1[i][0]) for i in range(len(dstims_para_sujeto_1))]
 
             for sujeto, eeg, dstims in zip((1, 2), (eeg_sujeto_1, eeg_sujeto_2),

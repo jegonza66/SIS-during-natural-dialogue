@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import scipy
 
 def maximo_comun_divisor(a, b):
     temporal = 0
@@ -137,3 +138,23 @@ def findFreeinterval(arr):
         if prevEnd < currStart:
             P.append([prevEnd, currStart])
     return P
+
+
+def slope(x, y):
+    x = x[~np.isnan(y)]
+    y = y[~np.isnan(y)]
+    return scipy.stats.linregress(x, y)[0]
+
+
+def sliding_window(df, window_size=6, func='slope', step=1, min_points=6):
+    res = []
+    for i in range(0, len(df), step):
+        rows = df.iloc[i:i + window_size]
+        if func == "mean":
+            res_i = rows.apply(lambda y: np.nanmean(y) if sum(~np.isnan(y)) >= min_points else np.nan)
+        elif func == "slope":
+            x = rows.index
+            res_i = rows.apply(lambda y: slope(x, y) if sum(~np.isnan(y)) >= min_points else np.nan)
+        res.append(res_i)
+    res = np.array(res)
+    return res

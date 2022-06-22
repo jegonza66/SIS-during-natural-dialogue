@@ -6,7 +6,7 @@ from scipy import signal as sgn
 import Plot
 import gcmi
 
-import Load_Envelope as Load
+import Load_light as Load
 
 # WHAT TO DO
 Cortical_Entrainment = True

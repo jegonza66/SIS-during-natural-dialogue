@@ -116,7 +116,7 @@ pitch_trial = pitch[:trial_changes[0]]
 plt.plot(pitch_trial, label='Pablo')
 
 ## PITCH
-pitch_fname = "Datos/Pitch/S" + str(s) + "/s" + str(s) + ".objects." + "{:02d}".format(trial) + ".channel" + str(
+pitch_fname = "Datos/Pitch_threshold_0.03/S" + str(s) + "/s" + str(s) + ".objects." + "{:02d}".format(trial) + ".channel" + str(
     channel) + ".txt"
 
 read_file = pd.read_csv(pitch_fname)
@@ -128,19 +128,7 @@ intensity = np.array(read_file['intensity'])
 pitch[pitch == '--undefined--'] = np.nan
 pitch = np.array(pitch, dtype=float)
 
-plt.plot(pitch, label='Nos')
-plt.legend()
-plt.grid()
-
-pitch_der = []
-for i in range(len(pitch) - 1):
-    try:
-        diff = pitch[i + 1] - pitch[i]
-        pitch_der.append(diff)
-    except:
-        pitch_der.append(None)
-pitch_der.append(None)
-pitch_der = np.array(pitch_der, dtype=float)
+pitch_der = Funciones.sliding_window(df=pd.DataFrame(pitch))
 
 if not valores_faltantes_pitch:
     pitch[np.isnan(pitch)] = valores_faltantes_pitch

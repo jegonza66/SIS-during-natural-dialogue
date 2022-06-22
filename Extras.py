@@ -5,7 +5,7 @@ import mne
 import numpy as np
 from sklearn.model_selection import KFold
 
-import Load_Envelope as Load
+import Load as Load
 import Models
 import Plot
 import Processing
@@ -46,10 +46,10 @@ Stims = ['Envelope', 'Pitch', 'Spectrogram', 'Envelope_Pitch_Spectrogram']
 Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All']
 Bands = ['Theta']
 
-stim = 'Envelope'
+stim = 'PitchDer'
 Band = 'Theta'
 situacion = 'Escucha'
-tmin, tmax = -0.4, 0.2
+tmin, tmax = -0.6, -0.003
 sr = 128
 delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
 times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays))

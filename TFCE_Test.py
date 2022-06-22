@@ -5,7 +5,7 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 
-import Load
+import Load_All
 
 
 #Defino parametros
@@ -25,11 +25,11 @@ for Band in Bands:
     procesed_data_path = 'saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
     save_path = 'saves/Ridge/T_value_matrices/{}/'.format(Band)
 
-    Sujeto_1, Sujeto_2 = Load.Load_Data(sesion=21, stim=stim, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
-                                        procesed_data_path=procesed_data_path)
+    Sujeto_1, Sujeto_2 = Load_All.Load_Data(sesion=21, stim=stim, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
+                                            procesed_data_path=procesed_data_path)
     info = Sujeto_1['info']
     # LOAD STIMULUS BY SUBJECT
-    dstims_para_sujeto_1, dstims_para_sujeto_2 = Load.Estimulos(stim=stim, Sujeto_1=Sujeto_1, Sujeto_2=Sujeto_2)
+    dstims_para_sujeto_1, dstims_para_sujeto_2 = Load_All.Estimulos(stim=stim, Sujeto_1=Sujeto_1, Sujeto_2=Sujeto_2)
     Len_Estimulos = [len(dstims_para_sujeto_1[i][0]) for i in range(len(dstims_para_sujeto_1))]
 
     # Paths para cargar datos
