@@ -22,9 +22,9 @@ def highlight_cell(x, y, ax=None, **kwargs):
 def lateralized_channels(info, channels_right=None, channels_left=None):
     # Lateralization comparison
     if channels_right == None:
-        channels_right = ['B27', 'B28', 'B29', 'B30', 'C4', 'C5', 'C6', 'C7', 'C9', 'C10', 'C13', 'C14']
+        channels_right = ['B27', 'B28', 'B29', 'B30', 'C4', 'C5', 'C6', 'C7', 'C9', 'C10', 'B31', 'C3']
     if channels_left == None:
-        channels_left = ['D8', 'D9', 'D10', 'D11', 'D7', 'D6', 'D5', 'D4', 'C31', 'C32', 'C27', 'C26']
+        channels_left = ['D8', 'D9', 'D10', 'D11', 'D7', 'D6', 'D5', 'D4', 'C31', 'C32', 'D12', 'D3']
 
     # Plot masked channels
     mask = [i in channels_right + channels_left for i in info['ch_names']]
@@ -267,8 +267,8 @@ def Cabezas_corr_promedio(Correlaciones_totales_sujetos, info, Display, Save, Ru
     plt.suptitle("Mean {} per channel among subjects".format(title), fontsize=19)
     plt.title('{} = {:.3f} +/- {:.3f}'.format(title, Correlaciones_promedio.mean(), Correlaciones_promedio.std()),
               fontsize=19)
-    cmap = matplotlib.colors.LinearSegmentedColormap.from_list("", ['greenyellow', 'yellow', 'orange', 'red'])
-    im = mne.viz.plot_topomap(Correlaciones_promedio, info, cmap=cmap,
+    # cmap = matplotlib.colors.LinearSegmentedColormap.from_list("", ['greenyellow', 'yellow', 'orange', 'red'])
+    im = mne.viz.plot_topomap(Correlaciones_promedio, info, cmap='OrRd',
                               vmin=Correlaciones_promedio.min(), vmax=Correlaciones_promedio.max(),
                               show=False, sphere=0.07)
     cb = plt.colorbar(im[0], shrink=0.85, orientation='vertical')
@@ -283,8 +283,8 @@ def Cabezas_corr_promedio(Correlaciones_totales_sujetos, info, Display, Save, Ru
     plt.close()
 
     # Lateralization comparison
-    good_channels_right = ['B27', 'B28', 'B29', 'B30', 'C4', 'C5', 'C6', 'C7', 'C9', 'C10', 'C13', 'C14']
-    good_channels_left = ['D8', 'D9', 'D10', 'D11', 'D7', 'D6', 'D5', 'D4', 'C31', 'C32', 'C27', 'C26']
+    good_channels_right = ['B27', 'B28', 'B29', 'B30', 'C4', 'C5', 'C6', 'C7', 'C9', 'C10', 'B31', 'C3']
+    good_channels_left = ['D8', 'D9', 'D10', 'D11', 'D7', 'D6', 'D5', 'D4', 'C31', 'C32', 'D12', 'D3']
     mask_right = [i in good_channels_right for i in info['ch_names']]
     mask_left = [i in good_channels_left for i in info['ch_names']]
     corr_right = Correlaciones_promedio[mask_right]
@@ -380,13 +380,12 @@ def Cabezas_canales_rep(Canales_repetidos_sujetos, info, Display, Save, Run_graf
     else:
         plt.ioff()
 
-    cmap = matplotlib.colors.LinearSegmentedColormap.from_list("", ['greenyellow', 'yellow', 'orange', 'red'])
-
+    # cmap = matplotlib.colors.LinearSegmentedColormap.from_list("", ['greenyellow', 'yellow', 'orange', 'red'])
     fig = plt.figure()
     plt.suptitle("Channels passing 5 test per subject - {}".format(title), fontsize=19)
     plt.title('Mean: {:.3f} +/- {:.3f}'.format(Canales_repetidos_sujetos.mean(), Canales_repetidos_sujetos.std()),
               fontsize=19)
-    im = mne.viz.plot_topomap(Canales_repetidos_sujetos, info, cmap=cmap,
+    im = mne.viz.plot_topomap(Canales_repetidos_sujetos, info, cmap='OrRd',
                               vmin=0, vmax=18,
                               show=False, sphere=0.07)
     cb = plt.colorbar(im[0], shrink=0.85, orientation='vertical')
@@ -450,7 +449,7 @@ def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display
 
             ax.xaxis.label.set_size(14)
             ax.yaxis.label.set_size(14)
-            # ax.set_ylim([-0.01, 0.008])
+            # ax.set_ylim([-0.016, 0.013])
             ax.tick_params(axis='both', labelsize=14)
             ax.grid()
             ax.legend(fontsize=12)

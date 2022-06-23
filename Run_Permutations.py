@@ -3,7 +3,7 @@ import pickle
 import numpy as np
 from sklearn.model_selection import KFold
 
-import Load_All
+import Load
 import Models
 import Processing
 import Permutations
@@ -18,7 +18,7 @@ sr = 128
 n_folds = 5
 delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
 times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays))
-situacion = 'Ambos'
+situacion = 'Ambos_Habla'
 # Model parameters
 model = 'Ridge'
 
@@ -73,13 +73,13 @@ for Band in Bands:
         for sesion in sesiones:
             print('\nSesion {}'.format(sesion))
             # LOAD DATA BY SUBJECT
-            Sujeto_1, Sujeto_2 = Load_All.Load_Data(sesion=sesion, stim=stim, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
+            Sujeto_1, Sujeto_2 = Load.Load_Data(sesion=sesion, stim=stim, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
                                                     procesed_data_path=procesed_data_path, situacion=situacion)
             # LOAD EEG BY SUBJECT
             eeg_sujeto_1, eeg_sujeto_2, info = Sujeto_1['EEG'], Sujeto_2['EEG'], Sujeto_1['info']
 
             # LOAD STIMULUS BY SUBJECT
-            dstims_para_sujeto_1, dstims_para_sujeto_2 = Load_All.Estimulos(stim=stim, Sujeto_1=Sujeto_1, Sujeto_2=Sujeto_2)
+            dstims_para_sujeto_1, dstims_para_sujeto_2 = Load.Estimulos(stim=stim, Sujeto_1=Sujeto_1, Sujeto_2=Sujeto_2)
             Len_Estimulos = [len(dstims_para_sujeto_1[i][0]) for i in range(len(dstims_para_sujeto_1))]
 
             # Defino variables donde voy a guardar mil cosas

@@ -409,7 +409,7 @@ class Sesion_class:
         pickle.dump([Sujeto_1['Pitch'], Sujeto_2['Pitch']], f)
         f.close()
 
-        f = open(Pitch_mask_path + 'Sesion{}.pkl'.format(self.sesion), 'wb')
+        f = open(Pitch_der_path + 'Sesion{}.pkl'.format(self.sesion), 'wb')
         pickle.dump([Sujeto_1['PitchDer'], Sujeto_2['PitchDer']], f)
         f.close()
 
