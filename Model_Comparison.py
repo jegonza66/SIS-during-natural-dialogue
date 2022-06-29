@@ -5,30 +5,31 @@ import os
 import mne
 from scipy.spatial import ConvexHull
 
+model = 'Ridge'
+situacion = 'Escucha'
 tmin, tmax = -0.6, -0.003
 
-Run_graficos_path = 'gráficos/Model_Comparison/tmin{}_tmax{}/Convex_Hull/'.format(tmin, tmax)
+Run_graficos_path = 'gráficos/Model_Comparison/{}/{}/tmin{}_tmax{}/Convex_Hull/'.format(model, situacion, tmin, tmax)
 Save_fig = True
 
 Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'All']
 
 for Band in Bands:
-
-    f = open('saves/Ridge/Final_Correlation/tmin{}_tmax{}/Envelope_EEG_{}.pkl'.format(tmin, tmax, Band), 'rb')
+    f = open('saves/{}/{}/Final_Correlation/tmin{}_tmax{}/Envelope_EEG_{}.pkl'.format(model, situacion, tmin, tmax, Band), 'rb')
     Corr_Envelope, Pass_Envelope = pickle.load(f)
     f.close()
 
-    f = open('saves/Ridge/Final_Correlation/tmin{}_tmax{}/Pitch_EEG_{}.pkl'.format(tmin, tmax, Band), 'rb')
+    f = open('saves/{}/{}/Final_Correlation/tmin{}_tmax{}/Pitch_EEG_{}.pkl'.format(model, situacion, tmin, tmax, Band), 'rb')
     Corr_Pitch, Pass_Pitch = pickle.load(f)
     f.close()
 
     f = open(
-        'saves/Ridge/Final_Correlation/tmin{}_tmax{}/Spectrogram_EEG_{}.pkl'.format(tmin, tmax, Band), 'rb')
+        'saves/{}/{}/Final_Correlation/tmin{}_tmax{}/Spectrogram_EEG_{}.pkl'.format(model, situacion, tmin, tmax, Band), 'rb')
     Corr_Spectrogram, Pass_Spectrogram = pickle.load(f)
     f.close()
 
     f = open(
-        'saves/Ridge/Final_Correlation/tmin{}_tmax{}/Envelope_Pitch_Spectrogram_EEG_{}.pkl'.format(tmin, tmax, Band),
+        'saves/{}/{}/Final_Correlation/tmin{}_tmax{}/Envelope_Pitch_Spectrogram_EEG_{}.pkl'.format(model, situacion, tmin, tmax, Band),
         'rb')
     Corr_Envelope_Pitch_Spectrogram, Pass_Envelope_Pitch_Spectrogram = pickle.load(f)
     f.close()
@@ -196,7 +197,7 @@ import numpy as np
 
 model = 'Ridge'
 situacion = 'Escucha'
-Run_graficos_path = 'gráficos/Model_Comparison/tmin{}_tmax{}/Venn_Diagrams/'.format(tmin, tmax)
+Run_graficos_path = 'gráficos/Model_Comparison/{}/{}/tmin{}_tmax{}/Venn_Diagrams/'.format(model, situacion, tmin, tmax)
 Save_fig = False
 
 tmin, tmax = -0.6, -0.003
@@ -278,7 +279,7 @@ tmin, tmax = -0.6, -0.003
 model = 'Decoding'
 situacion = 'Escucha'
 
-Run_graficos_path = 'gráficos/Model_Comparison/{}/tmin{}_tmax{}/Violin Plots/'.format(model, tmin, tmax)
+Run_graficos_path = 'gráficos/Model_Comparison/{}/{}/tmin{}_tmax{}/Violin Plots/'.format(model, situacion, tmin, tmax)
 Save_fig = True
 Correlaciones = {}
 
@@ -318,7 +319,7 @@ tmin, tmax = -0.6, -0.003
 model = 'Decoding'
 situacion = 'Escucha'
 
-Run_graficos_path = 'gráficos/Model_Comparison/{}/tmin{}_tmax{}/Box Plots/'.format(model, tmin, tmax)
+Run_graficos_path = 'gráficos/Model_Comparison/{}/{}/tmin{}_tmax{}/Box Plots/'.format(model, situacion, tmin, tmax)
 Save_fig = True
 
 stim = 'Envelope'
@@ -367,14 +368,14 @@ import os
 model = 'Ridge'
 situacion = 'Escucha'
 tmin, tmax = -0.6, -0.003
-Run_graficos_path = 'gráficos/Model_Comparison/tmin{}_tmax{}/Heatmaps/'.format(tmin, tmax)
+Run_graficos_path = 'gráficos/Model_Comparison/{}/{}/tmin{}_tmax{}/Heatmaps/'.format(model, situacion, tmin, tmax)
 Save_fig = True
 
 Bands = ['All', 'Delta', 'Theta', 'Alpha', 'Beta_1']
 Stims = ['Spectrogram', 'Envelope', 'Pitch', 'Shimmer']
 
-Corrs_map = np.zeros((len(stims), len(Bands)))
-Sig_map = np.zeros((len(stims), len(Bands)))
+Corrs_map = np.zeros((len(Stims), len(Bands)))
+Sig_map = np.zeros((len(Stims), len(Bands)))
 
 for i, stim in enumerate(Stims):
     Corr_stim = []
@@ -392,11 +393,11 @@ fig, ax = plt.subplots()
 plt.imshow(Corrs_map)
 plt.title('Correlation', fontsize=15)
 ax.set_yticks(np.arange(len(Stims)))
-ax.set_yticklabels(stims, fontsize=13)
+ax.set_yticklabels(Stims, fontsize=13)
 ax.set_xticks(np.arange(len(Bands)))
 ax.set_xticklabels(Bands, fontsize=13)
 # ax.xaxis.tick_top()
-cbar = plt.colorbar(shrink=0.4, aspect=15)
+cbar = plt.colorbar(shrink=0.7, aspect=15)
 cbar.ax.tick_params(labelsize=13)
 fig.tight_layout()
 
@@ -409,11 +410,11 @@ fig, ax = plt.subplots()
 plt.imshow(Sig_map)
 plt.title('Significance', fontsize=15)
 ax.set_yticks(np.arange(len(Stims)))
-ax.set_yticklabels(stims, fontsize=13)
+ax.set_yticklabels(Stims, fontsize=13)
 ax.set_xticks(np.arange(len(Bands)))
 ax.set_xticklabels(Bands, fontsize=13)
 # ax.xaxis.tick_top()
-cbar = plt.colorbar(shrink=0.4, aspect=15)
+cbar = plt.colorbar(shrink=0.7, aspect=15)
 cbar.ax.tick_params(labelsize=13)
 fig.tight_layout()
 
@@ -429,10 +430,12 @@ montage = mne.channels.make_standard_montage('biosemi128')
 channel_names = montage.ch_names
 info = mne.create_info(ch_names=channel_names[:], sfreq=128, ch_types='eeg').set_montage(montage)
 
+model = 'Ridge'
+situacion = 'Escucha'
 alpha = 100
 tmin, tmax = -0.6, -0.003
 
-Run_graficos_path = 'gráficos/Model_Comparison/tmin{}_tmax{}/'.format(tmin, tmax)
+Run_graficos_path = 'gráficos/Model_Comparison/{}/{}/tmin{}_tmax{}/'.format(model, situacion, tmin, tmax)
 Save_fig = False
 
 Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All']
