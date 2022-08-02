@@ -315,7 +315,7 @@ import os
 import seaborn as sn
 import numpy as np
 
-tmin, tmax = -0.6, -0.003
+tmin, tmax = -0.4, 0.2
 model = 'Decoding'
 situacion = 'Escucha'
 
@@ -329,8 +329,10 @@ Correlaciones = pd.DataFrame(columns=['Corr', 'Sig'])
 
 for Band in Bands:
     f = open('saves/{}/{}/Final_Correlation/tmin{}_tmax{}/{}_EEG_{}.pkl'.format(model, situacion, tmin, tmax, stim, Band), 'rb')
-    Corr, Pass = pickle.load(f)
+    Corr = pickle.load(f)
     f.close()
+    Pass = Corr[1]
+    Corr = Corr[0]
     temp_df = pd.DataFrame({'Corr': Corr.ravel(), 'Sig': Pass.ravel(), 'Band':[Band]*len(Corr.ravel())})
     Correlaciones = pd.concat((Correlaciones, temp_df))
 

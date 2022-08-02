@@ -38,7 +38,7 @@ Stims_preprocess = 'Normalize'
 EEG_preprocess = 'Standarize'
 
 # Random permutations
-Statistical_test = True
+Statistical_test = False
 
 # Save / Display Figures
 Display_Ind_Figures = False
