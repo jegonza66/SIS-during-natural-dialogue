@@ -449,7 +449,7 @@ def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display
 
             ax.xaxis.label.set_size(14)
             ax.yaxis.label.set_size(14)
-            # ax.set_ylim([-0.016, 0.013])
+            # ax.set_ylim([-0.016, 0.015])
             ax.tick_params(axis='both', labelsize=14)
             ax.grid()
             ax.legend(fontsize=12)

@@ -3,14 +3,10 @@ import pandas as pd
 import os
 import pickle
 import mne
-import librosa
 import scipy.io.wavfile as wavfile
 from scipy import signal as sgn
 import platform
 from praatio import pitch_and_intensity
-import opensmile
-import parselmouth
-from parselmouth.praat import call
 import Processing
 import Funciones
 
@@ -45,10 +41,15 @@ class Trial_channel:
         self.pitch_fname = "Datos/Pitch_threshold_{}/S".format(SilenceThreshold) + str(s) + "/s" + str(s) + ".objects." \
                            + "{:02d}".format(trial) + ".channel" + str(channel) + ".txt"
 
+
     def f_eeg(self):
         eeg = mne.io.read_raw_eeglab(self.eeg_fname)
         eeg_freq = eeg.info.get("sfreq")
         eeg.load_data()
+
+        # Independent sources
+        # eeg = mne.preprocessing.compute_current_source_density(eeg)
+
         # Hago un lowpass
         if self.Band:
             if self.Causal_filter_EEG:
@@ -65,6 +66,7 @@ class Trial_channel:
 
         return np.array(eeg)
 
+
     def f_info(self):
         # Defino montage e info
         montage = mne.channels.make_standard_montage('biosemi128')
@@ -72,6 +74,7 @@ class Trial_channel:
         info = mne.create_info(ch_names=channel_names[:], sfreq=self.sr, ch_types='eeg').set_montage(montage)
 
         return info
+
 
     def f_envelope(self):
         wav = wavfile.read(self.wav_fname)[1]
@@ -94,6 +97,7 @@ class Trial_channel:
         self.envelope = envelope
 
         return np.array(envelope)
+
 
     def f_calculate_pitch(self):
         if platform.system() == 'Linux':
@@ -149,68 +153,6 @@ class Trial_channel:
 
         return np.array(pitch), np.array(pitch_der)
 
-    def f_jitter_shimmer(self):
-        smile = opensmile.Smile(
-            feature_set=opensmile.FeatureSet.eGeMAPSv02,
-            feature_level=opensmile.FeatureLevel.LowLevelDescriptors)
-
-        y = smile.process_file(self.wav_fname)
-        y.index = y.index.droplevel(0)
-        y.index = y.index.map(lambda x: x[0].total_seconds())
-
-        jitter = y['jitterLocal_sma3nz']
-        shimmer = y['shimmerLocaldB_sma3nz']
-
-        mcm = Funciones.minimo_comun_multiplo(len(jitter), len(self.envelope))
-        jitter = np.repeat(jitter, mcm / len(jitter))
-        jitter = Processing.subsamplear(jitter, mcm / len(self.envelope))
-        jitter = Processing.matriz_shifteada(jitter, self.delays)
-
-        mcm = Funciones.minimo_comun_multiplo(len(shimmer), len(self.envelope))
-        shimmer = np.repeat(shimmer, mcm / len(shimmer))
-        shimmer = Processing.subsamplear(shimmer, mcm / len(self.envelope))
-        shimmer = Processing.matriz_shifteada(shimmer, self.delays)
-
-        return jitter, shimmer
-
-    # def f_cssp(self):
-
-        # snd = parselmouth.Sound(self.wav_fname)
-        # data = []
-        # frame_length = 0.2
-        # hop_length = 1/128
-        # t1s = np.arange(0, snd.duration - frame_length, hop_length)
-        # times = zip(t1s, t1s + frame_length)
-        #
-        # for t1, t2 in times:
-        #     powercepstrogram = call(snd.extract_part(t1, t2), "To PowerCepstrogram", 60, 0.0020001, 5000, 50)
-        #     cpps = call(powercepstrogram, "Get CPPS", "yes", 0.02, 0.0005, 60, 330, 0.05, "Parabolic", 0.001, 0,
-        #                 "Exponential decay", "Robust")
-        #     data.append(cpps)
-        #
-        # cssp = np.array(np.repeat(data, self.audio_sr * self.sampleStep))
-        # cssp = Processing.subsamplear(cssp, 125)
-        # cssp = Processing.matriz_shifteada(cssp, self.delays)
-
-        # return cssp
-
-    def f_spectrogram(self):
-        wav = wavfile.read(self.wav_fname)[1]
-        wav = wav.astype("float")
-
-        n_fft = 125
-        hop_length = 125
-        n_mels = 16
-
-        S = librosa.feature.melspectrogram(wav, sr=self.audio_sr, n_fft=n_fft, hop_length=hop_length, n_mels=n_mels)
-        S_DB = librosa.power_to_db(S, ref=np.max)
-
-        # Shifted matrix row by row
-        spec_shift = Processing.matriz_shifteada(S_DB[0], self.delays)
-        for i in np.arange(1, len(S_DB)):
-            spec_shift = np.hstack((spec_shift, Processing.matriz_shifteada(S_DB[i], self.delays)))
-
-        return np.array(spec_shift)
 
     def load_trial(self):
         channel = {}
@@ -218,9 +160,6 @@ class Trial_channel:
         channel['info'] = self.f_info()
         channel['envelope'] = self.f_envelope()
         channel['pitch'], channel['pitch_der'] = self.load_pitch()
-        # channel['spectrogram'] = self.f_spectrogram()
-        # channel['jitter'], channel['shimmer'] = self.f_jitter_shimmer()
-        # channel['cssp'] = self.f_cssp()
         return channel
 
 

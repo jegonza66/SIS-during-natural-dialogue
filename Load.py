@@ -49,6 +49,10 @@ class Trial_channel:
         eeg = mne.io.read_raw_eeglab(self.eeg_fname)
         eeg_freq = eeg.info.get("sfreq")
         eeg.load_data()
+
+        # Independent sources
+        # eeg = mne.preprocessing.compute_current_source_density(eeg)
+
         # Hago un lowpass
         if self.Band:
             if self.Causal_filter_EEG:
