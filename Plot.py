@@ -401,6 +401,33 @@ def Cabezas_canales_rep(Canales_repetidos_sujetos, info, Display, Save, Run_graf
     plt.close()
 
 
+def topo_pval(topo_pval, info, Display, Save, Run_graficos_path, title):
+    if Display:
+        plt.ion()
+    else:
+        plt.ioff()
+
+    # cmap = matplotlib.colors.LinearSegmentedColormap.from_list("", ['greenyellow', 'yellow', 'orange', 'red'])
+    fig = plt.figure()
+    plt.suptitle("Mean p-values - {}".format(title), fontsize=19)
+    plt.title('Mean: {:.3f} +/- {:.3f}'.format(topo_pval.mean(), topo_pval.std()),
+              fontsize=19)
+    im = mne.viz.plot_topomap(topo_pval, info, cmap='OrRd',
+                              vmin=0, vmax=topo_pval.max(),
+                              show=False, sphere=0.07)
+    cb = plt.colorbar(im[0], shrink=0.85, orientation='vertical')
+    cb.ax.tick_params(labelsize=19)
+    cb.set_label(label='p-value', size=21)
+    fig.tight_layout()
+
+    if Save:
+        save_path_graficos = Run_graficos_path
+        os.makedirs(save_path_graficos, exist_ok=True)
+        fig.savefig(save_path_graficos + 'p-value_topo_{}.png'.format(title))
+        fig.savefig(save_path_graficos + 'p-value_topo_{}.svg'.format(title))
+    plt.close()
+
+
 def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display, Save, Run_graficos_path,
                        Len_Estimulos, stim, ERP=False, title=None, decorrelation_times=None):
     # Armo pesos promedio por canal de todos los sujetos que por lo menos tuvieron un buen canal

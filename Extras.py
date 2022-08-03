@@ -42,13 +42,9 @@ except:
     print('\n\nAlphas file not found.\n\n')
 
 # Stimuli and EEG
-Stims = ['Envelope', 'Pitch', 'Spectrogram', 'Envelope_Pitch_Spectrogram']
-Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'Beta_2', 'All']
-Bands = ['Theta']
-
-stim = 'PitchDer'
+stim = 'Envelope'
 Band = 'Theta'
-situacion = 'Escucha'
+situacion = 'Ambos_Habla'
 tmin, tmax = -0.6, -0.003
 sr = 128
 delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
@@ -57,7 +53,6 @@ times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.
 # Paths
 procesed_data_path = 'saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
 Run_saves_path = 'saves/'
-graficos_save_path = 'gráficos/Signals_vs_Pred/tmin{}_tmax{}/'.format(tmin, tmax, stim, Band)
 
 
 if Simulate_random_data:
@@ -166,6 +161,8 @@ for sesion in sesiones:
                         plt.grid()
                         plt.legend()
                         plt.tight_layout()
+
+                        graficos_save_path = 'gráficos/Signals_vs_Pred/tmin{}_tmax{}/'.format(tmin, tmax, stim, Band)
 
                         os.makedirs(graficos_save_path + 'Original/Stim_{}_EEG_Band{}/'.format(stim, Band),
                                     exist_ok=True)

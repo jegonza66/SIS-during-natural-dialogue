@@ -4,8 +4,8 @@ import numpy as np
 from sklearn.model_selection import KFold
 from datetime import datetime
 
-# import Load
-import Load_light as Load
+import Load
+# import Load_light as Load
 import Models
 import Plot
 import Processing
@@ -20,7 +20,7 @@ sr = 128
 delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
 times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays))
 times = np.flip(-times)
-situacion = 'Escucha'
+situacion = 'Silencio'
 
 # Model parameters ('Ridge' or 'mtrf')
 model = 'Ridge'
@@ -36,7 +36,7 @@ except:
     print('\n\nAlphas file not found.\n\n')
 
 # Stimuli and EEG
-Stims = ['Envelope']
+Stims = ['Spectrogram']
 Bands = ['Theta']
 
 # Standarization
@@ -44,7 +44,7 @@ Stims_preprocess = 'Normalize'
 EEG_preprocess = 'Standarize'
 
 # Random permutations
-Statistical_test = False
+Statistical_test = True
 
 # Save / Display Figures
 Display_Ind_Figures = False
@@ -124,9 +124,15 @@ for Band in Bands:
                     Correlaciones_fake = np.zeros((n_folds, iteraciones, info['nchan']))
                     Errores_fake = np.zeros((n_folds, iteraciones, info['nchan']))
 
+                # Variable to store all channel's p-value
+                topo_pvalues_corr = np.zeros((n_folds, info['nchan']))
+                topo_pvalues_rmse = np.zeros((n_folds, info['nchan']))
+
+                # Variable to store p-value of significant channels
                 Prob_Corr_ronda_canales = np.ones((n_folds, info['nchan']))
                 Prob_Rmse_ronda_canales = np.ones((n_folds, info['nchan']))
 
+                # Variable to store significant channels
                 Canales_repetidos_corr_sujeto = np.zeros(info['nchan'])
                 Canales_repetidos_rmse_sujeto = np.zeros(info['nchan'])
 
@@ -209,6 +215,9 @@ for Band in Bands:
                         umbral = 0.05/128
                         Prob_Corr_ronda_canales[fold][p_corr < umbral] = p_corr[p_corr < umbral]
                         Prob_Rmse_ronda_canales[fold][p_rmse < umbral] = p_rmse[p_rmse < umbral]
+                        # p-value topographic distribution
+                        topo_pvalues_corr[fold] = p_corr
+                        topo_pvalues_rmse[fold] = p_rmse
 
                 # Save Model Weights and Correlations
                 os.makedirs(Path_origial, exist_ok=True)
@@ -235,6 +244,9 @@ for Band in Bands:
                     # Guardo los canales sobrevivientes de cada sujeto
                     Canales_repetidos_corr_sujeto[Canales_sobrevivientes_corr] += 1
                     Canales_repetidos_rmse_sujeto[Canales_sobrevivientes_rmse] += 1
+                    # Adapt to yield p-values
+                    topo_pval_corr_sujeto = topo_pvalues_corr.mean(0)
+                    topo_pval_rmse_sujeto = topo_pvalues_rmse.mean(0)
 
                     # Grafico Shadows
                     Plot.plot_grafico_shadows(Display_Ind_Figures, sesion, sujeto, alpha,
@@ -258,22 +270,29 @@ for Band in Bands:
                 # Guardo las correlaciones y los pesos promediados entre folds de cada canal del sujeto y lo adjunto a lista
                 # para promediar entre canales de sujetos
                 if not sujeto_total:
+                    # Save TRFs for all subjects
                     Pesos_totales_sujetos_todos_canales = Pesos_promedio
+                    # Save topographic distribution of correlation and rmse for all subjects
                     Correlaciones_totales_sujetos = Corr_promedio
                     Rmse_totales_sujetos = Rmse_promedio
-
+                    # Save p-values for all subjects
+                    pvalues_corr_subjects = topo_pval_corr_sujeto
+                    pvalues_rmse_subjects = topo_pval_rmse_sujeto
+                    # Save significant channels for all subjects
                     Canales_repetidos_corr_sujetos = Canales_repetidos_corr_sujeto
                     Canales_repetidos_rmse_sujetos = Canales_repetidos_rmse_sujeto
                 else:
-                    Pesos_totales_sujetos_todos_canales = np.dstack(
-                        (Pesos_totales_sujetos_todos_canales, Pesos_promedio))
+                    # Save TRFs for all subjects
+                    Pesos_totales_sujetos_todos_canales = np.dstack((Pesos_totales_sujetos_todos_canales, Pesos_promedio))
+                    # Save topographic distribution of correlation and rmse for all subjects
                     Correlaciones_totales_sujetos = np.vstack((Correlaciones_totales_sujetos, Corr_promedio))
                     Rmse_totales_sujetos = np.vstack((Rmse_totales_sujetos, Rmse_promedio))
-
-                    Canales_repetidos_corr_sujetos = np.vstack(
-                        (Canales_repetidos_corr_sujetos, Canales_repetidos_corr_sujeto))
-                    Canales_repetidos_rmse_sujetos = np.vstack(
-                        (Canales_repetidos_rmse_sujetos, Canales_repetidos_rmse_sujeto))
+                    # Save p-values for all subjects
+                    pvalues_corr_subjects = np.vstack((pvalues_corr_subjects, topo_pval_corr_sujeto))
+                    pvalues_rmse_subjects = np.vstack((pvalues_rmse_subjects, topo_pval_rmse_sujeto))
+                    # Save significant channels for all subjects
+                    Canales_repetidos_corr_sujetos = np.vstack((Canales_repetidos_corr_sujetos, Canales_repetidos_corr_sujeto))
+                    Canales_repetidos_rmse_sujetos = np.vstack((Canales_repetidos_rmse_sujetos, Canales_repetidos_rmse_sujeto))
                 sujeto_total += 1
 
         # Armo cabecita con correlaciones promedio entre sujetos
@@ -287,6 +306,11 @@ for Band in Bands:
 
         # Armo cabecita con canales repetidos
         if Statistical_test:
+            Plot.topo_pval(pvalues_corr_subjects.mean(0), info, Display_Total_Figures,
+                                     Save_Total_Figures, Run_graficos_path, title='Correlation')
+            Plot.topo_pval(pvalues_rmse_subjects.mean(0), info, Display_Total_Figures,
+                           Save_Total_Figures, Run_graficos_path, title='Rmse')
+
             Plot.Cabezas_canales_rep(Canales_repetidos_corr_sujetos.sum(0), info, Display_Total_Figures,
                                      Save_Total_Figures, Run_graficos_path, title='Correlation')
             Plot.Cabezas_canales_rep(Canales_repetidos_corr_sujetos.sum(0), info, Display_Total_Figures,
