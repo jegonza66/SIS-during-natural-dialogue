@@ -32,6 +32,7 @@ except:
 # Stimuli and EEG
 Stims = ['Envelope']
 Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'All']
+Bands = ['Theta']
 
 # Standarization
 Stims_preprocess = 'Normalize'
@@ -169,11 +170,11 @@ for Band in Bands:
 
                     # Calculo Correlacion y guardo
                     Rcorr = np.array(
-                        [np.corrcoef(dstims_test[:, -1].ravel(), np.array(predicted).ravel())[0, 1]])
+                        [np.corrcoef(dstims_test[:, t_lag].ravel(), np.array(predicted).ravel())[0, 1]])
                     Corr_buenas_ronda[fold] = Rcorr
 
                     # Calculo Error y guardo
-                    Rmse = np.sqrt(np.power((predicted.ravel() - dstims_test[:, -1]).ravel(), 2).mean(0))
+                    Rmse = np.sqrt(np.power((predicted.ravel() - dstims_test[:, t_lag]).ravel(), 2).mean(0))
                     Rmse_buenos_ronda[fold] = Rmse
 
                     if Statistical_test:
