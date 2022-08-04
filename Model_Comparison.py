@@ -320,7 +320,7 @@ model = 'Decoding'
 situacion = 'Escucha'
 
 Run_graficos_path = 'gráficos/Model_Comparison/{}/{}/tmin{}_tmax{}/Box Plots/'.format(model, situacion, tmin, tmax)
-Save_fig = True
+Save_fig = False
 
 stim = 'Envelope'
 Bands = ['All', 'Delta', 'Theta', 'Alpha', 'Beta_1']
@@ -345,11 +345,10 @@ for patch in ax.artists:
     patch.set_facecolor((r, g, b, .8))
 
 # Create an array with the colors you want to use
-colors = ["C0", "grey"]
+colors = ["grey", "C0"]
 # Set your custom color palette
 palette = sn.color_palette(colors)
 sn.swarmplot(x='Band', y='Corr', data=Correlaciones, hue='Permutations test', size=3, palette=palette)
-# sn.swarmplot(data=pd.DataFrame(Correlaciones_Fail), color=".25", alpha=.5)
 plt.tick_params(labelsize=13)
 ax.xaxis.label.set_size(15)
 ax.yaxis.label.set_size(15)

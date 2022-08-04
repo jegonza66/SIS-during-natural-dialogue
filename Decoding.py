@@ -32,14 +32,14 @@ except:
 # Stimuli and EEG
 Stims = ['Envelope']
 Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'All']
-Bands = ['Theta']
+Bands = ['Delta', 'Theta']
 
 # Standarization
 Stims_preprocess = 'Normalize'
 EEG_preprocess = 'Standarize'
 
 # Random permutations
-Statistical_test = False
+Statistical_test = True
 
 # Save / Display Figures
 Display_Ind_Figures = False
@@ -56,7 +56,7 @@ try:
     Max_t_lags = pickle.load(f)
     f.close()
 except:
-    print('\n\nMean_Correlations file not found\n\n')
+    print('\n\nMax tlags file not found\n\n')
     Max_t_lags = {}
 
 try:

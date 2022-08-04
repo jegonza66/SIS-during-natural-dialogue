@@ -2,25 +2,25 @@ import os
 import pickle
 import numpy as np
 from sklearn.model_selection import KFold
+from datetime import datetime
 
 import Load
 import Models
 import Processing
 import Permutations
 
-from datetime import datetime
 
 startTime = datetime.now()
 
 # Define Parameters
-tmin, tmax = -0.6, -0.003
+tmin, tmax = -0.4, 0.2
 sr = 128
 n_folds = 5
 delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
 times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays))
-situacion = 'Silencio'
+situacion = 'Escucha'
 # Model parameters
-model = 'Ridge'
+model = 'Decoding'
 
 if model == 'Ridge':
     iteraciones = 3000
@@ -38,8 +38,8 @@ elif model == 'Decoding':
         Max_t_lags = {}
 
 # Stimuli and EEG
-Stims = ['Spectrogram']
-Bands = ['Theta']
+Stims = ['Envelope']
+Bands = ['Alpha', 'Beta_1', 'All']
 
 # Standarization
 Stims_preprocess = 'Normalize'
