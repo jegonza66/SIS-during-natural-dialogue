@@ -280,11 +280,11 @@ model = 'Decoding'
 situacion = 'Escucha'
 
 Run_graficos_path = 'gráficos/Model_Comparison/{}/{}/tmin{}_tmax{}/Violin Plots/'.format(model, situacion, tmin, tmax)
-Save_fig = True
+Save_fig = False
 Correlaciones = {}
 
 stim = 'Envelope'
-Bands = ['Delta', 'Theta', 'Alpha']
+Bands = ['All', 'Delta', 'Theta', 'Alpha', 'Beta_1']
 
 for Band in Bands:
     f = open('saves/{}/{}/Final_Correlation/tmin{}_tmax{}/{}_EEG_{}.pkl'.format(model, situacion, tmin, tmax, stim, Band), 'rb')
@@ -345,7 +345,7 @@ for patch in ax.artists:
     patch.set_facecolor((r, g, b, .8))
 
 # Create an array with the colors you want to use
-colors = ["grey", "C0"]
+colors = ["C0", "grey"]
 # Set your custom color palette
 palette = sn.color_palette(colors)
 sn.swarmplot(x='Band', y='Corr', data=Correlaciones, hue='Permutations test', size=3, palette=palette)
@@ -386,7 +386,7 @@ for i, stim in enumerate(Stims):
         Corr_Band, Sig_Band = pickle.load(f)
         f.close()
         Corr_stim.append(Corr_Band.mean())
-        Sig_stim.append(Sig_Band.mean())
+        Sig_stim.append(Sig_Band.mean(1).sum(0))
     Corrs_map[i] = Corr_stim
     Sig_map[i] = Sig_stim
 

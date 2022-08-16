@@ -32,7 +32,6 @@ except:
 # Stimuli and EEG
 Stims = ['Envelope']
 Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'All']
-Bands = ['Delta', 'Theta']
 
 # Standarization
 Stims_preprocess = 'Normalize'

@@ -20,7 +20,7 @@ sr = 128
 delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
 times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays))
 times = np.flip(-times)
-situacion = 'Silencio'
+situacion = 'Escucha'
 
 # Model parameters ('Ridge' or 'mtrf')
 model = 'Ridge'
@@ -37,7 +37,7 @@ except:
 
 # Stimuli and EEG
 Stims = ['Spectrogram']
-Bands = ['Theta']
+Bands = ['All', 'Delta', 'Theta', 'Alpha', 'Beta_1']
 
 # Standarization
 Stims_preprocess = 'Normalize'
