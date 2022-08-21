@@ -320,7 +320,7 @@ model = 'Decoding'
 situacion = 'Escucha'
 
 Run_graficos_path = 'gráficos/Model_Comparison/{}/{}/tmin{}_tmax{}/Box Plots/'.format(model, situacion, tmin, tmax)
-Save_fig = False
+Save_fig = True
 
 stim = 'Envelope'
 Bands = ['All', 'Delta', 'Theta', 'Alpha', 'Beta_1']
@@ -331,9 +331,9 @@ for Band in Bands:
     f = open('saves/{}/{}/Final_Correlation/tmin{}_tmax{}/{}_EEG_{}.pkl'.format(model, situacion, tmin, tmax, stim, Band), 'rb')
     Corr = pickle.load(f)
     f.close()
-    Pass = Corr[1]
     Corr = Corr[0]
-    temp_df = pd.DataFrame({'Corr': Corr.ravel(), 'Sig': Pass.ravel(), 'Band':[Band]*len(Corr.ravel())})
+    Pass = Corr[1]
+    temp_df = pd.DataFrame({'Corr': Corr.ravel(), 'Sig': Pass.ravel(), 'Band': [Band]*len(Corr.ravel())})
     Correlaciones = pd.concat((Correlaciones, temp_df))
 
 Correlaciones['Permutations test'] = np.where(Correlaciones['Sig'] == 1, 'NonSignificant', 'Significant')
@@ -359,6 +359,14 @@ if Save_fig:
     plt.savefig(Run_graficos_path + '{}.png'.format(stim))
     plt.savefig(Run_graficos_path + '{}.svg'.format(stim))
 
+for Band in Bands:
+    print(f'\n{Band}')
+    Passed_folds = (Correlaciones.loc[Correlaciones['Band'] == Band]['Permutations test'] == 'Significant').sum()
+    Passed_subj = 0
+    for subj in range(len(Pass)):
+        Passed_subj += all(Pass[subj] < 1)
+    print(f'Passed folds: {Passed_folds}/{len(Correlaciones.loc[Correlaciones["Band"] == Band])}')
+    print(f'Passed subjects: {Passed_subj}/{len(Pass)}')
 
 ## Heatmaps
 import numpy as np

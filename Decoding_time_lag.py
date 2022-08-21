@@ -167,7 +167,7 @@ for Band in Bands:
 
                 sujeto_total += 1
 
-         # Plots
+        # Plots
         Plot.decoding_t_lags(Correlaciones_totales_sujetos, times, Band, Display_Total_Figures, Save_Total_Figures,
                              Run_graficos_path)
 
@@ -185,42 +185,52 @@ for Band in Bands:
 
 print(datetime.now() - startTime)
 
-##
-
+## Run from load
 # Define Parameters
 tmin, tmax = -0.4, 0.2
 sr = 128
 delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
-times = list(np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays)))
+times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays))
 # take lower time rolution to run faster
 skip = 2
 times = times[::skip]
 t_lags = np.arange(len(times))*skip
 situacion = 'Escucha'
 
-Stims = ['Envelope']
-Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'All']
+Stims_preprocess = 'Normalize'
+EEG_preprocess = 'Standarize'
+
+stim = 'Envelope'
+Bands = ['All', 'Delta', 'Theta', 'Alpha', 'Beta_1']
+
+Display_Total_Figures = True
+Save_Total_Figures = True
 
 max_t_lags = {}
 
-for stim in Stims:
-    for Band in Bands:
-        print(Band)
-        save_path = 'saves/Decoding_t_lag/{}/Final_Correlation/tmin{}_tmax{}/'.format(situacion, tmin, tmax)
+for Band in Bands:
+    print('\n' + Band)
+    save_path = 'saves/Decoding_t_lag/{}/Final_Correlation/tmin{}_tmax{}/'.format(situacion, tmin, tmax)
+    Run_graficos_path = 'gráficos/Decoding_t_lag/{}/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
+        situacion, Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
 
-        f = open(save_path + '{}_EEG_{}.pkl'.format(stim, Band), 'rb')
-        Correlaciones_totales_sujetos = pickle.load(f)
-        f.close()
+    f = open(save_path + '{}_EEG_{}.pkl'.format(stim, Band), 'rb')
+    Correlaciones_totales_sujetos = pickle.load(f)
+    f.close()
 
-        Corr_time_sub = Correlaciones_totales_sujetos.mean(0)
-        mean_time_corr = Corr_time_sub.mean(1)
+    Corr_time_sub = Correlaciones_totales_sujetos.mean(0)
+    mean_time_corr = Corr_time_sub.mean(1)
 
-        # get max correlation t_lag
-        max_t_lag = np.argmax(mean_time_corr)
-        print(times[max_t_lag])
-        print(max_t_lag)
+    # get max correlation t_lag
+    max_t_lag = np.argmax(mean_time_corr)
+    print(times[max_t_lag])
+    print(max_t_lag)
 
-        max_t_lags[Band] = times[max_t_lag]
+    max_t_lags[Band] = times[max_t_lag]
+
+    # Plots
+    Plot.decoding_t_lags(Correlaciones_totales_sujetos, times, Band, Display_Total_Figures, Save_Total_Figures,
+                         Run_graficos_path)
 
 f = open(save_path + 'Max_t_lags.pkl', 'wb')
 pickle.dump(max_t_lags, f)

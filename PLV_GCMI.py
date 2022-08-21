@@ -10,7 +10,7 @@ import Load_light as Load
 
 # WHAT TO DO
 Cortical_Entrainment = True
-GCMI = True
+GCMI = False
 Intra_Brain = False
 Brain_Brain_sync = False
 
@@ -22,6 +22,7 @@ Save = True
 # Stimuli and EEG
 Stims = ['Envelope']
 Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'All', (1, 12)]
+Bands = ['Theta']
 sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
 total_subjects = len(sesiones)*2
 
@@ -190,6 +191,7 @@ for Band in Bands:
                             # vector_diff = imaginary_diff.mean(1) / real_diff.mean(1)
                             # # mean phase difference
                             # average_phase_diff[sujeto_total, :, t_lag] = np.arctan(vector_diff)
+
                             # Inter-Site Phase Clustering:
                             total_phase_consistency[sujeto_total, :, t_lag] = np.abs(np.mean(np.exp(1j * phase_diff), axis=1))
 
@@ -258,3 +260,94 @@ for Band in Bands:
             # Plot
             Plot.Brain_sync(data=Brain_Brain_phase_sync, Band=Band, info=info, Display=Display, Save=Save,
                             graficos_save_path=graficos_save_path, total_subjects=total_subjects)
+
+##
+
+# WHAT TO DO
+Cortical_Entrainment = True
+GCMI = False
+Intra_Brain = False
+Brain_Brain_sync = False
+
+# Figures
+Display = True
+Save = True
+
+# Define Parameters
+# Stimuli and EEG
+Stims = ['Envelope']
+Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'All', (1, 12)]
+Bands = ['Theta']
+sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
+total_subjects = len(sesiones)*2
+
+situacion = 'Escucha'
+situcaiones = ['Escucha', 'Ambos', 'Ambos_Habla', 'Habla_Propia', 'Silencio']
+tmin, tmax = -0.4, 0.2
+sr = 128
+delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
+times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays))
+
+# Paths
+procesed_data_path = 'saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
+Run_saves_path = 'saves/'
+
+# Get info
+# LOAD DATA BY SUBJECT
+Sujeto_1, Sujeto_2 = Load.Load_Data(sesion=21, stim='Envelope', Band='Theta', sr=sr, tmin=tmin, tmax=tmax,
+                                    procesed_data_path=procesed_data_path, situacion=situacion)
+# LOAD EEG BY SUBJECT
+eeg_sujeto_1, eeg_sujeto_2, info = Sujeto_1['EEG'], Sujeto_2['EEG'], Sujeto_1['info']
+
+for situacion in situcaiones:
+    for Band in Bands:
+        for stim in Stims:
+            print('\nBand: ' + Band)
+            print('Stimulus: ' + stim)
+            print('Status: ' + situacion)
+            print('tmin: {} - tmax: {}'.format(tmin, tmax))
+            # Save Variables
+            if Cortical_Entrainment:
+                total_phase_consistency = np.zeros((total_subjects, 128, len(delays)))
+            if GCMI:
+                total_gcmi = np.zeros((total_subjects, 128, len(delays)))
+            if Brain_Brain_sync:
+                Brain_Brain_phase_sync = np.zeros((total_subjects, 128, 128))
+            if Intra_Brain:
+                Intra_Brain_phase_sync = np.zeros((total_subjects, 128, 128))
+
+        if GCMI:
+            # Variables save path
+            save_path = Run_saves_path + '/GCMI/{}/tmin{}_tmax{}/'.format(situacion, tmin, tmax)
+            os.makedirs(save_path, exist_ok=True)
+
+            f = open(save_path + '{}.pkl'.format(Band), 'rb')
+            total_gcmi = pickle.load(f)
+            f.close()
+
+            Plot.ch_heatmap_topo(total_data=total_gcmi, Band=Band, info=info,
+                                 delays=delays, times=times, Display=Display, Save=Save,
+                                 graficos_save_path=graficos_save_path, title='GCMI', total_subjects=total_subjects)
+
+        if Cortical_Entrainment:
+            graficos_save_path = 'gráficos/Cort_Entr/{}/tmin{}_tmax{}/{}/'.format(situacion, tmin, tmax,Band)
+            # Save Cortical entrainment
+            save_path = Run_saves_path + '/Cort_Entr/{}/tmin{}_tmax{}/'.format(situacion, tmin, tmax)
+
+            f = open(save_path + '{}.pkl'.format(Band), 'rb')
+            total_phase_consistency = pickle.load(f)
+            f.close()
+
+            Plot.ch_heatmap_topo(total_data=total_phase_consistency, Band=Band, info=info,
+                                 delays=delays, times=times, Display=Display, Save=Save,
+                                 graficos_save_path=graficos_save_path, title='Phase Sync',
+                                 total_subjects=total_subjects)
+        #
+        # if Intra_Brain:
+        #     Plot.Brain_Brain_sync(data=Intra_Brain_phase_sync, Band=Band, info=info, Display=Display, Save=Save,
+        #                           graficos_save_path=graficos_save_path, total_subjects=total_subjects)
+        #
+        # if Brain_Brain_sync:
+        #     # Plot
+        #     Plot.Brain_sync(data=Brain_Brain_phase_sync, Band=Band, info=info, Display=Display, Save=Save,
+        #                     graficos_save_path=graficos_save_path, total_subjects=total_subjects)

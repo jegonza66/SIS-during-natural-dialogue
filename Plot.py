@@ -885,25 +885,28 @@ def weights_ERP(Pesos_totales_sujetos_todos_canales, info, times, Display,
                 Run_graficos_path + 'Regression_Weights_{}.png'.format(Stims_Order[j] if Cant_Estimulos > 1 else stim))
     plt.close()
 
+
 def decoding_t_lags(Correlaciones_totales_sujetos, times, Band, Display, Save, Run_graficos_path):
     Corr_time_sub = Correlaciones_totales_sujetos.mean(0)
-    mean_time_corr = Corr_time_sub.mean(1)
-    std_time_corr = Corr_time_sub.std(1)
+    mean_time_corr = np.flip(Corr_time_sub.mean(1))
+    std_time_corr = np.flip(Corr_time_sub.std(1))
+
+    plot_times = np.flip(-times)
 
     if Display:
         plt.ion()
     else:
         plt.ioff()
 
-     # get max correlation t_lag
+    # get max correlation t_lag
     max_t_lag = np.argmax(mean_time_corr)
 
     fig, ax = plt.subplots()
-    plt.plot(times, mean_time_corr)
+    plt.plot(plot_times, mean_time_corr)
     plt.title('{}'.format(Band))
-    plt.fill_between(times, mean_time_corr - std_time_corr/2, mean_time_corr + std_time_corr/2, alpha=.5)
-    plt.vlines(times[max_t_lag], ax.get_ylim()[0], ax.get_ylim()[1], linestyle='dashed', color='k',
-               label='Max. correlation delay: {:.2f}s'.format(times[max_t_lag]))
+    plt.fill_between(plot_times, mean_time_corr - std_time_corr/2, mean_time_corr + std_time_corr/2, alpha=.5)
+    plt.vlines(plot_times[max_t_lag], ax.get_ylim()[0], ax.get_ylim()[1], linestyle='dashed', color='k',
+               label='Max. correlation delay: {:.2f}s'.format(plot_times[max_t_lag]))
     plt.xlabel('Time lag [s]')
     plt.ylabel('Correlation')
     ax.xaxis.label.set_size(15)
@@ -916,7 +919,6 @@ def decoding_t_lags(Correlaciones_totales_sujetos, times, Band, Display, Save, R
         os.makedirs(Run_graficos_path, exist_ok=True)
         fig.savefig(Run_graficos_path + 'Correlation_time_lags_{}.svg'.format(Band))
         fig.savefig(Run_graficos_path + 'Correlation_time_lags_{}.png'.format(Band))
-    plt.close()
 
 
 def Brain_sync(data, Band, info, Display, Save, graficos_save_path, total_subjects=18, sesion=None, sujeto=None):
@@ -949,7 +951,7 @@ def Brain_sync(data, Band, info, Display, Save, graficos_save_path, total_subjec
         elif data.shape == (info['nchan'], info['nchan']):
             plt.savefig(graficos_save_path + 'Inter Brain sync - Sesion{}_Sujeto{}.png'.format(sesion, sujeto))
             plt.savefig(graficos_save_path + 'Inter Brain sync - Sesion{}_Sujeto{}.svg'.format(sesion, sujeto))
-    plt.close()
+
 
 
 def ch_heatmap_topo(total_data, Band, info, delays, times, Display, Save, graficos_save_path, title, total_subjects=18,
@@ -957,19 +959,47 @@ def ch_heatmap_topo(total_data, Band, info, delays, times, Display, Save, grafic
 
     if total_data.shape == (info['nchan'], len(delays)):
         phase_sync_ch = total_data
-        phase_sync_std = phase_sync_ch.std(0)
-        phase_sync = phase_sync_ch.mean(0)
     elif total_data.shape == (total_subjects, info['nchan'], len(delays)):
         phase_sync_ch = total_data.mean(0)
-        phase_sync_std = phase_sync_ch.std(0)
-        phase_sync = phase_sync_ch.mean(0)
-
-    max_t_lag = np.argmax(phase_sync)
 
     if Display:
         plt.ion()
     else:
         plt.ioff()
+
+    # Plot topo
+    phase_sync = phase_sync_ch.mean(0)
+    max_t_lag = np.argmax(phase_sync)
+    max_pahse_sync = phase_sync_ch[:, max_t_lag]
+
+    fig = plt.figure()
+    plt.suptitle("{}".format(title), fontsize=19)
+    plt.title('Mean = {:.3f} +/- {:.3f}'.format(max_pahse_sync.mean(), max_pahse_sync.std()),
+              fontsize=19)
+    im = mne.viz.plot_topomap(max_pahse_sync, info, cmap='Greys',
+                              vmin=max_pahse_sync.min(),
+                              vmax=max_pahse_sync.max(),
+                              show=False, sphere=0.07)
+    cb = plt.colorbar(im[0], shrink=0.85, orientation='vertical')
+    cb.ax.tick_params(labelsize=19)
+    fig.tight_layout()
+
+    if Save:
+        os.makedirs(graficos_save_path, exist_ok=True)
+        if total_data.shape == (info['nchan'], len(delays)):
+            plt.savefig(graficos_save_path + 'Topo_{}_Sesion{}_Sujeto{}.png'.format(title, sesion, sujeto))
+            plt.savefig(graficos_save_path + 'Topo_{}_Sesion{}_Sujeto{}.svg'.format(title, sesion, sujeto))
+        elif total_data.shape == (total_subjects, info['nchan'], len(delays)):
+            plt.savefig(graficos_save_path + 'Topo_{}.png'.format(title))
+            plt.savefig(graficos_save_path + 'Topo_{}.svg'.format(title))
+
+    # Invert times for plot
+    phase_sync_ch = np.flip(phase_sync_ch)
+    phase_sync_std = phase_sync_ch.std(0)
+    phase_sync = phase_sync_ch.mean(0)
+    max_t_lag = np.argmax(phase_sync)
+
+    times = np.flip(-times)
 
     fig = plt.figure()
     plt.suptitle("Time lagged {} - Band: {}\n"
@@ -1009,31 +1039,29 @@ def ch_heatmap_topo(total_data, Band, info, delays, times, Display, Save, grafic
         elif total_data.shape == (total_subjects, info['nchan'], len(delays)):
             plt.savefig(graficos_save_path + 't_lags_{}.png'.format(title))
             plt.savefig(graficos_save_path + 't_lags_{}.svg'.format(title))
-    plt.close()
 
-    # Plot topo
-    max_pahse_sync = phase_sync_ch[:, max_t_lag]
-    fig = plt.figure()
-    plt.suptitle("{}".format(title), fontsize=19)
-    plt.title('Mean = {:.3f} +/- {:.3f}'.format(max_pahse_sync.mean(), max_pahse_sync.std()),
-              fontsize=19)
-    im = mne.viz.plot_topomap(max_pahse_sync, info, cmap='Greys',
-                              vmin=max_pahse_sync.min(),
-                              vmax=max_pahse_sync.max(),
-                              show=False, sphere=0.07)
-    cb = plt.colorbar(im[0], shrink=0.85, orientation='vertical')
-    cb.ax.tick_params(labelsize=19)
-    fig.tight_layout()
 
-    if Save:
-        os.makedirs(graficos_save_path, exist_ok=True)
-        if total_data.shape == (info['nchan'], len(delays)):
-            plt.savefig(graficos_save_path + 'Topo_{}_Sesion{}_Sujeto{}.png'.format(title, sesion, sujeto))
-            plt.savefig(graficos_save_path + 'Topo_{}_Sesion{}_Sujeto{}.svg'.format(title, sesion, sujeto))
-        elif total_data.shape == (total_subjects, info['nchan'], len(delays)):
-            plt.savefig(graficos_save_path + 'Topo_{}.png'.format(title))
-            plt.savefig(graficos_save_path + 'Topo_{}.svg'.format(title))
-    plt.close()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ## VIEJAS NO SE USAN
 
 def Plot_instantes_interes(Pesos_totales_sujetos_todos_canales, info, Band, times, sr, Display_figure_instantes,
