@@ -976,11 +976,11 @@ def ch_heatmap_topo(total_data, Band, info, delays, times, Display, Save, grafic
     plt.suptitle("{}".format(title), fontsize=19)
     plt.title('Mean = {:.3f} +/- {:.3f}'.format(max_pahse_sync.mean(), max_pahse_sync.std()),
               fontsize=19)
-    im = mne.viz.plot_topomap(max_pahse_sync, info, cmap='Greys',
+    im = mne.viz.plot_topomap(max_pahse_sync, info, cmap='Reds',
                               vmin=max_pahse_sync.min(),
                               vmax=max_pahse_sync.max(),
                               show=False, sphere=0.07)
-    cb = plt.colorbar(im[0], shrink=0.85, orientation='vertical')
+    cb = plt.colorbar(im[0], shrink=0.65, orientation='horizontal')
     cb.ax.tick_params(labelsize=19)
     fig.tight_layout()
 

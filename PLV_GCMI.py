@@ -270,7 +270,7 @@ Intra_Brain = False
 Brain_Brain_sync = False
 
 # Figures
-Display = True
+Display = False
 Save = True
 
 # Define Parameters
