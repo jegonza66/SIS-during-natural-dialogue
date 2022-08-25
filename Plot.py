@@ -418,7 +418,7 @@ def topo_pval(topo_pval, info, Display, Save, Run_graficos_path, title):
 
 
 def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display, Save, Run_graficos_path,
-                       Len_Estimulos, stim, ERP=False, title=None, decorrelation_times=None):
+                       Len_Estimulos, stim, ERP=True, title=None, decorrelation_times=None):
     # Armo pesos promedio por canal de todos los sujetos que por lo menos tuvieron un buen canal
     Pesos_totales_sujetos_todos_canales_copy = Pesos_totales_sujetos_todos_canales.swapaxes(0, 2)
     Pesos_totales_sujetos_todos_canales_copy = Pesos_totales_sujetos_todos_canales_copy.mean(0).transpose()
@@ -454,13 +454,13 @@ def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display
                         show=False, spatial_colors=True, unit=False, units='w', axes=ax)
             ax.plot(times * 1000, evoked._data.mean(0), "k--", label="Mean", zorder=130, linewidth=2)
             # if times[-1] > 0: ax.axvspan(0, ax.get_xlim()[1], alpha=0.4, color='grey', label='Unheard stimuli')
-            # if times[0] < 0: ax.axvspan(ax.get_xlim()[0], 0, alpha=0.4, color='grey', label='Pre-Stimuli')
-            if decorrelation_times and times[-1] > 0:
-                ax.vlines(np.mean(decorrelation_times), ax.get_ylim()[0], ax.get_ylim()[1], linestyle='dashed',
+            if times[0] < 0: ax.axvspan(ax.get_xlim()[0], 0, alpha=0.4, color='grey', label='Pre-Stimuli')
+            if decorrelation_times and times[0] < 0:
+                ax.vlines(-np.mean(decorrelation_times), ax.get_ylim()[0], ax.get_ylim()[1], linestyle='dashed',
                           color='red',
                           label='Decorrelation time')
-                ax.axvspan(np.mean(decorrelation_times) - np.std(decorrelation_times) / 2,
-                           np.mean(decorrelation_times) + np.std(decorrelation_times) / 2,
+                ax.axvspan(-np.mean(decorrelation_times) - np.std(decorrelation_times) / 2,
+                           -np.mean(decorrelation_times) + np.std(decorrelation_times) / 2,
                            alpha=0.4, color='red', label='Decorrelation time std.')
 
             ax.xaxis.label.set_size(14)
@@ -487,13 +487,13 @@ def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display
 
             ax.plot(times * 1000, evoked._data.mean(0), 'k--', label='Mean', zorder=130, linewidth=2)
             # if times[-1] > 0: ax.axvspan(0, ax.get_xlim()[1], alpha=0.4, color='grey', label='Unheard stimuli')
-            # if times[0] < 0: ax.axvspan(ax.get_xlim()[0], 0, alpha=0.4, color='grey', label='Pre-Stimuli')
-            if decorrelation_times and times[-1] > 0:
-                ax.vlines(np.mean(decorrelation_times), ax.get_ylim()[0], ax.get_ylim()[1], linestyle='dashed',
+            if times[0] < 0: ax.axvspan(ax.get_xlim()[0], 0, alpha=0.4, color='grey', label='Pre-Stimuli')
+            if decorrelation_times and times[0] < 0:
+                ax.vlines(-np.mean(decorrelation_times), ax.get_ylim()[0], ax.get_ylim()[1], linestyle='dashed',
                           color='red',
                           label='Decorrelation time')
-                ax.axvspan(np.mean(decorrelation_times) - np.std(decorrelation_times) / 2,
-                           np.mean(decorrelation_times) + np.std(decorrelation_times) / 2,
+                ax.axvspan(-np.mean(decorrelation_times) - np.std(decorrelation_times) / 2,
+                           -np.mean(decorrelation_times) + np.std(decorrelation_times) / 2,
                            alpha=0.4, color='red', label='Decorrelation time std.')
 
             ax.xaxis.label.set_size(14)
@@ -834,7 +834,7 @@ def PSD_boxplot(psd_pred_correlations, psd_rand_correlations, Display, Save, Run
 
 
 def weights_ERP(Pesos_totales_sujetos_todos_canales, info, times, Display,
-                Save, Run_graficos_path, Cant_Estimulos, Stims_Order, stim, decorrelation_times=None):
+                Save, Run_graficos_path, Len_Estimulos, stim, decorrelation_times=None):
     # Armo pesos promedio por canal de todos los sujetos que por lo menos tuvieron un buen canal
     Pesos_totales_sujetos_todos_canales_copy = Pesos_totales_sujetos_todos_canales.swapaxes(0, 2)
     Pesos_totales_sujetos_todos_canales_copy = Pesos_totales_sujetos_todos_canales_copy.mean(0).transpose()
@@ -845,6 +845,9 @@ def weights_ERP(Pesos_totales_sujetos_todos_canales, info, times, Display,
     else:
         plt.ioff()
 
+    Stims_Order = stim.split('_')
+
+    Cant_Estimulos = len(Len_Estimulos)
     for j in range(Cant_Estimulos):
         Pesos_totales_sujetos_todos_canales_copy[:, j * len(times):(j + 1) * len(times)].mean(0)
 
@@ -860,7 +863,7 @@ def weights_ERP(Pesos_totales_sujetos_todos_canales, info, times, Display,
 
         ax.plot(times * 1000, evoked._data.mean(0), 'k--', label='Mean', zorder=130, linewidth=2)
         if times[-1] > 0: ax.axvspan(ax.get_xlim()[0], 0, alpha=0.4, color='grey', label='Unheard stimuli')
-        if decorrelation_times and times[-1] > 0:
+        if decorrelation_times and times[0] < 0:
             ax.vlines(-np.mean(decorrelation_times), ax.get_ylim()[0], ax.get_ylim()[1], linestyle='dashed',
                       color='red',
                       label='Decorrelation time')

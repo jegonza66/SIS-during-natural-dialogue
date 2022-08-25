@@ -25,6 +25,7 @@ tmin, tmax = -0.4, 0.2
 sr = 128
 delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
 times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays))
+times = np.flip(-times)
 
 # Paths
 procesed_data_path = 'saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
@@ -128,5 +129,6 @@ except:
 
 
 curva_pesos_totales = Plot.regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display, Save,
-                                              Run_graficos_path, Len_Estimulos, stim, decorrelation_times)
+                                              Run_graficos_path, Len_Estimulos, stim,
+                                              decorrelation_times=decorrelation_times)
 

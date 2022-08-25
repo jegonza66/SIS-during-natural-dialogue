@@ -268,45 +268,6 @@ for Band in Bands:
     Pitch_u_percent = r2u_2 * 100 /np.sum(sets_0)
     Spectrogram_u_percent = r2u_3 * 100 /np.sum(sets_0)
 
-## Violin Plot Bandas Decoding
-import pandas as pd
-import pickle
-import matplotlib.pyplot as plt
-import os
-import seaborn as sn
-
-tmin, tmax = -0.6, -0.003
-model = 'Decoding'
-situacion = 'Escucha'
-
-Run_graficos_path = 'gráficos/Model_Comparison/{}/{}/tmin{}_tmax{}/Violin Plots/'.format(model, situacion, tmin, tmax)
-Save_fig = False
-Correlaciones = {}
-
-stim = 'Envelope'
-Bands = ['All', 'Delta', 'Theta', 'Alpha', 'Beta_1']
-
-for Band in Bands:
-    f = open('saves/{}/{}/Final_Correlation/tmin{}_tmax{}/{}_EEG_{}.pkl'.format(model, situacion, tmin, tmax, stim, Band), 'rb')
-    Corr = pickle.load(f)
-    f.close()
-
-    Correlaciones[Band] = Corr
-
-plt.ion()
-plt.figure(figsize=(19, 5))
-sn.violinplot(data=pd.DataFrame(Correlaciones))
-plt.ylabel('Correlation', fontsize=24)
-plt.yticks(fontsize=20)
-plt.xticks(fontsize=20)
-plt.grid()
-plt.tight_layout()
-
-if Save_fig:
-    os.makedirs(Run_graficos_path, exist_ok=True)
-    plt.savefig(Run_graficos_path + '{}.png'.format(stim))
-    plt.savefig(Run_graficos_path + '{}.svg'.format(stim))
-
 ## Box Plot Bandas Decoding
 import pandas as pd
 import pickle
@@ -329,17 +290,19 @@ Correlaciones = pd.DataFrame(columns=['Corr', 'Sig'])
 
 for Band in Bands:
     f = open('saves/{}/{}/Final_Correlation/tmin{}_tmax{}/{}_EEG_{}.pkl'.format(model, situacion, tmin, tmax, stim, Band), 'rb')
-    Corr = pickle.load(f)
+    Corr_Pass = pickle.load(f)
     f.close()
-    Corr = Corr[0]
-    Pass = Corr[1]
+    Corr = Corr_Pass[0]
+    Pass = Corr_Pass[1]
     temp_df = pd.DataFrame({'Corr': Corr.ravel(), 'Sig': Pass.ravel(), 'Band': [Band]*len(Corr.ravel())})
     Correlaciones = pd.concat((Correlaciones, temp_df))
 
 Correlaciones['Permutations test'] = np.where(Correlaciones['Sig'] == 1, 'NonSignificant', 'Significant')
 
+my_pal = {'All': 'darkgrey', 'Delta': 'darkgrey', 'Theta': 'darkgrey', 'Alpha': 'darkgrey', 'Beta_1': 'darkgrey'}
+
 fig, ax = plt.subplots()
-ax = sn.boxplot(x='Band', y='Corr', data=Correlaciones, width=0.35)
+ax = sn.boxplot(x='Band', y='Corr', data=Correlaciones, width=0.35, palette=my_pal)
 # ax = sn.violinplot(x='Band', y='Corr', data=Correlaciones, width=0.35)
 for patch in ax.artists:
     r, g, b, a = patch.get_facecolor()
