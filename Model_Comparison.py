@@ -299,14 +299,14 @@ for Band in Bands:
 
 Correlaciones['Permutations test'] = np.where(Correlaciones['Sig'] == 1, 'NonSignificant', 'Significant')
 
-my_pal = {'All': 'darkgrey', 'Delta': 'darkgrey', 'Theta': 'darkgrey', 'Alpha': 'darkgrey', 'Beta_1': 'darkgrey'}
+my_pal = {'All': 'C0', 'Delta': 'C0', 'Theta': 'C0', 'Alpha': 'C0', 'Beta_1': 'C0'}
 
 fig, ax = plt.subplots()
 ax = sn.boxplot(x='Band', y='Corr', data=Correlaciones, width=0.35, palette=my_pal)
 # ax = sn.violinplot(x='Band', y='Corr', data=Correlaciones, width=0.35)
 for patch in ax.artists:
     r, g, b, a = patch.get_facecolor()
-    patch.set_facecolor((r, g, b, .8))
+    patch.set_facecolor((r, g, b, .4))
 
 # Create an array with the colors you want to use
 colors = ["C0", "grey"]
