@@ -37,7 +37,7 @@ except:
 
 # Stimuli and EEG
 Stims = ['Spectrogram']
-Bands = ['All', 'Delta', 'Theta', 'Alpha', 'Beta_1']
+Bands = ['Theta']
 
 # Standarization
 Stims_preprocess = 'Normalize'
@@ -51,7 +51,7 @@ Display_Ind_Figures = False
 Display_Total_Figures = False
 Save_Ind_Figures = True
 Save_Total_Figures = True
-Save_Final_Correlation = False
+Save_Final_Correlation = True
 
 # Save mean correlations
 Mean_Correlations_fname = 'saves/{}/{}/Final_Correlation/tmin{}_tmax{}/Mean_Correlations.pkl'.format(model, situacion, tmin, tmax)
@@ -327,8 +327,8 @@ for Band in Bands:
         Plot.Matriz_corr_channel_wise(Pesos_totales_sujetos_todos_canales, Display_Total_Figures, Save_Total_Figures,
                                       Run_graficos_path)
         try:
-            _ = Plot.Plot_cabezas_instantes(Pesos_totales_sujetos_todos_canales, info, Band, times, sr, Display_Total_Figures,
-                                            Save_Total_Figures, Run_graficos_path)
+            _ = Plot.Plot_cabezas_instantes(Pesos_totales_sujetos_todos_canales, info, Band, stim, times, sr, Display_Total_Figures,
+                                            Save_Total_Figures, Run_graficos_path, Len_Estimulos)
         except:
             pass
         # Cabezas de correlacion de pesos por canal

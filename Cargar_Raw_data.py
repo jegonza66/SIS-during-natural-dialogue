@@ -195,6 +195,12 @@ plt.colorbar(format='%+2.0f dB')
 S_DB = S_DB.ravel().flatten()
 S_DB = Processing.matriz_shifteada(S_DB, delays)
 
+fmin = n_fft/2
+mel_f = librosa.mel_frequencies(n_mels+2, fmin=fmin, fmax=8000)
+low = mel_f[:-2]
+center = mel_f[1:-1]
+high = mel_f[2:]
+
 ## PLOT
 time = np.arange(len(wav)) / 16000
 

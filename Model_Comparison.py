@@ -320,7 +320,7 @@ model = 'Decoding'
 situacion = 'Escucha'
 
 Run_graficos_path = 'gráficos/Model_Comparison/{}/{}/tmin{}_tmax{}/Box Plots/'.format(model, situacion, tmin, tmax)
-Save_fig = True
+Save_fig = False
 
 stim = 'Envelope'
 Bands = ['All', 'Delta', 'Theta', 'Alpha', 'Beta_1']
@@ -340,6 +340,7 @@ Correlaciones['Permutations test'] = np.where(Correlaciones['Sig'] == 1, 'NonSig
 
 fig, ax = plt.subplots()
 ax = sn.boxplot(x='Band', y='Corr', data=Correlaciones, width=0.35)
+# ax = sn.violinplot(x='Band', y='Corr', data=Correlaciones, width=0.35)
 for patch in ax.artists:
     r, g, b, a = patch.get_facecolor()
     patch.set_facecolor((r, g, b, .8))
