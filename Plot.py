@@ -1021,6 +1021,7 @@ def ch_heatmap_topo(total_data, Band, info, delays, times, Display, Save, grafic
     axs2 = fig.add_axes([.2, .1, 0.65, 0.35])
     axs2.plot(times, phase_sync)
     axs2.fill_between(times, phase_sync - phase_sync_std / 2, phase_sync + phase_sync_std / 2, alpha=.5)
+    axs2.set_ylim([0, 0.08])
     axs2.vlines(times[max_t_lag], axs2.get_ylim()[0], axs2.get_ylim()[1], linestyle='dashed', color='k',
                label='Max. sync delay: {:.2f}s'.format(times[max_t_lag]))
     axs2.set_xlabel('Time lag [s]')
