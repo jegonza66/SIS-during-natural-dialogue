@@ -18,7 +18,7 @@ Stims_preprocess = 'Normalize'
 EEG_preprocess = 'Standarize'
 
 # Stimuli and EEG
-stim = 'Envelope'
+stim = 'Spectrogram'
 Band = 'Theta'
 situacion = 'Escucha'
 tmin, tmax = -0.4, 0.2

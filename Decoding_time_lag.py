@@ -12,7 +12,7 @@ from datetime import datetime
 startTime = datetime.now()
 
 # Define Parameters
-tmin, tmax = -0.4, 0.2
+tmin, tmax = -0.3, 0.3
 sr = 128
 delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
 times = list(np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays)))
@@ -40,9 +40,6 @@ Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'All']
 # Standarization
 Stims_preprocess = 'Normalize'
 EEG_preprocess = 'Standarize'
-
-# Random permutations
-Statistical_test = False
 
 # Save / Display Figures
 Display_Ind_Figures = False
