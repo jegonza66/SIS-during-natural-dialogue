@@ -82,7 +82,7 @@ for Band in Bands:
         # Paths
         save_path = 'saves/{}/{}/Final_Correlation/tmin{}_tmax{}/'.format(model, situacion, tmin, tmax)
         procesed_data_path = 'saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
-        Run_graficos_path = 'gráficos/{}/{}/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
+        Run_graficos_path = 'gráficos/25_folds/{}/{}/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
             model, situacion, Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
         Path_origial = 'saves/{}/{}/Original/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
             model, situacion, Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
@@ -244,15 +244,16 @@ for Band in Bands:
                     # Guardo los canales sobrevivientes de cada sujeto
                     Canales_repetidos_corr_sujeto[Canales_sobrevivientes_corr] += 1
                     Canales_repetidos_rmse_sujeto[Canales_sobrevivientes_rmse] += 1
-                    # Adapt to yield p-values
-                    topo_pval_corr_sujeto = topo_pvalues_corr.mean(0)
-                    topo_pval_rmse_sujeto = topo_pvalues_rmse.mean(0)
 
                     # Grafico Shadows
                     Plot.plot_grafico_shadows(Display_Ind_Figures, sesion, sujeto, alpha,
                                               Canales_sobrevivientes_corr, info, sr,
                                               Corr_promedio, Save_Ind_Figures, Run_graficos_path,
                                               Corr_buenas_ronda_canal, Correlaciones_fake)
+
+                # Adapt to yield p-values
+                topo_pval_corr_sujeto = topo_pvalues_corr.mean(0)
+                topo_pval_rmse_sujeto = topo_pvalues_rmse.mean(0)
 
                 # Grafico cabezas y canales
                 Plot.plot_cabezas_canales(info.ch_names, info, sesion, sujeto, Corr_promedio, Display_Ind_Figures,

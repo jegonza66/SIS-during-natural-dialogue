@@ -489,8 +489,7 @@ def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display
                 ax.axvspan(ax.get_xlim()[0], 0, alpha=0.4, color='grey', label='Pre-Stimuli')
             # if decorrelation_times and times[0] < 0:
             #     ax.vlines(-np.mean(decorrelation_times), ax.get_ylim()[0], ax.get_ylim()[1], linestyle='dashed',
-            #               color='red',
-            #               label='Decorrelation time')
+            #               color='red', label='Decorrelation time')
                 ax.axvspan(-np.mean(decorrelation_times), 0, alpha=0.4, color='red', label=' Mean decorrelation time')
                 # ax.axvspan(-np.mean(decorrelation_times) - np.std(decorrelation_times) / 2,
                 #            -np.mean(decorrelation_times) + np.std(decorrelation_times) / 2,
@@ -560,6 +559,8 @@ def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, 
             evoked.plot(scalings=dict(eeg=1, grad=1, mag=1), zorder='std', time_unit='ms', titles=dict(eeg=''),
                         show=False, spatial_colors=True, unit=False, units='w', axes=axs[0])
             axs[0].plot(times * 1000, evoked._data.mean(0), "k--", label="Mean", zorder=130, linewidth=2)
+            # if times[0] < 0:
+            #     axs[0].axvspan(axs[0].get_xlim()[0], 0, alpha=0.4, color='grey', label='Pre-Stimuli')
             axs[0].axis('off')
             axs[0].legend(fontsize=10)
 
@@ -861,7 +862,8 @@ def weights_ERP(Pesos_totales_sujetos_todos_canales, info, times, Display,
                     show=False, spatial_colors=True, unit=True, units='W', axes=ax)
 
         ax.plot(times * 1000, evoked._data.mean(0), 'k--', label='Mean', zorder=130, linewidth=2)
-        if times[-1] > 0: ax.axvspan(ax.get_xlim()[0], 0, alpha=0.4, color='grey', label='Unheard stimuli')
+        if times[-1] > 0:
+            ax.axvspan(ax.get_xlim()[0], 0, alpha=0.4, color='grey', label='Unheard stimuli')
         if decorrelation_times and times[0] < 0:
             ax.vlines(-np.mean(decorrelation_times), ax.get_ylim()[0], ax.get_ylim()[1], linestyle='dashed',
                       color='red',
