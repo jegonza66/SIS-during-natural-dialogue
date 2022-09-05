@@ -194,30 +194,87 @@ import pickle
 import matplotlib.pyplot as plt
 import os
 import seaborn as sn
+from scipy.stats import wilcoxon
+import mne
 
 model = 'Ridge'
 Band = 'Theta'
 stim = 'Spectrogram'
 situaciones = ['Escucha', 'Habla_Propia', 'Ambos', 'Ambos_Habla', 'Silencio']
 tmin, tmax = -0.6, -0.003
-Run_graficos_path = 'gráficos/SIS_statistics/{}/{}/tmin{}_tmax{}/Violin Plots/'.format(Band, stim, tmin, tmax)
+Run_graficos_path = 'gráficos/SIS_statistics/{}/{}/tmin{}_tmax{}/'.format(Band, stim, tmin, tmax)
 Save_fig = True
 
-Correlaciones = {}
+montage = mne.channels.make_standard_montage('biosemi128')
+channel_names = montage.ch_names
+info = mne.create_info(ch_names=channel_names[:], sfreq=128, ch_types='eeg').set_montage(montage)
 
+Correlaciones = {}
 
 for situacion in situaciones:
     f = open('saves/{}/{}/Final_Correlation/tmin{}_tmax{}/{}_EEG_{}.pkl'.format(model, situacion, tmin, tmax, stim, Band), 'rb')
     Corr, Pass = pickle.load(f)
     f.close()
 
-    Correlaciones[situacion] = Corr
+    Correlaciones[situacion] = Corr.transpose()
 
 # Calculate wilcoxon test over rows of the dictionary
+stats = {}
+pvals = {}
+
+for sit1, sit2 in zip(('Escucha', 'Escucha', 'Escucha', 'Habla_Propia', 'Ambos', 'Ambos', 'Ambos_Habla'),
+                      ('Habla_Propia', 'Ambos', 'Silencio', 'Silencio', 'Ambos_Habla', 'Silencio', 'Silencio')):
+
+    dist1 = Correlaciones[sit1]
+    dist2 = Correlaciones[sit2]
+
+    stat = []
+    pval = []
+    for i in range(len(dist1)):
+        res = wilcoxon(dist1[i], dist2[i])
+        stat.append(res[0])
+        pval.append(res[1])
+
+    stats[f'{sit1}-{sit2}'] = stat
+    pvals[f'{sit1}-{sit2}'] = pval
+
+    # Plot pvalue
+    fig, ax = plt.subplots()
+    fig.suptitle(f'p-value: {sit1}-{sit2}\n'
+                 f'Mean: {round(np.mean(pvals[f"{sit1}-{sit2}"]), 3)}', fontsize=19)
+    im = mne.viz.plot_topomap(pvals[f'{sit1}-{sit2}'], info, axes=ax, show=False, sphere=0.07, cmap='Reds')
+    cbar = plt.colorbar(im[0], ax=ax, shrink=0.85)
+    cbar.ax.yaxis.set_tick_params(labelsize=17)
+    cbar.ax.set_ylabel(ylabel='p-value', fontsize=17)
+    fig.tight_layout()
+
+    if Save_fig:
+        os.makedirs(Run_graficos_path, exist_ok=True)
+        plt.savefig(Run_graficos_path + f'pval_{sit1}-{sit2}.png'.format(Band))
+        plt.savefig(Run_graficos_path + f'pval_{sit1}-{sit2}.svg'.format(Band))
+
+    # Plot statistic
+    fig, ax = plt.subplots()
+    fig.suptitle(f'stat: {sit1}-{sit2}\n'
+                 f'Mean: {round(np.mean(stats[f"{sit1}-{sit2}"]), 3)}', fontsize=19)
+    im = mne.viz.plot_topomap(stats[f'{sit1}-{sit2}'], info, axes=ax, show=False, sphere=0.07, cmap='Reds')
+    cbar = plt.colorbar(im[0], ax=ax, shrink=0.85)
+    cbar.ax.yaxis.set_tick_params(labelsize=17)
+    cbar.ax.set_ylabel(ylabel='p-value', fontsize=17)
+    fig.tight_layout()
+
+    if Save_fig:
+        os.makedirs(Run_graficos_path, exist_ok=True)
+        plt.savefig(Run_graficos_path + f'stat_{sit1}-{sit2}.png'.format(Band))
+        plt.savefig(Run_graficos_path + f'stat_{sit1}-{sit2}.svg'.format(Band))
+
+
+
+for situacion in situaciones:
+    Correlaciones[situacion] = Correlaciones[situacion].ravel()
 
 my_pal = {'Escucha': 'darkgrey', 'Habla_Propia': 'darkgrey', 'Ambos': 'darkgrey', 'Ambos_Habla': 'darkgrey', 'Silencio': 'darkgrey'}
 
-plt.ion()
 plt.figure(figsize=(19, 5))
 sn.violinplot(data=pd.DataFrame(Correlaciones), palette=my_pal)
 plt.ylabel('Correlation', fontsize=24)
@@ -231,8 +288,8 @@ plt.tight_layout()
 
 if Save_fig:
     os.makedirs(Run_graficos_path, exist_ok=True)
-    plt.savefig(Run_graficos_path + '{}.png'.format(Band))
-    plt.savefig(Run_graficos_path + '{}.svg'.format(Band))
+    plt.savefig(Run_graficos_path + 'Violin_plot.png'.format(Band))
+    plt.savefig(Run_graficos_path + 'Violin_plot.svg'.format(Band))
 
 ## Venn Diagrams
 from matplotlib_venn import venn3, venn3_circles
@@ -444,6 +501,7 @@ if Save_fig:
 
 
 ## Plot por subjects
+import mne
 
 montage = mne.channels.make_standard_montage('biosemi128')
 channel_names = montage.ch_names
