@@ -188,6 +188,52 @@ if Save_fig:
     plt.savefig(Run_graficos_path + '{}.png'.format(Band))
     plt.savefig(Run_graficos_path + '{}.svg'.format(Band))
 
+## Violin Plot Situation
+import pandas as pd
+import pickle
+import matplotlib.pyplot as plt
+import os
+import seaborn as sn
+
+model = 'Ridge'
+Band = 'Theta'
+stim = 'Spectrogram'
+situaciones = ['Escucha', 'Habla_Propia', 'Ambos', 'Ambos_Habla', 'Silencio']
+tmin, tmax = -0.6, -0.003
+Run_graficos_path = 'gráficos/SIS_statistics/{}/{}/tmin{}_tmax{}/Violin Plots/'.format(Band, stim, tmin, tmax)
+Save_fig = True
+
+Correlaciones = {}
+
+
+for situacion in situaciones:
+    f = open('saves/{}/{}/Final_Correlation/tmin{}_tmax{}/{}_EEG_{}.pkl'.format(model, situacion, tmin, tmax, stim, Band), 'rb')
+    Corr, Pass = pickle.load(f)
+    f.close()
+
+    Correlaciones[situacion] = Corr
+
+# Calculate wilcoxon test over rows of the dictionary
+
+my_pal = {'Escucha': 'darkgrey', 'Habla_Propia': 'darkgrey', 'Ambos': 'darkgrey', 'Ambos_Habla': 'darkgrey', 'Silencio': 'darkgrey'}
+
+plt.ion()
+plt.figure(figsize=(19, 5))
+sn.violinplot(data=pd.DataFrame(Correlaciones), palette=my_pal)
+plt.ylabel('Correlation', fontsize=24)
+plt.yticks(fontsize=20)
+plt.xticks(fontsize=24)
+plt.grid()
+ax = plt.gca()
+ax.set_xticklabels(['Listening', 'Speech\nproduction', 'Listening \n (speaking)', 'Speaking \n (listening)',
+                    'Silence'], fontsize=24)
+plt.tight_layout()
+
+if Save_fig:
+    os.makedirs(Run_graficos_path, exist_ok=True)
+    plt.savefig(Run_graficos_path + '{}.png'.format(Band))
+    plt.savefig(Run_graficos_path + '{}.svg'.format(Band))
+
 ## Venn Diagrams
 from matplotlib_venn import venn3, venn3_circles
 from matplotlib import pyplot as plt
