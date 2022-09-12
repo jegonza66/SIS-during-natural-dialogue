@@ -44,7 +44,7 @@ Stims_preprocess = 'Normalize'
 EEG_preprocess = 'Standarize'
 
 # Random permutations
-Statistical_test = True
+Statistical_test = False
 
 # Save / Display Figures
 Display_Ind_Figures = False
@@ -54,7 +54,7 @@ Save_Total_Figures = True
 Save_Final_Correlation = True
 
 # Save mean correlations
-Mean_Correlations_fname = 'saves/{}/{}/Final_Correlation/tmin{}_tmax{}/Mean_Correlations.pkl'.format(model, situacion, tmin, tmax)
+Mean_Correlations_fname = 'saves/25_folds/{}/{}/Final_Correlation/tmin{}_tmax{}/Mean_Correlations.pkl'.format(model, situacion, tmin, tmax)
 try:
     f = open(Mean_Correlations_fname, 'rb')
     Mean_Correlations = pickle.load(f)
@@ -80,13 +80,13 @@ for Band in Bands:
         print('Status: ' + situacion)
         print('tmin: {} - tmax: {}'.format(tmin, tmax))
         # Paths
-        save_path = 'saves/{}/{}/Final_Correlation/tmin{}_tmax{}/'.format(model, situacion, tmin, tmax)
+        save_path = 'saves/25_folds/{}/{}/Final_Correlation/tmin{}_tmax{}/'.format(model, situacion, tmin, tmax)
         procesed_data_path = 'saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
-        Run_graficos_path = 'gráficos/{}/{}/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
+        Run_graficos_path = 'gráficos/25_folds/{}/{}/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
             model, situacion, Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
-        Path_original = 'saves/{}/{}/Original/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
+        Path_original = 'saves/25_folds/{}/{}/Original/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
             model, situacion, Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
-        Path_it = 'saves/{}/{}/Fake_it/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
+        Path_it = 'saves/25_folds/{}/{}/Fake_it/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
             model, situacion, Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
 
         # Start Run
@@ -111,7 +111,7 @@ for Band in Bands:
                 print('Subject {}'.format(sujeto))
                 # Separo los datos en 5 y tomo test set de 20% de datos con kfold (5 iteraciones)
                 Predicciones = {}
-                n_folds = 5
+                n_folds = 25
                 iteraciones = 3000
 
                 # Defino variables donde voy a guardar mil cosas
@@ -139,14 +139,14 @@ for Band in Bands:
                 # Empiezo el KFold de test
                 kf_test = KFold(n_folds, shuffle=False)
                 for fold, (train_val_index, test_index) in enumerate(kf_test.split(eeg)):
-                    eeg_train_val, eeg_test = eeg[train_val_index], eeg[test_index]
+                    eeg_train_val, eeg_test = eeg[test_index], eeg[train_val_index]
 
                     dstims_train_val = list()
                     dstims_test = list()
 
                     for stimulus in list(dstims):
-                        dstims_train_val.append(stimulus[train_val_index])
-                        dstims_test.append(stimulus[test_index])
+                        dstims_train_val.append(stimulus[test_index])
+                        dstims_test.append(stimulus[train_val_index])
 
                     axis = 0
                     porcent = 5

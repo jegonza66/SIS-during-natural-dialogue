@@ -190,7 +190,9 @@ if Save_fig:
 
 ## Violin Plot Situation
 import pandas as pd
+import numpy as np
 import pickle
+import matplotlib
 import matplotlib.pyplot as plt
 import os
 import seaborn as sn
@@ -202,7 +204,7 @@ Band = 'Theta'
 stim = 'Spectrogram'
 situaciones = ['Escucha', 'Habla_Propia', 'Ambos', 'Ambos_Habla', 'Silencio']
 tmin, tmax = -0.6, -0.003
-Run_graficos_path = 'gráficos/SIS_statistics/{}/{}/tmin{}_tmax{}/'.format(Band, stim, tmin, tmax)
+Run_graficos_path = 'gráficos/SIS_statistics/{}/{}/tmin{}_tmax{}/log/'.format(Band, stim, tmin, tmax)
 Save_fig = True
 
 montage = mne.channels.make_standard_montage('biosemi128')
@@ -222,8 +224,8 @@ for situacion in situaciones:
 stats = {}
 pvals = {}
 
-for sit1, sit2 in zip(('Escucha', 'Escucha', 'Escucha', 'Habla_Propia', 'Ambos', 'Ambos', 'Ambos_Habla'),
-                      ('Habla_Propia', 'Ambos', 'Silencio', 'Silencio', 'Ambos_Habla', 'Silencio', 'Silencio')):
+for sit1, sit2 in zip(('Escucha', 'Escucha', 'Escucha', 'Habla_Propia', 'Habla_Propia', 'Ambos', 'Ambos', 'Ambos_Habla'),
+                      ('Habla_Propia', 'Ambos', 'Silencio', 'Silencio', 'Ambos_Habla', 'Ambos_Habla', 'Silencio', 'Silencio')):
 
     dist1 = Correlaciones[sit1]
     dist2 = Correlaciones[sit2]
@@ -238,14 +240,22 @@ for sit1, sit2 in zip(('Escucha', 'Escucha', 'Escucha', 'Habla_Propia', 'Ambos',
     stats[f'{sit1}-{sit2}'] = stat
     pvals[f'{sit1}-{sit2}'] = pval
 
+    log_pval = np.log10(pval)
+
     # Plot pvalue
     fig, ax = plt.subplots()
     fig.suptitle(f'p-value: {sit1}-{sit2}\n'
-                 f'Mean: {round(np.mean(pvals[f"{sit1}-{sit2}"]), 3)}', fontsize=19)
-    im = mne.viz.plot_topomap(pvals[f'{sit1}-{sit2}'], info, axes=ax, show=False, sphere=0.07, cmap='Reds')
-    cbar = plt.colorbar(im[0], ax=ax, shrink=0.85)
+                 f'mean: {round(np.mean(pvals[f"{sit1}-{sit2}"]), 6)} - '
+                 f'min: {round(np.min(pvals[f"{sit1}-{sit2}"]), 6)} - '
+                 f'max: {round(np.max(pvals[f"{sit1}-{sit2}"]), 6)}\n'
+                 f'passed: {sum(np.array(pval)< 0.05/128)}', fontsize=17)
+    im = mne.viz.plot_topomap(log_pval, vmin=-6, vmax=np.log10(0.0004), pos=info, axes=ax, show=False, sphere=0.07, cmap='Reds_r')
+    cbar = plt.colorbar(im[0], ax=ax, shrink=0.85, ticks=[-6, -5, -4])
     cbar.ax.yaxis.set_tick_params(labelsize=17)
+    cbar.ax.set_yticklabels(['<10-6', '10-5', '>10-4'])
     cbar.ax.set_ylabel(ylabel='p-value', fontsize=17)
+
+
     fig.tight_layout()
 
     if Save_fig:
@@ -290,6 +300,102 @@ if Save_fig:
     os.makedirs(Run_graficos_path, exist_ok=True)
     plt.savefig(Run_graficos_path + 'Violin_plot.png'.format(Band))
     plt.savefig(Run_graficos_path + 'Violin_plot.svg'.format(Band))
+
+## TRF amplitude
+
+import numpy as np
+import pickle
+import matplotlib.pyplot as plt
+import mne
+
+model = 'Ridge'
+Band = 'Theta'
+stim = 'Spectrogram'
+sr = 128
+tmin, tmax = -0.6, -0.003
+delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
+times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays))
+times = np.flip(-times)
+Stims_preprocess = 'Normalize'
+EEG_preprocess = 'Standarize'
+Save_fig = True
+
+Listening_25_folds_path = 'saves/25_folds/{}/{}/Original/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/Pesos_Totales_{}_{}.pkl'.\
+    format(model, 'Escucha', Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band, stim, Band)
+Listening_path = 'saves/{}/{}/Original/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/Pesos_Totales_{}_{}.pkl'.\
+    format(model, 'Escucha', Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band, stim, Band)
+Ambos_path = 'saves/{}/{}/Original/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/Pesos_Totales_{}_{}.pkl'.\
+    format(model, 'Ambos', Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band, stim, Band)
+
+Run_graficos_path = 'gráficos/Amplitude_Comparison/{}/{}/tmin{}_tmax{}/'.format(Band, stim, tmin, tmax)
+
+# Load TRFs
+f = open(Listening_25_folds_path, 'rb')
+TRF_25 = pickle.load(f)
+f.close()
+TRF_25 = np.flip(TRF_25.reshape(info['nchan'], 16, len(delays)), axis=2).mean(1)
+
+f = open(Listening_path, 'rb')
+TRF_escucha = pickle.load(f)
+f.close()
+TRF_escucha = np.flip(TRF_escucha.reshape(info['nchan'], 16, len(delays)), axis=2).mean(1)
+
+f = open(Ambos_path, 'rb')
+TRF_ambos = pickle.load(f)
+f.close()
+TRF_ambos = np.flip(TRF_ambos.reshape(info['nchan'], 16, len(delays)), axis=2).mean(1)
+
+montage = mne.channels.make_standard_montage('biosemi128')
+channel_names = montage.ch_names
+info = mne.create_info(ch_names=channel_names[:], sfreq=128, ch_types='eeg').set_montage(montage)
+
+mean_25 = TRF_25.mean(0)
+mean_escucha = TRF_escucha.mean(0)
+mean_ambos = TRF_ambos.mean(0)
+
+plt.ion()
+
+plt.figure(figsize=(15, 5))
+plt.plot(times*1000, mean_escucha, label='L|O')
+plt.plot(times*1000, mean_25, label='L|O downsampled')
+plt.plot(times*1000, mean_ambos, label='L|B')
+plt.xlim([(times*1000).min(), (times*1000).max()])
+plt.xlabel('Time (ms)')
+plt.ylabel('TRF (a.u.)')
+plt.grid()
+plt.legend()
+
+if Save_fig:
+    os.makedirs(Run_graficos_path, exist_ok=True)
+    plt.savefig(Run_graficos_path + 'Plot.png'.format(Band))
+    plt.savefig(Run_graficos_path + 'Plot.svg'.format(Band))
+
+fig, axs = plt.subplots(nrows=3, ncols=1, figsize=(15, 9), sharex=True)
+for i, plot_data, title in zip(range(3), [TRF_escucha, TRF_25, TRF_ambos], ['L|O', 'L|O downsampled', 'L | B']):
+    evoked = mne.EvokedArray(plot_data, info)
+    evoked.times = times
+    evoked.plot(scalings=dict(eeg=1, grad=1, mag=1), zorder='std', time_unit='ms', titles=dict(eeg=''),
+                show=False, spatial_colors=True, unit=True, units='TRF (a.u.)', axes=axs[i])
+    axs[i].plot(times * 1000, evoked._data.mean(0), "k--", label="Mean", zorder=130, linewidth=2)
+    axs[i].xaxis.label.set_size(14)
+    axs[i].yaxis.label.set_size(14)
+    axs[i].set_ylim([-0.016, 0.015])
+    axs[i].tick_params(axis='both', labelsize=14)
+    axs[i].grid()
+    axs[i].legend(fontsize=12)
+    axs[i].set_title(f'{title}', fontsize=15)
+    if i != 2:
+        axs[i].set_xlabel('', fontsize=14)
+    else:
+        axs[i].set_xlabel('Time (ms)', fontsize=14)
+
+fig.tight_layout()
+
+if Save_fig:
+    os.makedirs(Run_graficos_path, exist_ok=True)
+    plt.savefig(Run_graficos_path + 'Subplots.png'.format(Band))
+    plt.savefig(Run_graficos_path + 'Subplots.svg'.format(Band))
+
 
 ## Venn Diagrams
 from matplotlib_venn import venn3, venn3_circles
