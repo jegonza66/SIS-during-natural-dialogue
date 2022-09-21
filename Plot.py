@@ -10,6 +10,7 @@ import mne
 import Funciones
 import librosa
 from statannot import add_stat_annotation
+from scipy.stats import wilcoxon
 
 
 def highlight_cell(x, y, ax=None, **kwargs):
@@ -295,6 +296,7 @@ def Cabezas_corr_promedio(Correlaciones_totales_sujetos, info, Display, Save, Ru
 
     add_stat_annotation(ax, data=data, box_pairs=[('Left', 'Right')],
                         test='Wilcoxon', text_format='full', loc='outside')
+    test_results = wilcoxon(data['Left'], data['Right'])
 
     if Save:
         save_path_graficos = Run_graficos_path
@@ -302,7 +304,7 @@ def Cabezas_corr_promedio(Correlaciones_totales_sujetos, info, Display, Save, Ru
         fig.savefig(save_path_graficos + 'left_vs_right_{}.svg'.format(title))
         fig.savefig(save_path_graficos + 'left_vs_right_{}.png'.format(title))
 
-    return Correlaciones_promedio.mean(), Correlaciones_promedio.std()
+    return (Correlaciones_promedio.mean(), Correlaciones_promedio.std()), test_results
 
 
 def violin_plot_decoding(Correlaciones_totales_sujetos, Display, Save, Run_graficos_path, title):
@@ -980,7 +982,7 @@ def ch_heatmap_topo(total_data, Band, info, delays, times, Display, Save, grafic
     max_pahse_sync = phase_sync_ch[:, max_t_lag]
 
     fig = plt.figure()
-    plt.suptitle("{}".format(title), fontsize=19)
+    plt.suptitle("{}".format(title), fontsize=17)
     plt.title('Mean = {:.3f} +/- {:.3f}'.format(max_pahse_sync.mean(), max_pahse_sync.std()),
               fontsize=19)
     im = mne.viz.plot_topomap(max_pahse_sync, info, cmap='Reds',
@@ -988,7 +990,8 @@ def ch_heatmap_topo(total_data, Band, info, delays, times, Display, Save, grafic
                               vmax=max_pahse_sync.max(),
                               show=False, sphere=0.07)
     cb = plt.colorbar(im[0], shrink=0.65, orientation='horizontal')
-    cb.ax.tick_params(labelsize=19)
+    cb.set_label('r', fontsize=15)
+    cb.ax.tick_params(labelsize=15)
     fig.tight_layout()
 
     if Save:
@@ -1014,28 +1017,26 @@ def ch_heatmap_topo(total_data, Band, info, delays, times, Display, Save, grafic
                                                   phase_sync_std[max_t_lag], fontsize=15))
 
     axs1 = fig.add_axes([.2, 0.5, 0.65, 0.35])
-    im = axs1.pcolormesh(times, np.arange(info['nchan']), phase_sync_ch, shading='auto')
-    axs1.set_ylabel('{}'.format(title))
-    axs1.yaxis.label.set_size(12)
+    im = axs1.pcolormesh(times*1000, np.arange(info['nchan']), phase_sync_ch, shading='auto')
+    axs1.set_ylabel('Channels', fontsize=12)
     axs1.tick_params(axis='y', labelsize=12)
     axs1.set_xticks([])
 
     cb_ax = fig.add_axes([.87, .5, .02, .35])
     cbar = fig.colorbar(im, orientation='vertical', cax=cb_ax)
+    cbar.set_label('PLV', fontsize=12)
     cbar.ax.tick_params(labelsize=12)
 
     axs2 = fig.add_axes([.2, .1, 0.65, 0.35])
-    axs2.plot(times, phase_sync)
-    axs2.fill_between(times, phase_sync - phase_sync_std / 2, phase_sync + phase_sync_std / 2, alpha=.5)
+    axs2.plot(times*1000, phase_sync)
+    axs2.fill_between(times*1000, phase_sync - phase_sync_std / 2, phase_sync + phase_sync_std / 2, alpha=.5)
     axs2.set_ylim([0, 0.08])
-    axs2.vlines(times[max_t_lag], axs2.get_ylim()[0], axs2.get_ylim()[1], linestyle='dashed', color='k',
-               label='Max. sync delay: {:.2f}s'.format(times[max_t_lag]))
-    axs2.set_xlabel('Time lag [s]')
-    axs2.set_ylabel('Mean {}'.format(title))
-    axs2.xaxis.label.set_size(12)
-    axs2.yaxis.label.set_size(12)
+    axs2.vlines(times[max_t_lag]*1000, axs2.get_ylim()[0], axs2.get_ylim()[1], linestyle='dashed', color='k',
+               label='Max. delay: {}ms'.format(int(times[max_t_lag]*1000)))
+    axs2.set_xlabel('Time lag [ms]', fontsize=12)
+    axs2.set_ylabel('Mean {}'.format(title), fontsize=12)
     axs2.tick_params(axis='both', labelsize=12)
-    axs2.set_xlim([times[0], times[-1]])
+    axs2.set_xlim([times[0]*1000, times[-1]*1000])
     axs2.grid()
     axs2.legend()
 

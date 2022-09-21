@@ -297,13 +297,17 @@ for Band in Bands:
                 sujeto_total += 1
 
         # Armo cabecita con correlaciones promedio entre sujetos
-        Mean_Correlations_Band[stim] = Plot.Cabezas_corr_promedio(Correlaciones_totales_sujetos, info,
-                                                                  Display_Total_Figures, Save_Total_Figures,
-                                                                  Run_graficos_path, title='Correlation')
+        Mean_Correlations_Band[stim], lat_test_results_corr = Plot.Cabezas_corr_promedio(Correlaciones_totales_sujetos,
+                                                                                         info, Display_Total_Figures,
+                                                                                         Save_Total_Figures,
+                                                                                         Run_graficos_path,
+                                                                                         title='Correlation')
 
-        Mean_Correlations_Band[stim] = Plot.Cabezas_corr_promedio(Rmse_totales_sujetos, info,
-                                                                  Display_Total_Figures, Save_Total_Figures,
-                                                                  Run_graficos_path, title='Rmse')
+        Mean_Correlations_Band[stim], lat_test_results_rmse = Plot.Cabezas_corr_promedio(Rmse_totales_sujetos, info,
+                                                                                         Display_Total_Figures,
+                                                                                         Save_Total_Figures,
+                                                                                         Run_graficos_path,
+                                                                                         title='Rmse')
 
         # Armo cabecita con canales repetidos
         if Statistical_test:

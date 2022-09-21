@@ -9,7 +9,7 @@ import gcmi
 import Load_light as Load
 
 # WHAT TO DO
-Cortical_Entrainment = True
+PLV = True
 GCMI = False
 Intra_Brain = False
 Brain_Brain_sync = False
@@ -43,7 +43,7 @@ for Band in Bands:
         print('Status: ' + situacion)
         print('tmin: {} - tmax: {}'.format(tmin, tmax))
         # Save Variables
-        if Cortical_Entrainment:
+        if PLV:
             total_phase_consistency = np.zeros((total_subjects, 128, len(delays)))
         if GCMI:
             total_gcmi = np.zeros((total_subjects, 128, len(delays)))
@@ -172,8 +172,8 @@ for Band in Bands:
                                         graficos_save_path=graficos_save_path_subj, total_subjects=total_subjects,
                                         sesion=sesion, sujeto=sujeto)
 
-                    if Cortical_Entrainment:
-                        graficos_save_path = 'gráficos/Cort_Entr/{}/tmin{}_tmax{}/{}/'.format(situacion, tmin, tmax,
+                    if PLV:
+                        graficos_save_path = 'gráficos/PLV/{}/tmin{}_tmax{}/{}/'.format(situacion, tmin, tmax,
                                                                                               Band)
                         print('Runing Cortical entrainment...')
                         for t_lag in range(len(delays)):
@@ -238,9 +238,9 @@ for Band in Bands:
                                  delays=delays, times=times, Display=Display, Save=Save,
                                  graficos_save_path=graficos_save_path, title='GCMI', total_subjects=total_subjects)
 
-        if Cortical_Entrainment:
+        if PLV:
             # Save Cortical entrainment
-            save_path = Run_saves_path + '/Cort_Entr/{}/tmin{}_tmax{}/'.format(situacion, tmin, tmax)
+            save_path = Run_saves_path + '/PLV/{}/tmin{}_tmax{}/'.format(situacion, tmin, tmax)
             os.makedirs(save_path, exist_ok=True)
 
             f = open(save_path + '{}.pkl'.format(Band), 'wb')
@@ -249,7 +249,7 @@ for Band in Bands:
 
             Plot.ch_heatmap_topo(total_data=total_phase_consistency, Band=Band, info=info,
                                  delays=delays, times=times, Display=Display, Save=Save,
-                                 graficos_save_path=graficos_save_path, title='Phase Sync',
+                                 graficos_save_path=graficos_save_path, title='PLV',
                                  total_subjects=total_subjects)
 
         if Intra_Brain:
@@ -262,9 +262,13 @@ for Band in Bands:
                             graficos_save_path=graficos_save_path, total_subjects=total_subjects)
 
 ##
+import numpy as np
+import Plot
+import Load
+import pickle
 
 # WHAT TO DO
-Cortical_Entrainment = True
+PLV = True
 GCMI = False
 Intra_Brain = False
 Brain_Brain_sync = False
@@ -307,7 +311,7 @@ for situacion in situcaiones:
             print('Status: ' + situacion)
             print('tmin: {} - tmax: {}'.format(tmin, tmax))
             # Save Variables
-            if Cortical_Entrainment:
+            if PLV:
                 total_phase_consistency = np.zeros((total_subjects, 128, len(delays)))
             if GCMI:
                 total_gcmi = np.zeros((total_subjects, 128, len(delays)))
@@ -329,10 +333,10 @@ for situacion in situcaiones:
                                  delays=delays, times=times, Display=Display, Save=Save,
                                  graficos_save_path=graficos_save_path, title='GCMI', total_subjects=total_subjects)
 
-        if Cortical_Entrainment:
-            graficos_save_path = 'gráficos/Cort_Entr/{}/tmin{}_tmax{}/{}/'.format(situacion, tmin, tmax,Band)
+        if PLV:
+            graficos_save_path = 'gráficos/PLV/{}/tmin{}_tmax{}/{}/'.format(situacion, tmin, tmax,Band)
             # Save Cortical entrainment
-            save_path = Run_saves_path + '/Cort_Entr/{}/tmin{}_tmax{}/'.format(situacion, tmin, tmax)
+            save_path = Run_saves_path + '/PLV/{}/tmin{}_tmax{}/'.format(situacion, tmin, tmax)
 
             f = open(save_path + '{}.pkl'.format(Band), 'rb')
             total_phase_consistency = pickle.load(f)
@@ -340,7 +344,7 @@ for situacion in situcaiones:
 
             Plot.ch_heatmap_topo(total_data=total_phase_consistency, Band=Band, info=info,
                                  delays=delays, times=times, Display=Display, Save=Save,
-                                 graficos_save_path=graficos_save_path, title='Phase Sync',
+                                 graficos_save_path=graficos_save_path, title='PLV',
                                  total_subjects=total_subjects)
         #
         # if Intra_Brain:

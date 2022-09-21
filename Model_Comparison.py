@@ -112,13 +112,13 @@ import seaborn as sn
 
 tmin, tmax = -0.6, -0.003
 model = 'Ridge'
-situacion = 'Escucha'
+situacion = 'Silencio'
 
 Run_graficos_path = 'gráficos/Model_Comparison/{}/{}/tmin{}_tmax{}/Violin Plots/'.format(model, situacion, tmin, tmax)
 Save_fig = True
 Correlaciones = {}
 
-stim = 'Envelope'
+stim = 'Spectrogram'
 Bands = ['All', 'Delta', 'Theta', 'Alpha', 'Beta_1']
 
 for Band in Bands:
@@ -136,10 +136,10 @@ plt.title(situacion, fontsize=24)
 sn.violinplot(data=pd.DataFrame(Correlaciones), palette=my_pal)
 plt.ylabel('Correlation', fontsize=24)
 plt.yticks(fontsize=20)
-plt.ylim([-0, 0.5])
+plt.ylim([-0.1, 0.5])
 plt.grid()
 ax = plt.gca()
-ax.set_xticklabels(['All\n(0.1 - 40 Hz)', 'Delta\n(1 - 4 Hz)', 'Theta\n(4 - 8 Hz)', 'Alpha\n(8 - 13 Hz)',
+ax.set_xticklabels(['Broad band\n(0.1 - 40 Hz)', 'Delta\n(1 - 4 Hz)', 'Theta\n(4 - 8 Hz)', 'Alpha\n(8 - 13 Hz)',
                     'Low Beta\n(13 - 19 Hz)'], fontsize=24)
 plt.tight_layout()
 
