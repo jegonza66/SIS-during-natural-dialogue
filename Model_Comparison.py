@@ -206,6 +206,11 @@ situaciones = ['Escucha', 'Habla_Propia', 'Ambos', 'Ambos_Habla', 'Silencio']
 tmin, tmax = -0.6, -0.003
 Run_graficos_path = 'gráficos/SIS_statistics/{}/{}/tmin{}_tmax{}/log/'.format(Band, stim, tmin, tmax)
 Save_fig = True
+Display_fig = False
+if Display_fig:
+    plt.ion()
+else:
+    plt.ioff()
 
 montage = mne.channels.make_standard_montage('biosemi128')
 channel_names = montage.ch_names
