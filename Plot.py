@@ -962,9 +962,11 @@ def Brain_sync(data, Band, info, Display, Save, graficos_save_path, total_subjec
             plt.savefig(graficos_save_path + 'Inter Brain sync - Sesion{}_Sujeto{}.svg'.format(sesion, sujeto))
 
 
-
 def ch_heatmap_topo(total_data, Band, info, delays, times, Display, Save, graficos_save_path, title, total_subjects=18,
-                    sesion=None, sujeto=None):
+                    sesion=None, sujeto=None, fontsize=None):
+
+    if not fontsize:
+        fontsize = 24
 
     if total_data.shape == (info['nchan'], len(delays)):
         phase_sync_ch = total_data
@@ -982,16 +984,16 @@ def ch_heatmap_topo(total_data, Band, info, delays, times, Display, Save, grafic
     max_pahse_sync = phase_sync_ch[:, max_t_lag]
 
     fig = plt.figure()
-    plt.suptitle("{}".format(title), fontsize=17)
+    plt.suptitle("{}".format(title), fontsize=fontsize)
     plt.title('Mean = {:.3f} +/- {:.3f}'.format(max_pahse_sync.mean(), max_pahse_sync.std()),
-              fontsize=19)
+              fontsize=fontsize)
     im = mne.viz.plot_topomap(max_pahse_sync, info, cmap='Reds',
                               vmin=max_pahse_sync.min(),
                               vmax=max_pahse_sync.max(),
                               show=False, sphere=0.07)
     cb = plt.colorbar(im[0], shrink=0.65, orientation='horizontal')
-    cb.set_label('r', fontsize=15)
-    cb.ax.tick_params(labelsize=15)
+    cb.set_label('r', fontsize=fontsize)
+    cb.ax.tick_params(labelsize=fontsize)
     fig.tight_layout()
 
     if Save:
@@ -1014,18 +1016,18 @@ def ch_heatmap_topo(total_data, Band, info, delays, times, Display, Save, grafic
     fig = plt.figure()
     plt.suptitle("Time lagged {} - Band: {}\n"
                  "Max = {:.3f} +/- {:.3f}".format(title, Band, phase_sync[max_t_lag],
-                                                  phase_sync_std[max_t_lag], fontsize=15))
+                                                  phase_sync_std[max_t_lag], fontsize=fontsize))
 
     axs1 = fig.add_axes([.2, 0.5, 0.65, 0.35])
     im = axs1.pcolormesh(times*1000, np.arange(info['nchan']), phase_sync_ch, shading='auto')
-    axs1.set_ylabel('Channels', fontsize=12)
-    axs1.tick_params(axis='y', labelsize=12)
+    axs1.set_ylabel('Channels', fontsize=fontsize)
+    axs1.tick_params(axis='y', labelsize=fontsize)
     axs1.set_xticks([])
 
     cb_ax = fig.add_axes([.87, .5, .02, .35])
     cbar = fig.colorbar(im, orientation='vertical', cax=cb_ax)
-    cbar.set_label('PLV', fontsize=12)
-    cbar.ax.tick_params(labelsize=12)
+    cbar.set_label('PLV', fontsize=fontsize)
+    cbar.ax.tick_params(labelsize=fontsize)
 
     axs2 = fig.add_axes([.2, .1, 0.65, 0.35])
     axs2.plot(times*1000, phase_sync)
@@ -1033,9 +1035,9 @@ def ch_heatmap_topo(total_data, Band, info, delays, times, Display, Save, grafic
     axs2.set_ylim([0, 0.08])
     axs2.vlines(times[max_t_lag]*1000, axs2.get_ylim()[0], axs2.get_ylim()[1], linestyle='dashed', color='k',
                label='Max. delay: {}ms'.format(int(times[max_t_lag]*1000)))
-    axs2.set_xlabel('Time lag [ms]', fontsize=12)
-    axs2.set_ylabel('Mean {}'.format(title), fontsize=12)
-    axs2.tick_params(axis='both', labelsize=12)
+    axs2.set_xlabel('Time lag [ms]', fontsize=fontsize)
+    axs2.set_ylabel('Mean {}'.format(title), fontsize=fontsize)
+    axs2.tick_params(axis='both', labelsize=fontsize)
     axs2.set_xlim([times[0]*1000, times[-1]*1000])
     axs2.grid()
     axs2.legend()

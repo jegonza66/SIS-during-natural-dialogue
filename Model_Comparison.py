@@ -130,17 +130,19 @@ for Band in Bands:
 
 my_pal = {'All': 'darkgrey', 'Delta': 'darkgrey', 'Theta': 'C1', 'Alpha': 'darkgrey', 'Beta_1': 'darkgrey'}
 
+fontsize=30
+
 plt.ion()
 plt.figure(figsize=(19, 5))
-plt.title(situacion, fontsize=24)
+plt.title(situacion, fontsize=fontsize)
 sn.violinplot(data=pd.DataFrame(Correlaciones), palette=my_pal)
-plt.ylabel('Correlation', fontsize=24)
-plt.yticks(fontsize=20)
+plt.ylabel('Correlation', fontsize=fontsize)
+plt.yticks(fontsize=fontsize)
 plt.ylim([-0.1, 0.5])
 plt.grid()
 ax = plt.gca()
 ax.set_xticklabels(['Broad band\n(0.1 - 40 Hz)', 'Delta\n(1 - 4 Hz)', 'Theta\n(4 - 8 Hz)', 'Alpha\n(8 - 13 Hz)',
-                    'Low Beta\n(13 - 19 Hz)'], fontsize=24)
+                    'Low Beta\n(13 - 19 Hz)'], fontsize=fontsize)
 plt.tight_layout()
 
 if Save_fig:
