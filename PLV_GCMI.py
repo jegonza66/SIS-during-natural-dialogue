@@ -264,7 +264,6 @@ for Band in Bands:
 ##
 import numpy as np
 import Plot
-import Load
 import pickle
 
 # WHAT TO DO
@@ -279,8 +278,8 @@ Save = True
 
 # Define Parameters
 # Stimuli and EEG
-Stims = ['Envelope']
-Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'All', (1, 12)]
+Stims = ['Spectrogram']
+Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'All']
 Bands = ['Theta']
 sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
 total_subjects = len(sesiones)*2
@@ -297,11 +296,10 @@ procesed_data_path = 'saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
 Run_saves_path = 'saves/'
 
 # Get info
-# LOAD DATA BY SUBJECT
-Sujeto_1, Sujeto_2 = Load.Load_Data(sesion=21, stim='Envelope', Band='Theta', sr=sr, tmin=tmin, tmax=tmax,
-                                    procesed_data_path=procesed_data_path, situacion=situacion)
-# LOAD EEG BY SUBJECT
-eeg_sujeto_1, eeg_sujeto_2, info = Sujeto_1['EEG'], Sujeto_2['EEG'], Sujeto_1['info']
+info_path = 'saves/Preprocesed_Data/tmin-0.6_tmax-0.003/EEG/info.pkl'
+f = open(info_path, 'rb')
+info = pickle.load(f)
+f.close()
 
 for situacion in situcaiones:
     for Band in Bands:

@@ -36,7 +36,7 @@ except:
     print('\n\nAlphas file not found.\n\n')
 
 # Stimuli and EEG
-Stims = ['Spectrogram']
+Stims = ['Envelope']
 Bands = ['Theta']
 
 # Standarization

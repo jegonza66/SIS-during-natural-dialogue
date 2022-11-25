@@ -103,18 +103,24 @@ for Band in Bands:
         plt.savefig(Run_graficos_path + '{}.png'.format(Band))
         plt.savefig(Run_graficos_path + '{}.svg'.format(Band))
 
-## Violin Plot Bands
+## Violin / Topo (Bands)
 import pandas as pd
 import pickle
 import matplotlib.pyplot as plt
 import os
 import seaborn as sn
+import mne
 
 tmin, tmax = -0.6, -0.003
 model = 'Ridge'
-situacion = 'Silencio'
+situacion = 'Escucha'
 
-Run_graficos_path = 'gráficos/Model_Comparison/{}/{}/tmin{}_tmax{}/Violin Plots/'.format(model, situacion, tmin, tmax)
+info_path = 'saves/Preprocesed_Data/tmin-0.6_tmax-0.003/EEG/info.pkl'
+f = open(info_path, 'rb')
+info = pickle.load(f)
+f.close()
+
+Run_graficos_path = 'gráficos/Model_Comparison/{}/{}/tmin{}_tmax{}/Violin Topo/'.format(model, situacion, tmin, tmax)
 Save_fig = True
 Correlaciones = {}
 
@@ -130,18 +136,111 @@ for Band in Bands:
 
 my_pal = {'All': 'darkgrey', 'Delta': 'darkgrey', 'Theta': 'C1', 'Alpha': 'darkgrey', 'Beta_1': 'darkgrey'}
 
-plt.ion()
-plt.figure(figsize=(19, 5))
-plt.title(situacion, fontsize=24)
-sn.violinplot(data=pd.DataFrame(Correlaciones), palette=my_pal)
-plt.ylabel('Correlation', fontsize=24)
-plt.yticks(fontsize=20)
-plt.ylim([-0.1, 0.5])
-plt.grid()
-ax = plt.gca()
+fontsize = 15
+plt.rcParams.update({'font.size': fontsize})
+# fig, axs = plt.subplots(figsize=(10, 4), ncols=5, nrows=2, gridspec_kw={'wspace': 0.25})
+fig, axs = plt.subplots(figsize=(10, 4), ncols=5, nrows=2)
+
+for i, Band in enumerate(Bands):
+    ax = axs[0, i]
+    fig.tight_layout()
+    im = mne.viz.plot_topomap(Correlaciones[Band].ravel(), info, axes=ax, show=False, sphere=0.07, cmap='Reds',
+                              vmin=Correlaciones[Band].min(), vmax=Correlaciones[Band].max())
+    cbar = plt.colorbar(im[0], ax=ax, orientation='vertical', shrink=0.5)
+    cbar.ax.tick_params(labelsize=fontsize)
+
+for ax_row in axs[1:]:
+    for ax in ax_row:
+        ax.remove()
+
+ax = fig.add_subplot(2, 1, (2, 3))
+
+plt.suptitle(situacion)
+sn.violinplot(data=pd.DataFrame(Correlaciones), palette=my_pal, ax=ax)
+ax.set_ylabel('Correlation')
+ax.set_ylim([-0.1, 0.5])
+ax.grid()
 ax.set_xticklabels(['Broad band\n(0.1 - 40 Hz)', 'Delta\n(1 - 4 Hz)', 'Theta\n(4 - 8 Hz)', 'Alpha\n(8 - 13 Hz)',
-                    'Low Beta\n(13 - 19 Hz)'], fontsize=24)
-plt.tight_layout()
+                    'Low Beta\n(13 - 19 Hz)'])
+fig.tight_layout()
+
+if Save_fig:
+    os.makedirs(Run_graficos_path, exist_ok=True)
+    plt.savefig(Run_graficos_path + '{}.png'.format(stim))
+    plt.savefig(Run_graficos_path + '{}.svg'.format(stim))
+
+## Violin / mTRF (Bands)
+import pandas as pd
+import pickle
+import matplotlib.pyplot as plt
+import os
+import seaborn as sn
+import mne
+import numpy as np
+
+info_path = 'saves/Preprocesed_Data/tmin-0.6_tmax-0.003/EEG/info.pkl'
+f = open(info_path, 'rb')
+info = pickle.load(f)
+f.close()
+
+tmin, tmax = -0.6, -0.003
+delays = - np.arange(np.floor(tmin * info['sfreq']), np.ceil(tmax * info['sfreq']), dtype=int)
+times = np.linspace(delays[0] * np.sign(tmin) * 1 / info['sfreq'], np.abs(delays[-1]) * np.sign(tmax) * 1 / info['sfreq'], len(delays))
+times = np.flip(-times)
+
+model = 'Ridge'
+situacion = 'Escucha'
+
+Run_graficos_path = 'gráficos/Model_Comparison/{}/{}/tmin{}_tmax{}/Violin mTRF/'.format(model, situacion, tmin, tmax)
+Save_fig = True
+Correlaciones = {}
+mTRFs = {}
+
+stim = 'Spectrogram'
+Bands = ['All', 'Delta', 'Theta', 'Alpha', 'Beta_1']
+
+for Band in Bands:
+    f = open('saves/{}/{}/Final_Correlation/tmin{}_tmax{}/{}_EEG_{}.pkl'.format(model, situacion, tmin, tmax, stim, Band), 'rb')
+    Corr, Pass = pickle.load(f)
+    f.close()
+    Correlaciones[Band] = Corr.mean(0)
+
+f = open('saves/{}/{}/Original/Stims_Normalize_EEG_Standarize/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/Pesos_Totales_{}_{}.pkl'.format(model, situacion, tmin, tmax, stim, 'Theta', stim, 'Theta'), 'rb')
+mTRFs_Theta = pickle.load(f)
+f.close()
+
+my_pal = {'All': 'darkgrey', 'Delta': 'darkgrey', 'Theta': 'C1', 'Alpha': 'darkgrey', 'Beta_1': 'darkgrey'}
+
+fontsize = 12
+plt.rcParams.update({'font.size': fontsize})
+fig, axs = plt.subplots(figsize=(6, 4), nrows=2, gridspec_kw={'height_ratios': [1, 1]})
+
+plt.suptitle(situacion)
+sn.violinplot(data=pd.DataFrame(Correlaciones), palette=my_pal, ax=axs[0])
+axs[0].set_ylabel('Correlation')
+axs[0].set_ylim([-0.1, 0.5])
+axs[0].grid()
+axs[0].set_xticklabels(['Broad band', 'Delta', 'Theta', 'Alpha', 'Low Beta'])
+
+
+spectrogram_weights_chanels = mTRFs_Theta.reshape(info['nchan'], 16, len(times)).mean(1)
+
+# Adapt for ERP
+spectrogram_weights_chanels = np.flip(spectrogram_weights_chanels, axis=1)
+
+evoked = mne.EvokedArray(spectrogram_weights_chanels, info)
+evoked.times = times
+evoked.plot(scalings=dict(eeg=1, grad=1, mag=1), zorder='std', time_unit='ms', titles=dict(eeg=''),
+            show=False, spatial_colors=True, unit=False, units='w', axes=axs[1])
+axs[1].plot(times * 1000, evoked._data.mean(0), "k--", label="Mean", zorder=130, linewidth=2)
+if times[0] < 0:
+    ax.axvspan(ax.get_xlim()[0], 0, alpha=0.4, color='grey', label='Pre-Stimuli')
+
+axs[1].set_ylim([-0.016, 0.015])
+axs[1].grid()
+
+fig.tight_layout()
+plt.show()
 
 if Save_fig:
     os.makedirs(Run_graficos_path, exist_ok=True)

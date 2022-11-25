@@ -259,16 +259,15 @@ def Cabezas_corr_promedio(Correlaciones_totales_sujetos, info, Display, Save, Ru
     else:
         plt.ioff()
 
-    fig = plt.figure()
-    plt.suptitle("Mean {} per channel among subjects".format(title), fontsize=19)
-    plt.title('{} = {:.3f} +/- {:.3f}'.format(title, Correlaciones_promedio.mean(), Correlaciones_promedio.std()),
-              fontsize=19)
+    fontsize = 24
+    fig = plt.figure(figsize=(5, 4))
+    plt.suptitle('{} = {:.3f} +/- {:.3f}'.format(title, Correlaciones_promedio.mean(), Correlaciones_promedio.std()), fontsize=fontsize)
     # cmap = matplotlib.colors.LinearSegmentedColormap.from_list("", ['greenyellow', 'yellow', 'orange', 'red'])
     im = mne.viz.plot_topomap(Correlaciones_promedio, info, cmap='OrRd',
                               vmin=Correlaciones_promedio.min(), vmax=Correlaciones_promedio.max(),
                               show=False, sphere=0.07)
     cb = plt.colorbar(im[0], shrink=0.85, orientation='vertical')
-    cb.ax.tick_params(labelsize=19)
+    cb.ax.tick_params(labelsize=fontsize)
     fig.tight_layout()
 
     if Save:
@@ -285,17 +284,18 @@ def Cabezas_corr_promedio(Correlaciones_totales_sujetos, info, Display, Save, Ru
     corr_right = Correlaciones_promedio[mask_right]
     corr_left = Correlaciones_promedio[mask_left]
 
-    fig = plt.figure()
+    fontsize = 18
+    fig = plt.figure(figsize=(6.5, 4))
     data = pd.DataFrame({'Left': corr_left, 'Right': corr_right})
     ax = sn.boxplot(data=data, width=0.35)
     for patch in ax.artists:
         r, g, b, a = patch.get_facecolor()
         patch.set_facecolor((r, g, b, .8))
     sn.swarmplot(data=data, color=".25")
-    plt.tick_params(labelsize=15)
+    plt.tick_params(labelsize=fontsize)
 
     add_stat_annotation(ax, data=data, box_pairs=[('Left', 'Right')],
-                        test='Wilcoxon', text_format='full', loc='outside')
+                        test='Wilcoxon', text_format='full', loc='outside', )
     test_results = wilcoxon(data['Left'], data['Right'])
 
     if Save:
@@ -578,8 +578,8 @@ def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, 
             axs[1].tick_params(axis='both', labelsize=14)
 
             cbar = fig.colorbar(im, ax=axs[1], orientation='vertical')
-            cbar.set_label('TRF', fontsize=13)
-            cbar.ax.tick_params(labelsize=12)
+            cbar.set_label('Amplitude (a.u.)', fontsize=14)
+            cbar.ax.tick_params(labelsize=14)
 
             # Change axis 0 to match axis 1 width after adding colorbar
             ax1_box = axs[1].get_position().bounds
@@ -615,8 +615,8 @@ def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, 
             axs[1].yaxis.label.set_size(14)
             axs[1].tick_params(axis='both', labelsize=14)
             cbar = fig.colorbar(im, ax=axs[1], orientation='vertical')
-            cbar.set_label('TRF', fontsize=13)
-            cbar.ax.tick_params(labelsize=12)
+            cbar.set_label('Amplitude (a.u.)', fontsize=14)
+            cbar.ax.tick_params(labelsize=14)
 
             # Change axis 0 to match axis 1 width after adding colorbar
             ax1_box = axs[1].get_position().bounds
@@ -976,69 +976,65 @@ def ch_heatmap_topo(total_data, Band, info, delays, times, Display, Save, grafic
     else:
         plt.ioff()
 
+    fontsize = 14
+    plt.rcParams.update({'font.size': fontsize})
+    fig, axs = plt.subplots(figsize=(9, 5), nrows=2, ncols=2, gridspec_kw={'width_ratios': [2, 1]})
+
+    # Remove axes of column 2
+    for ax_col in axs[:, 1]:
+        ax_col.remove()
+
+    # Add one axis in column
+    ax = fig.add_subplot(1, 3, (3, 3))
+
     # Plot topo
     phase_sync = phase_sync_ch.mean(0)
     max_t_lag = np.argmax(phase_sync)
     max_pahse_sync = phase_sync_ch[:, max_t_lag]
 
-    fig = plt.figure()
-    plt.suptitle("{}".format(title), fontsize=17)
-    plt.title('Mean = {:.3f} +/- {:.3f}'.format(max_pahse_sync.mean(), max_pahse_sync.std()),
-              fontsize=19)
+    # ax.set_title('Mean = {:.3f} +/- {:.3f}'.format(max_pahse_sync.mean(), max_pahse_sync.std()))
     im = mne.viz.plot_topomap(max_pahse_sync, info, cmap='Reds',
                               vmin=max_pahse_sync.min(),
                               vmax=max_pahse_sync.max(),
-                              show=False, sphere=0.07)
-    cb = plt.colorbar(im[0], shrink=0.65, orientation='horizontal')
-    cb.set_label('r', fontsize=15)
-    cb.ax.tick_params(labelsize=15)
-    fig.tight_layout()
+                              show=False, sphere=0.07, axes=ax)
+    cb = plt.colorbar(im[0], shrink=1, orientation='horizontal')
+    cb.set_label('r')
 
-    if Save:
-        os.makedirs(graficos_save_path, exist_ok=True)
-        if total_data.shape == (info['nchan'], len(delays)):
-            plt.savefig(graficos_save_path + 'Topo_{}_Sesion{}_Sujeto{}.png'.format(title, sesion, sujeto))
-            plt.savefig(graficos_save_path + 'Topo_{}_Sesion{}_Sujeto{}.svg'.format(title, sesion, sujeto))
-        elif total_data.shape == (total_subjects, info['nchan'], len(delays)):
-            plt.savefig(graficos_save_path + 'Topo_{}.png'.format(title))
-            plt.savefig(graficos_save_path + 'Topo_{}.svg'.format(title))
 
-    # Invert times for plot
+    # Invert times for PLV plot
     phase_sync_ch = np.flip(phase_sync_ch)
     phase_sync_std = phase_sync_ch.std(0)
     phase_sync = phase_sync_ch.mean(0)
     max_t_lag = np.argmax(phase_sync)
 
-    times = np.flip(-times)
+    times_plot = np.flip(-times)
 
-    fig = plt.figure()
-    plt.suptitle("Time lagged {} - Band: {}\n"
-                 "Max = {:.3f} +/- {:.3f}".format(title, Band, phase_sync[max_t_lag],
-                                                  phase_sync_std[max_t_lag], fontsize=15))
+    im = axs[0, 0].pcolormesh(times_plot * 1000, np.arange(info['nchan']), phase_sync_ch, shading='auto')
+    axs[0, 0].set_ylabel('Channels')
+    axs[0, 0].set_xticks([])
 
-    axs1 = fig.add_axes([.2, 0.5, 0.65, 0.35])
-    im = axs1.pcolormesh(times*1000, np.arange(info['nchan']), phase_sync_ch, shading='auto')
-    axs1.set_ylabel('Channels', fontsize=12)
-    axs1.tick_params(axis='y', labelsize=12)
-    axs1.set_xticks([])
+    cbar = plt.colorbar(im, orientation='vertical', ax=axs[0, 0])
+    cbar.set_label('PLV')
 
-    cb_ax = fig.add_axes([.87, .5, .02, .35])
-    cbar = fig.colorbar(im, orientation='vertical', cax=cb_ax)
-    cbar.set_label('PLV', fontsize=12)
-    cbar.ax.tick_params(labelsize=12)
+    axs[1, 0].plot(times_plot * 1000, phase_sync)
+    axs[1, 0].fill_between(times_plot * 1000, phase_sync - phase_sync_std / 2, phase_sync + phase_sync_std / 2, alpha=.5)
+    axs[1, 0].set_ylim([0, 0.08])
+    axs[1, 0].vlines(times_plot[max_t_lag] * 1000, axs[1, 0].get_ylim()[0], axs[1, 0].get_ylim()[1], linestyle='dashed', color='k',
+                label='Max: {}ms'.format(int(times_plot[max_t_lag] * 1000)))
+    axs[1, 0].set_xlabel('Time lag [ms]')
+    # axs[1, 0].set_ylabel('Mean {}'.format(title))
+    # axs2.tick_params(axis='both', labelsize=12)
+    axs[1, 0].set_xlim([times_plot[0] * 1000, times_plot[-1] * 1000])
+    axs[1, 0].grid()
+    axs[1, 0].legend()
 
-    axs2 = fig.add_axes([.2, .1, 0.65, 0.35])
-    axs2.plot(times*1000, phase_sync)
-    axs2.fill_between(times*1000, phase_sync - phase_sync_std / 2, phase_sync + phase_sync_std / 2, alpha=.5)
-    axs2.set_ylim([0, 0.08])
-    axs2.vlines(times[max_t_lag]*1000, axs2.get_ylim()[0], axs2.get_ylim()[1], linestyle='dashed', color='k',
-               label='Max. delay: {}ms'.format(int(times[max_t_lag]*1000)))
-    axs2.set_xlabel('Time lag [ms]', fontsize=12)
-    axs2.set_ylabel('Mean {}'.format(title), fontsize=12)
-    axs2.tick_params(axis='both', labelsize=12)
-    axs2.set_xlim([times[0]*1000, times[-1]*1000])
-    axs2.grid()
-    axs2.legend()
+    fig.tight_layout()
+
+    # Change axis 0 to match axis 1 width after adding colorbar
+    ax0_box = axs[0, 0].get_position().bounds
+    ax1_box = axs[1, 0].get_position().bounds
+    ax1_new_box = (ax1_box[0], ax1_box[1], ax0_box[2], ax1_box[3])
+    axs[1, 0].set_position(ax1_new_box)
 
     if Save:
         os.makedirs(graficos_save_path, exist_ok=True)
