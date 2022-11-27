@@ -327,7 +327,7 @@ for situacion in situcaiones:
             total_gcmi = pickle.load(f)
             f.close()
 
-            Plot.ch_heatmap_topo(total_data=total_gcmi, Band=Band, info=info,
+            Plot.ch_heatmap_topo(total_data=total_gcmi, info=info,
                                  delays=delays, times=times, Display=Display, Save=Save,
                                  graficos_save_path=graficos_save_path, title='GCMI', total_subjects=total_subjects)
 
@@ -340,10 +340,10 @@ for situacion in situcaiones:
             total_phase_consistency = pickle.load(f)
             f.close()
 
-            Plot.ch_heatmap_topo(total_data=total_phase_consistency, Band=Band, info=info,
+            Plot.ch_heatmap_topo(total_data=total_phase_consistency, info=info,
                                  delays=delays, times=times, Display=Display, Save=Save,
                                  graficos_save_path=graficos_save_path, title='PLV',
-                                 total_subjects=total_subjects)
+                                 total_subjects=total_subjects, fontsize=18)
         #
         # if Intra_Brain:
         #     Plot.Brain_Brain_sync(data=Intra_Brain_phase_sync, Band=Band, info=info, Display=Display, Save=Save,

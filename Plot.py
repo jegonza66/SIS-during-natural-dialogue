@@ -963,8 +963,8 @@ def Brain_sync(data, Band, info, Display, Save, graficos_save_path, total_subjec
 
 
 
-def ch_heatmap_topo(total_data, Band, info, delays, times, Display, Save, graficos_save_path, title, total_subjects=18,
-                    sesion=None, sujeto=None):
+def ch_heatmap_topo(total_data, info, delays, times, Display, Save, graficos_save_path, title, total_subjects=18,
+                    sesion=None, sujeto=None, fontsize=14):
 
     if total_data.shape == (info['nchan'], len(delays)):
         phase_sync_ch = total_data
@@ -976,7 +976,6 @@ def ch_heatmap_topo(total_data, Band, info, delays, times, Display, Save, grafic
     else:
         plt.ioff()
 
-    fontsize = 14
     plt.rcParams.update({'font.size': fontsize})
     fig, axs = plt.subplots(figsize=(9, 5), nrows=2, ncols=2, gridspec_kw={'width_ratios': [2, 1]})
 
@@ -1022,7 +1021,7 @@ def ch_heatmap_topo(total_data, Band, info, delays, times, Display, Save, grafic
     axs[1, 0].vlines(times_plot[max_t_lag] * 1000, axs[1, 0].get_ylim()[0], axs[1, 0].get_ylim()[1], linestyle='dashed', color='k',
                 label='Max: {}ms'.format(int(times_plot[max_t_lag] * 1000)))
     axs[1, 0].set_xlabel('Time lag [ms]')
-    # axs[1, 0].set_ylabel('Mean {}'.format(title))
+    axs[1, 0].set_ylabel('Mean {}'.format(title))
     # axs2.tick_params(axis='both', labelsize=12)
     axs[1, 0].set_xlim([times_plot[0] * 1000, times_plot[-1] * 1000])
     axs[1, 0].grid()
