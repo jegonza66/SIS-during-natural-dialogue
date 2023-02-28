@@ -9,7 +9,6 @@ from numpy.fft import fft, fftfreq
 import parselmouth
 import opensmile
 from parselmouth.praat import call
-import librosa
 
 import Funciones
 
@@ -26,6 +25,83 @@ sr = 128
 audio_sr = 16000
 tmin, tmax = -0.6, -0.003
 delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
+
+## Phonemes
+import textgrids
+
+phn_fname = "Datos/phonemes/S" + str(s) + "/s" + str(s) + ".objects." + "{:02d}".format(trial) + ".channel" + \
+            str(channel) + ".aligned_fa.TextGrid"
+
+phrases_fname = "Datos/phrases/S" + str(s) + "/s" + str(s) + ".objects." + "{:02d}".format(trial) + ".channel" + str(
+        channel) + ".phrases"
+
+# Get trial total length
+phrases = pd.read_table(phrases_fname, header=None, sep="\t")
+trial_tmax = phrases[1].iloc[-1]
+
+# Phonemes
+grid = textgrids.TextGrid(phn_fname)
+
+phonemes = grid['transcription : phones']
+phonemes[0].xmin = 0.
+
+# Parse
+labels = []
+times = []
+samples = []
+
+for ph in phonemes:
+    label = ph.text.transcode()
+    # Rename silences
+    if label == 'sil' or label == 'sp':
+        label = ""
+    labels.append(label)
+    times.append((ph.xmin, ph.xmax))
+    samples.append(np.round((ph.xmax - ph.xmin) * sr).astype("int"))
+
+labels.append("")
+times.append((ph.xmin, trial_tmax))
+samples.append(np.round((trial_tmax - ph.xmax) * sr).astype("int"))
+
+# Get unique phonemes
+labels_set = set(labels)
+unique_labels = (list(labels_set))
+
+
+# WAV
+wav_fname = "Datos/wavs/S" + str(s) + "/s" + str(s) + ".objects." + "{:02d}".format(trial) + ".channel" + str(
+    channel) + ".wav"
+wav = wavfile.read(wav_fname)[1]
+wav = wav.astype("float")
+
+# ENVELOPE
+envelope = np.abs(sgn.hilbert(wav))
+window_size = 125
+stride = 125
+envelope = np.array(
+    [np.mean(envelope[i:i + window_size]) for i in range(0, len(envelope), stride) if i + window_size <= len(envelope)])
+envelope = envelope.ravel().flatten()
+
+
+diferencia = np.sum(samples) - len(envelope)
+if diferencia > 0:
+    samples[-1] -= diferencia
+elif diferencia < 0:
+    samples[-1] += diferencia
+
+# Make empty df of phonemes
+df = pd.DataFrame(0, index=np.arange(np.sum(samples)), columns=unique_labels)
+
+#
+phonemes_tgrid = np.repeat(labels, samples)
+
+for i, phoneme in enumerate(phonemes_tgrid):
+    df.iloc[i][phoneme] = envelope[i]
+    # df.iloc[i][phoneme] = 1
+
+
+
+
 
 ## EEG
 Band = None
@@ -63,7 +139,6 @@ ax.grid()
 # plt.savefig('NO_CAUSAL.png')
 
 ## WAV
-
 wav_fname = "Datos/wavs/S" + str(s) + "/s" + str(s) + ".objects." + "{:02d}".format(trial) + ".channel" + str(
     channel) + ".wav"
 wav = wavfile.read(wav_fname)[1]

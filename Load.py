@@ -13,6 +13,7 @@ import parselmouth
 from parselmouth.praat import call
 import Processing
 import Funciones
+import textgrids
 
 
 class Trial_channel:
@@ -44,6 +45,91 @@ class Trial_channel:
             trial) + ".channel" + str(channel) + ".wav"
         self.pitch_fname = "Datos/Pitch_threshold_{}/S".format(SilenceThreshold) + str(s) + "/s" + str(s) + ".objects." \
                            + "{:02d}".format(trial) + ".channel" + str(channel) + ".txt"
+        self.phn_fname = "Datos/phonemes/S" + str(s) + "/s" + str(s) + ".objects." + "{:02d}".format(trial) + ".channel" + \
+                    str(channel) + ".aligned_fa.TextGrid"
+        self.phrases_fname = "Datos/phrases/S" + str(s) + "/s" + str(s) + ".objects." + "{:02d}".format(trial) + ".channel" + str(
+        channel) + ".phrases"
+
+
+    def f_phonemes(self, envelope):
+
+        # Get trial total length
+        phrases = pd.read_table(self.phrases_fname, header=None, sep="\t")
+        trial_tmax = phrases[1].iloc[-1]
+
+        # Load transcription
+        grid = textgrids.TextGrid(self.phn_fname)
+        # Get phonemes
+        phonemes_grid = grid['transcription : phones']
+        # Extend first silence time to trial start time
+        phonemes_grid[0].xmin = 0.
+
+        # Parse
+        labels = []
+        times = []
+        samples = []
+
+        for ph in phonemes_grid:
+            label = ph.text.transcode()
+            # Rename silences
+            if label == 'sil' or label == 'sp':
+                label = ""
+            labels.append(label)
+            times.append((ph.xmin, ph.xmax))
+            samples.append(np.round((ph.xmax - ph.xmin) * self.sr).astype("int"))
+
+        # Extend last silence to trial end time
+        labels.append("")
+        times.append((ph.xmin, trial_tmax))
+        samples.append(np.round((trial_tmax - ph.xmax) * self.sr).astype("int"))
+
+        # Get unique phonemes
+        labels_set = set(labels)
+        unique_labels = (list(labels_set))
+
+        # If use envelope amplitude to make continuous stimuli
+        diferencia = np.sum(samples) - len(envelope)
+        if diferencia > 0:
+            samples[-1] -= diferencia
+        elif diferencia < 0:
+            samples[-1] += diferencia
+
+        # Make empty df of phonemes
+        phonemes_df = pd.DataFrame(0, index=np.arange(np.sum(samples)), columns=unique_labels)
+
+        # Get samples number instead of time
+        phonemes_tgrid = np.repeat(labels, samples)
+
+        for i, phoneme in enumerate(phonemes_tgrid):
+            phonemes_df.iloc[i][phoneme] = envelope[i]
+            # df.iloc[i][phoneme] = 1
+
+        return phonemes_df
+
+
+    def f_eeg(self):
+        eeg = mne.io.read_raw_eeglab(self.eeg_fname)
+        eeg_freq = eeg.info.get("sfreq")
+        eeg.load_data()
+
+        # Independent sources
+        # eeg = mne.preprocessing.compute_current_source_density(eeg)
+
+        # Hago un lowpass
+        if self.Band:
+            if self.Causal_filter_EEG:
+                eeg = eeg.filter(l_freq=self.l_freq_eeg, h_freq=self.h_freq_eeg, phase='minimum')
+            else:
+                eeg = eeg.filter(l_freq=self.l_freq_eeg, h_freq=self.h_freq_eeg)
+
+        # Paso a array
+        eeg = eeg.to_data_frame()
+        eeg = np.array(eeg)[:, 1:129]  # paso a array y tiro la primer columna de tiempo
+
+        # Downsample
+        eeg = Processing.subsamplear(eeg, int(eeg_freq / self.sr))
+
+        return np.array(eeg)
 
     def f_eeg(self):
         eeg = mne.io.read_raw_eeglab(self.eeg_fname)
@@ -94,10 +180,10 @@ class Trial_channel:
         envelope = np.array([np.mean(envelope[i:i + window_size]) for i in range(0, len(envelope), stride) if
                              i + window_size <= len(envelope)])
         envelope = envelope.ravel().flatten()
-        envelope = Processing.matriz_shifteada(envelope, self.delays)  # armo la matriz shifteada
+        envelope_mat = Processing.matriz_shifteada(envelope, self.delays)  # armo la matriz shifteada
         self.envelope = envelope
 
-        return np.array(envelope)
+        return np.array(envelope_mat)
 
     def f_calculate_pitch(self):
         if platform.system() == 'Linux':
@@ -223,6 +309,7 @@ class Trial_channel:
         channel['envelope'] = self.f_envelope()
         channel['pitch'], channel['pitch_der'] = self.load_pitch()
         channel['spectrogram'] = self.f_spectrogram()
+        channel['phonemes'] = self.f_phonemes(envelope=self.envelope)
         # channel['jitter'], channel['shimmer'] = self.f_jitter_shimmer()
         # channel['cssp'] = self.f_cssp()
         return channel
@@ -254,10 +341,10 @@ class Sesion_class:
     def load_from_raw(self):
         # Armo estructura de datos de sujeto
         Sujeto_1 = {'EEG': pd.DataFrame(), 'Envelope': pd.DataFrame(), 'Spectrogram': pd.DataFrame(),
-                    'Pitch': pd.DataFrame()}
+                    'Pitch': pd.DataFrame(), 'Phonemes': pd.DataFrame()}
 
         Sujeto_2 = {'EEG': pd.DataFrame(), 'Envelope': pd.DataFrame(), 'Spectrogram': pd.DataFrame(),
-                    'Pitch': pd.DataFrame()}
+                    'Pitch': pd.DataFrame(), 'Phonemes': pd.DataFrame()}
 
         run = True
         trial = 1
@@ -332,12 +419,14 @@ class Sesion_class:
                     Sujeto_1['Envelope'] = Sujeto_1['Envelope'].append((Trial_sujeto_1['envelope']))
                     Sujeto_1['Pitch'] = Sujeto_1['Pitch'].append((Trial_sujeto_1['pitch']))
                     Sujeto_1['Spectrogram'] = Sujeto_1['Spectrogram'].append((Trial_sujeto_1['spectrogram']))
+                    Sujeto_1['Phonemes'] = Sujeto_1['Phonemes'].append((Trial_sujeto_1['phonemes']))
 
                 if len(Trial_sujeto_2['eeg']):
                     Sujeto_2['EEG'] = Sujeto_2['EEG'].append(Trial_sujeto_2['eeg'])
                     Sujeto_2['Envelope'] = Sujeto_2['Envelope'].append((Trial_sujeto_2['envelope']))
                     Sujeto_2['Pitch'] = Sujeto_2['Pitch'].append((Trial_sujeto_2['pitch']))
                     Sujeto_2['Spectrogram'] = Sujeto_2['Spectrogram'].append((Trial_sujeto_2['spectrogram']))
+                    Sujeto_2['Phonemes'] = Sujeto_2['Phonemes'].append((Trial_sujeto_2['phonemes']))
 
                 trial += 1
         info = Trial_channel_1['info']
