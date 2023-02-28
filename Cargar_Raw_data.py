@@ -113,6 +113,37 @@ eeg_freq = eeg.info.get("sfreq")
 info = eeg.info
 eeg.load_data()
 if Band: eeg = eeg.filter(l_freq=l_freq_eeg, h_freq=h_freq_eeg, phase='minimum')
+# eeg.plot()
+
+## Source estimation
+from mne.datasets import fetch_fsaverage
+import os
+
+montage = mne.channels.make_standard_montage('biosemi128')
+eeg.set_montage(montage)
+eeg.set_eeg_reference(projection=True)  # needed for inverse modeling
+
+# Download fsaverage files
+fs_dir = r'C:\Users\joaco\OneDrive - The University of Nottingham\MEGEYEHS\DATA\MRI_DATA\FreeSurfer_out\fsaverage'
+subjects_dir = os.path.dirname(fs_dir)
+os.environ["SUBJECTS_DIR"] = subjects_dir
+
+
+# The files live in:
+subject = 'fsaverage'
+trans = 'trans.fif'  # MNE has a built-in fsaverage transformation
+src = os.path.join(fs_dir, 'bem', 'fsaverage-ico-5-src.fif')
+bem = os.path.join(fs_dir, 'bem', 'fsaverage-5120-5120-5120-bem-sol.fif')
+# Check that the locations of EEG electrodes is correct with respect to MRI
+
+eeg_info_path = 'eeg_info.fif'
+eeg.save(eeg_info_path)
+
+
+mne.gui.coregistration(subject='fsaverage', subjects_dir=subjects_dir, inst=eeg_info_path)
+
+mne.viz.plot_alignment(eeg.info, src=src, eeg=['original', 'projected'], trans=trans,
+                       show_axes=False, mri_fiducials=False)
 
 # eeg = eeg.to_data_frame()
 # eeg = np.array(eeg)[:, 1:129]  # paso a array y tomo tiro la primer columna de tiempos
@@ -122,7 +153,7 @@ if Band: eeg = eeg.filter(l_freq=l_freq_eeg, h_freq=h_freq_eeg, phase='minimum')
 # # Downsample
 # eeg = Processing.subsamplear(eeg, int(eeg_freq / sr))
 
-eeg.plot()
+
 # plt.savefig('gráficos/Raw_EEG.png')
 # plt.savefig('{}Theta.png'.format(s))
 

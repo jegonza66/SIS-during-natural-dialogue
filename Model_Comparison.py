@@ -139,15 +139,15 @@ my_pal = {'All': 'darkgrey', 'Delta': 'darkgrey', 'Theta': 'C1', 'Alpha': 'darkg
 fontsize = 15
 plt.rcParams.update({'font.size': fontsize})
 # fig, axs = plt.subplots(figsize=(10, 4), ncols=5, nrows=2, gridspec_kw={'wspace': 0.25})
-fig, axs = plt.subplots(figsize=(10, 4), ncols=5, nrows=2)
+fig, axs = plt.subplots(figsize=(14, 5), ncols=5, nrows=2)
 
 for i, Band in enumerate(Bands):
     ax = axs[0, i]
     fig.tight_layout()
     im = mne.viz.plot_topomap(Correlaciones[Band].ravel(), info, axes=ax, show=False, sphere=0.07, cmap='Reds',
                               vmin=Correlaciones[Band].min(), vmax=Correlaciones[Band].max())
-    cbar = plt.colorbar(im[0], ax=ax, orientation='vertical', shrink=0.5)
-    cbar.ax.tick_params(labelsize=fontsize)
+    # cbar = plt.colorbar(im[0], ax=ax, orientation='vertical', shrink=0.5)
+    # cbar.ax.tick_params(labelsize=fontsize)
 
 for ax_row in axs[1:]:
     for ax in ax_row:
