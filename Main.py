@@ -4,7 +4,7 @@ import numpy as np
 from sklearn.model_selection import KFold
 from datetime import datetime
 
-import Load
+import New_load as Load
 # import Load_light as Load
 import Models
 import Plot
@@ -15,7 +15,7 @@ startTime = datetime.now()
 # Define Parameters
 sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
 total_subjects = len(sesiones)*2
-tmin, tmax = -0.6, -0.003
+tmin, tmax = -0.6, 0
 sr = 128
 delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
 times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays))
@@ -36,7 +36,7 @@ except:
     print('\n\nAlphas file not found.\n\n')
 
 # Stimuli and EEG
-Stims = ['Envelope']
+Stims = ['Spectrogram_Phonemes']
 Bands = ['Theta']
 
 # Standarization
@@ -98,6 +98,7 @@ for Band in Bands:
             Sujeto_1, Sujeto_2 = Load.Load_Data(sesion=sesion, stim=stim, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
                                                 procesed_data_path=procesed_data_path, situacion=situacion,
                                                 SilenceThreshold=0.03)
+
             # LOAD EEG BY SUBJECT
             eeg_sujeto_1, eeg_sujeto_2, info = Sujeto_1['EEG'], Sujeto_2['EEG'], Sujeto_1['info']
 

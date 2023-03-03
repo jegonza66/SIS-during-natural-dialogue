@@ -11,6 +11,8 @@ import Funciones
 import librosa
 from statannot import add_stat_annotation
 from scipy.stats import wilcoxon
+import setup
+exp_info = setup.exp_info()
 
 
 def highlight_cell(x, y, ax=None, **kwargs):
@@ -134,6 +136,7 @@ def plot_grafico_pesos(Display, sesion, sujeto, best_alpha, Pesos_promedio,
         ax = fig.add_subplot(Cant_Estimulos, 1, i + 1)
 
         if Stims_Order[i] == 'Spectrogram':
+
             spectrogram_weights = Pesos_promedio[:, sum(Len_Estimulos[j] for j in range(i)):sum(
                 Len_Estimulos[j] for j in range(i + 1))].mean(0)
             spectrogram_weights = spectrogram_weights.reshape(16, len(times))
@@ -147,6 +150,22 @@ def plot_grafico_pesos(Display, sesion, sujeto, best_alpha, Pesos_promedio,
             ticks_labels = [int(Bands_center[i + 1]) for i in np.arange(0, len(Bands_center - 1), 2)]
             ax.set_yticks(ticks_positions)
             ax.set_yticklabels(ticks_labels)
+
+            fig.colorbar(im, ax=ax, orientation='vertical')
+
+        elif Stims_Order[i] == 'Phonemes':
+            phonemes_weights = Pesos_promedio[:, sum(Len_Estimulos[j] for j in range(i)):sum(
+                Len_Estimulos[j] for j in range(i + 1))].mean(0)
+            phonemes_weights = phonemes_weights.reshape(len(exp_info.ph_labels), len(times))
+
+            im = ax.pcolormesh(times * 1000, np.arange(len(exp_info.ph_labels)), phonemes_weights, cmap='jet', shading='auto')
+
+            # Bands_center = librosa.mel_frequencies(n_mels=18, fmin=62, fmax=8000)[1:-1]
+            ax.set(xlabel='Time (ms)', ylabel='Hz')
+            ticks_positions = np.arange(0, len(exp_info.ph_labels))
+            ax.set_yticks(ticks_positions)
+            ax.set_yticklabels(exp_info.ph_labels)
+            ax.set_yticklabels(exp_info.ph_labels)
 
             fig.colorbar(im, ax=ax, orientation='vertical')
 
@@ -471,6 +490,34 @@ def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display
             ax.legend(fontsize=12)
             fig.tight_layout()
 
+        elif Stims_Order[i] == 'Phonemes':
+            phoneme_weights_chanels = Pesos_totales_sujetos_todos_canales_copy[:,
+                                          sum(Len_Estimulos[j] for j in range(i)):sum(
+                                              Len_Estimulos[j] for j in range(i + 1))]. \
+                reshape(info['nchan'], len(exp_info.ph_labels), len(times)).mean(1)
+
+            if ERP:
+                # Adapt for ERP
+                phoneme_weights_chanels = np.flip(phoneme_weights_chanels, axis=1)
+
+            evoked = mne.EvokedArray(phoneme_weights_chanels, info)
+            evoked.times = times
+            evoked.plot(scalings=dict(eeg=1, grad=1, mag=1), zorder='std', time_unit='ms', titles=dict(eeg=''),
+                        show=False, spatial_colors=True, unit=False, units='w', axes=ax)
+            ax.plot(times * 1000, evoked._data.mean(0), "k--", label="Mean", zorder=130, linewidth=2)
+            if times[0] < 0:
+                ax.axvspan(ax.get_xlim()[0], 0, alpha=0.4, color='grey', label='Pre-Stimuli')
+            if decorrelation_times and times[0] < 0:
+                ax.axvspan(-np.mean(decorrelation_times), 0, alpha=0.4, color='red', label=' Mean decorrelation time')
+
+            ax.xaxis.label.set_size(14)
+            ax.yaxis.label.set_size(14)
+            # ax.set_ylim([-0.016, 0.015])
+            ax.tick_params(axis='both', labelsize=14)
+            ax.grid()
+            ax.legend(fontsize=12)
+            fig.tight_layout()
+
         else:
             mean_coefs = Pesos_totales_sujetos_todos_canales_copy[:,
                                      sum(Len_Estimulos[j] for j in range(i)):sum(
@@ -587,6 +634,56 @@ def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, 
             ax0_new_box = (ax0_box[0], ax0_box[1], ax1_box[2], ax0_box[3])
             axs[0].set_position(ax0_new_box)
 
+        elif Stims_Order[i] == 'Phonemes':
+            fig, axs = plt.subplots(2, 1, sharex=True, figsize=(6, 8), gridspec_kw={'height_ratios': [1, 4]})
+            fig.suptitle('{} - {}'.format(Stims_Order[i], Band), fontsize=18)
+
+            phoneme_weights_chanels = Pesos_totales_sujetos_todos_canales_copy[:,
+                                          sum(Len_Estimulos[j] for j in range(i)):sum(
+                                              Len_Estimulos[j] for j in range(i + 1))]. \
+                reshape(info['nchan'], len(exp_info.ph_labels), len(times)).mean(1)
+
+            phoneme_weights_ph = Pesos_totales_sujetos_todos_canales_copy[:,
+                                        sum(Len_Estimulos[j] for j in range(i)):sum(
+                                            Len_Estimulos[j] for j in range(i + 1))].mean(0)
+            phoneme_weights_ph = phoneme_weights_ph.reshape(len(exp_info.ph_labels), len(times))
+
+            if ERP:
+                # Adapt for ERP
+                phoneme_weights_chanels = np.flip(phoneme_weights_chanels, axis=1)
+                phoneme_weights_ph = np.flip(phoneme_weights_ph, axis=1)
+
+            axs[0].axvline(0, axs[0].get_ylim()[0], axs[0].get_ylim()[1], color='grey')
+            axs[0].axhline(0, axs[0].get_xlim()[0], axs[0].get_xlim()[1], color='grey')
+            evoked = mne.EvokedArray(phoneme_weights_chanels, info)
+            evoked.times = times
+            evoked.plot(scalings=dict(eeg=1, grad=1, mag=1), zorder='std', time_unit='ms', titles=dict(eeg=''),
+                        show=False, spatial_colors=True, unit=False, units='w', axes=axs[0])
+            axs[0].plot(times * 1000, evoked._data.mean(0), "k--", label="Mean", zorder=130, linewidth=2)
+            axs[0].axis('off')
+            axs[0].legend(fontsize=10)
+
+            im = axs[1].pcolormesh(times * 1000, np.arange(len(exp_info.ph_labels)), phoneme_weights_ph, cmap='jet',
+                                   shading='auto')
+            axs[1].set(xlabel='Time (ms)', ylabel='Hz')
+
+            ticks_positions = np.arange(0, len(exp_info.ph_labels))
+            axs[1].set_yticks(ticks_positions)
+            axs[1].set_yticklabels(exp_info.ph_labels)
+            axs[1].xaxis.label.set_size(14)
+            axs[1].yaxis.label.set_size(10)
+            axs[1].tick_params(axis='both', labelsize=14)
+
+            cbar = fig.colorbar(im, ax=axs[1], orientation='vertical')
+            cbar.set_label('Amplitude (a.u.)', fontsize=14)
+            cbar.ax.tick_params(labelsize=14)
+
+            # Change axis 0 to match axis 1 width after adding colorbar
+            ax1_box = axs[1].get_position().bounds
+            ax0_box = axs[0].get_position().bounds
+            ax0_new_box = (ax0_box[0], ax0_box[1], ax1_box[2], ax0_box[3])
+            axs[0].set_position(ax0_new_box)
+
         else:
             mean_coefs = Pesos_totales_sujetos_todos_canales_copy[:,
                          sum(Len_Estimulos[j] for j in range(i)):sum(Len_Estimulos[j] for j in range(i + 1))]
@@ -647,6 +744,9 @@ def Plot_cabezas_instantes(Pesos_totales_sujetos_todos_canales, info, Band, stim
         if Stims_Order[i] == 'Spectrogram':
             Pesos = Pesos_totales_sujetos_todos_canales_copy[:, sum(Len_Estimulos[j] for j in range(i)):sum(
                                               Len_Estimulos[j] for j in range(i + 1))].reshape(info['nchan'], 16, len(times)).mean(1)
+        if Stims_Order[i] == 'Phonemes':
+            Pesos = Pesos_totales_sujetos_todos_canales_copy[:, sum(Len_Estimulos[j] for j in range(i)):sum(
+                                              Len_Estimulos[j] for j in range(i + 1))].reshape(info['nchan'], len(exp_info.ph_labels), len(times)).mean(1)
         else:
             Pesos = Pesos_totales_sujetos_todos_canales_copy[:, sum(Len_Estimulos[j] for j in range(i)):sum(Len_Estimulos[j] for j in range(i + 1))]
 
@@ -713,13 +813,18 @@ def Matriz_corr_channel_wise(Pesos_totales_sujetos_todos_canales, stim, Len_Esti
     for k in range(Cant_Estimulos):
 
         if Stims_Order[k] == 'Spectrogram':
-            Pesos_totales_sujetos_todos_canales = Pesos_totales_sujetos_todos_canales[:,
+            Pesos_totales_sujetos_todos_canales_reshaped = Pesos_totales_sujetos_todos_canales[:,
                                           sum(Len_Estimulos[j] for j in range(k)):sum(
                                               Len_Estimulos[j] for j in range(k + 1)), :]. \
                 reshape(info['nchan'], 16, len(times), 18).mean(1)
+        elif Stims_Order[k] == 'Phonemes':
+            Pesos_totales_sujetos_todos_canales_reshaped = Pesos_totales_sujetos_todos_canales[:,
+                                          sum(Len_Estimulos[j] for j in range(k)):sum(
+                                              Len_Estimulos[j] for j in range(k + 1)), :]. \
+                reshape(info['nchan'], len(exp_info.ph_labels), len(times), 18).mean(1)
 
         Pesos_totales_sujetos_todos_canales_average = np.dstack(
-            (Pesos_totales_sujetos_todos_canales, Pesos_totales_sujetos_todos_canales.mean(2)))
+            (Pesos_totales_sujetos_todos_canales_reshaped, Pesos_totales_sujetos_todos_canales_reshaped.mean(2)))
         Correlation_matrices = np.zeros((Pesos_totales_sujetos_todos_canales_average.shape[0],
                                          Pesos_totales_sujetos_todos_canales_average.shape[2],
                                          Pesos_totales_sujetos_todos_canales_average.shape[2]))
@@ -733,7 +838,7 @@ def Matriz_corr_channel_wise(Pesos_totales_sujetos_todos_canales, stim, Len_Esti
         for i in range(len(Correlation_matrix)):
             Correlation_matrix[i, i] = Correlation_matrix[-1, i]
 
-        lista_nombres = [i for i in np.arange(1, Pesos_totales_sujetos_todos_canales.shape[-1] + 1)] + ['Promedio']
+        lista_nombres = [i for i in np.arange(1, Pesos_totales_sujetos_todos_canales_reshaped.shape[-1] + 1)] + ['Promedio']
         Correlation_matrix = pd.DataFrame(Correlation_matrix[:-1, :-1])
         Correlation_matrix.columns = lista_nombres[:len(Correlation_matrix) - 1] + [lista_nombres[-1]]
 

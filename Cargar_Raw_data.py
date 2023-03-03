@@ -29,44 +29,67 @@ delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
 ## Phonemes
 import textgrids
 
-phn_fname = "Datos/phonemes/S" + str(s) + "/s" + str(s) + ".objects." + "{:02d}".format(trial) + ".channel" + \
-            str(channel) + ".aligned_fa.TextGrid"
+sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
 
-phrases_fname = "Datos/phrases/S" + str(s) + "/s" + str(s) + ".objects." + "{:02d}".format(trial) + ".channel" + str(
-        channel) + ".phrases"
+all_labels = []
 
-# Get trial total length
-phrases = pd.read_table(phrases_fname, header=None, sep="\t")
-trial_tmax = phrases[1].iloc[-1]
+for sesion in sesiones:
+    for trial in range(1, 15):
+        for channel in [1,2]:
+            try:
+                phn_fname = "Datos/phonemes/S" + str(sesion) + "/s" + str(sesion) + ".objects." + "{:02d}".format(trial) + ".channel" + \
+                            str(channel) + ".aligned_fa.TextGrid"
 
-# Phonemes
-grid = textgrids.TextGrid(phn_fname)
+                phrases_fname = "Datos/phrases/S" + str(sesion) + "/s" + str(sesion) + ".objects." + "{:02d}".format(trial) + ".channel" + str(
+                        channel) + ".phrases"
 
-phonemes = grid['transcription : phones']
-phonemes[0].xmin = 0.
+                # Get trial total length
+                phrases = pd.read_table(phrases_fname, header=None, sep="\t")
+                trial_tmax = phrases[1].iloc[-1]
 
-# Parse
-labels = []
-times = []
-samples = []
+                # Phonemes
+                grid = textgrids.TextGrid(phn_fname)
 
-for ph in phonemes:
-    label = ph.text.transcode()
-    # Rename silences
-    if label == 'sil' or label == 'sp':
-        label = ""
-    labels.append(label)
-    times.append((ph.xmin, ph.xmax))
-    samples.append(np.round((ph.xmax - ph.xmin) * sr).astype("int"))
+                phonemes = grid['transcription : phones']
+                phonemes[0].xmin = 0.
 
-labels.append("")
-times.append((ph.xmin, trial_tmax))
-samples.append(np.round((trial_tmax - ph.xmax) * sr).astype("int"))
+                # Parse
+                labels = []
+                times = []
+                samples = []
 
-# Get unique phonemes
-labels_set = set(labels)
+                for ph in phonemes:
+                    label = ph.text.transcode()
+                    # Rename silences
+                    if label == 'sil' or label == 'sp':
+                        label = ""
+                    labels.append(label)
+                    times.append((ph.xmin, ph.xmax))
+                    samples.append(np.round((ph.xmax - ph.xmin) * sr).astype("int"))
+
+                labels.append("")
+                times.append((ph.xmin, trial_tmax))
+                samples.append(np.round((trial_tmax - ph.xmax) * sr).astype("int"))
+
+                # Get unique phonemes
+                labels_set = set(labels)
+                unique_labels = (list(labels_set))
+
+                all_labels.append(unique_labels)
+            except:
+                print(sesion)
+                print(trial)
+                print(channel)
+
+all_labels = Funciones.flatten_list(all_labels)
+
+labels_set = set(all_labels)
 unique_labels = (list(labels_set))
 
+
+unique_labels.sort()
+
+ph_labels = ['', 'CH', 'NY', 'R', 'a', 'b', 'd', 'e', 'f', 'g', 'i', 'k', 'l', 'm', 'n', 'o', 'p', 'r', 's', 't', 'u', 'x', 'y']
 
 # WAV
 wav_fname = "Datos/wavs/S" + str(s) + "/s" + str(s) + ".objects." + "{:02d}".format(trial) + ".channel" + str(
@@ -96,7 +119,7 @@ df = pd.DataFrame(0, index=np.arange(np.sum(samples)), columns=unique_labels)
 phonemes_tgrid = np.repeat(labels, samples)
 
 for i, phoneme in enumerate(phonemes_tgrid):
-    df.iloc[i][phoneme] = envelope[i]
+    df.loc[i, phoneme] = envelope[i]
     # df.iloc[i][phoneme] = 1
 
 
@@ -285,6 +308,7 @@ norm.normalize_11(wav)
 wav -= wav.mean()
 
 ## Spectrogram
+import librosa
 import librosa.display
 
 n_fft = 125
@@ -298,8 +322,10 @@ plt.figure()
 librosa.display.specshow(S_DB, sr=audio_sr, hop_length=hop_length, x_axis='time', y_axis='mel', )
 plt.colorbar(format='%+2.0f dB')
 
-S_DB = S_DB.ravel().flatten()
-S_DB = Processing.matriz_shifteada(S_DB, delays)
+# Shifted matrix row by row
+spec_shift = Processing.matriz_shifteada(S_DB[0], delays)
+for i in np.arange(1, len(S_DB)):
+    spec_shift = np.hstack((spec_shift, Processing.matriz_shifteada(S_DB[i], delays)))
 
 fmin = n_fft/2
 mel_f = librosa.mel_frequencies(n_mels+2, fmin=fmin, fmax=8000)

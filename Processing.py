@@ -151,6 +151,29 @@ def preproc_dict(momentos_escucha, delays, situacion, dict):
     for key in keys:
         dict[key] = dict[key][keep_indexes, :]
 
+    return keep_indexes
+
+def preproc_dict2(momentos_escucha, delays, situacion):
+    momentos_escucha_matriz = matriz_shifteada(momentos_escucha, delays).astype(float)
+
+    if situacion == 'Todo':
+        return
+
+    elif situacion == 'Silencio':
+        situacion = 0
+    elif situacion == 'Escucha':
+        situacion = 1
+    elif situacion == 'Habla' or situacion == 'Habla_Propia':
+        situacion = 2
+    elif situacion == 'Ambos' or situacion == 'Ambos_Habla':
+        situacion = 3
+
+    momentos_escucha_matriz[momentos_escucha_matriz == situacion] = float("nan")
+
+    keep_indexes = pd.isnull(momentos_escucha_matriz).all(1).nonzero()[0]
+
+    return keep_indexes
+
 
 class estandarizar():
 
@@ -184,11 +207,15 @@ class normalizar():
         train_matrix -= self.min
 
         self.max = np.max(train_matrix, axis=self.axis)
-        train_matrix /= self.max
+        train_matrix = np.divide(train_matrix, self.max, out=np.zeros_like(train_matrix), where=self.max != 0)
+        # train_matrix /= self.max
+        return train_matrix
 
     def normlize_test_data(self, test_matrix):
         test_matrix -= self.min
-        test_matrix /= self.max
+        test_matrix = np.divide(test_matrix, self.max, out=np.zeros_like(test_matrix), where=self.max != 0)
+        # test_matrix /= self.max
+        return test_matrix
 
     def fit_normalize_percent(self, matrix):
         # Defino el termino a agarrar
@@ -204,6 +231,7 @@ class normalizar():
         sorted_matrix = copy.deepcopy(matrix)
         sorted_matrix.sort(self.axis)
         self.maxn_matrix = sorted_matrix[-self.n]
+        matrix = np.divide(matrix, self.max, out=np.zeros_like(matrix), where=self.maxn_matrix != 0)
         matrix /= self.maxn_matrix
 
     def normalize_01(self, matrix):
@@ -232,8 +260,8 @@ def standarize_normalize(eeg_train_val, eeg_test, dstims_train_val, dstims_test,
 
     if Stims_preprocess == 'Normalize':
         for i in range(len(dstims_train_val)):
-            norm.fit_normalize_train_data(dstims_train_val[i])
-            norm.normlize_test_data(dstims_test[i])
+            dstims_train_val[i] = norm.fit_normalize_train_data(dstims_train_val[i])
+            dstims_test[i] = norm.normlize_test_data(dstims_test[i])
         dstims_train_val = np.hstack([dstims_train_val[i] for i in range(len(dstims_train_val))])
         dstims_test = np.hstack([dstims_test[i] for i in range(len(dstims_test))])
 

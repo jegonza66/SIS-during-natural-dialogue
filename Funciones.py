@@ -52,6 +52,8 @@ def make_array(*args):
 def make_df_dict(dict):
     keys = list(dict.keys())
     keys.remove('info')
+    if 'Phonemes' in keys:
+        keys.remove('Phonemes')
     for key in keys:
         dict[key] = pd.DataFrame(dict[key])
 
@@ -68,6 +70,34 @@ def igualar_largos_dict(dict, momentos):
     keys.remove('info')
 
     minimo_largo = min([dict[key].shape[0] for key in keys] + [len(momentos)])
+
+    for key in keys:
+            if dict[key].shape[0] > minimo_largo:
+                dict[key] = dict[key][:minimo_largo]
+    if len(momentos) > minimo_largo:
+        momentos = momentos[:minimo_largo]
+
+    return momentos
+
+
+def igualar_largos_dict2(dict, momentos):
+    keys = list(dict.keys())
+    keys.remove('info')
+
+    minimo_largo = min([dict[key].shape[0] for key in keys] + [len(momentos)])
+
+    for key in keys:
+            if dict[key].shape[0] > minimo_largo:
+                dict[key] = dict[key][:minimo_largo]
+    if len(momentos) > minimo_largo:
+        momentos = momentos[:minimo_largo]
+
+    return momentos, minimo_largo
+
+
+def igualar_largos_dict_sample_data(dict, momentos, minimo_largo):
+    keys = list(dict.keys())
+    keys.remove('info')
 
     for key in keys:
             if dict[key].shape[0] > minimo_largo:
