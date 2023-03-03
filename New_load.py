@@ -48,8 +48,9 @@ class Trial_channel:
         self.pitch_fname = "Datos/Pitch_threshold_{}/S".format(SilenceThreshold) + str(s) + "/s" + str(s) + ".objects." \
                            + "{:02d}".format(trial) + ".channel" + str(channel) + ".txt"
         self.phn_fname = "Datos/phonemes/S" + str(s) + "/s" + str(s) + ".objects." + "{:02d}".format(
-            trial) + ".channel" + \
-                         str(channel) + ".aligned_fa.TextGrid"
+            trial) + ".channel" + str(channel) + ".aligned_fa.TextGrid"
+        self.phn_fname_manual = "Datos/phonemes/S" + str(s) + "/manual/s" + str(s) + "_objects_" + "{:02d}".format(
+            trial) + "_channel" + str(channel) + "_aligned_faTAMARA.TextGrid"
         self.phrases_fname = "Datos/phrases/S" + str(s) + "/s" + str(s) + ".objects." + "{:02d}".format(
             trial) + ".channel" + str(
             channel) + ".phrases"
@@ -115,6 +116,69 @@ class Trial_channel:
             # df.loc[i, phoneme] = 1
 
         return phonemes_df
+
+    def f_Phonemes_manual(self, envelope):
+
+        # Get trial total length
+        phrases = pd.read_table(self.phrases_fname, header=None, sep="\t")
+        trial_tmax = phrases[1].iloc[-1]
+
+        # Load transcription
+        grid = textgrids.TextGrid(self.phn_fname_manual)
+        # Get phonemes
+        phonemes_grid = grid['transcription : phones']
+        # Extend first silence time to trial start time
+        phonemes_grid[0].xmin = 0.
+
+        # Parse
+        labels = []
+        times = []
+        samples = []
+
+        for ph in phonemes_grid:
+            label = ph.text.transcode()
+            label = label.replace(' ', '')
+            label = label.replace('º', '')
+            label = label.replace('-', '')
+            # Rename silences
+            if label == 'sil' or label == 'sp' or label == 'sile' or label == 'silsil' \
+                    or label == 'SP' or label == 's¡p' or label == 'sils':
+                label = ""
+            labels.append(label)
+            times.append((ph.xmin, ph.xmax))
+            samples.append(np.round((ph.xmax - ph.xmin) * self.sr).astype("int"))
+
+        # Extend last silence to trial end time
+        labels.append("")
+        times.append((ph.xmin, trial_tmax))
+        samples.append(np.round((trial_tmax - ph.xmax) * self.sr).astype("int"))
+
+        # If use envelope amplitude to make continuous stimuli
+        diferencia = np.sum(samples) - len(envelope)
+        if diferencia > 0:
+            for i in [-i-1 for i in range(len(samples))]:
+                if diferencia > samples[i]:
+                    diferencia -= samples[i]
+                    samples[i] = 0
+                # Cuando samples es mayor que diferencia, le resto la diferencia a las samples
+                else:
+                    samples[i] -= diferencia
+                    break
+        elif diferencia < 0:
+            samples[-1] -= diferencia
+
+        # Make empty df of phonemes
+        phonemes_df = pd.DataFrame(0, index=np.arange(np.sum(samples)), columns=exp_info.ph_labels_man)
+
+        # Get samples number instead of time
+        phonemes_tgrid = np.repeat(labels, samples)
+
+        for i, phoneme in enumerate(phonemes_tgrid):
+            phonemes_df.loc[i, phoneme] = envelope[i]
+            # df.loc[i, phoneme] = 1
+
+        return phonemes_df
+
 
     def f_eeg(self):
         eeg = mne.io.read_raw_eeglab(self.eeg_fname)
@@ -296,6 +360,9 @@ class Trial_channel:
         if 'Phonemes' in stims:
             channel['Envelope'] = self.f_envelope()
             channel['Phonemes'] = self.f_phonemes(envelope=self.envelope)
+        if 'Phonemes-manual' in stims:
+            channel['Envelope'] = self.f_envelope()
+            channel['Phonemes-manual'] = self.f_Phonemes_manual(envelope=self.envelope)
 
         return channel
 
@@ -451,6 +518,9 @@ class Sesion_class:
         if 'Phonemes' in Sujeto_1.keys():
             Sujeto_1['Phonemes'].drop(columns="", inplace=True)
             Sujeto_2['Phonemes'].drop(columns="", inplace=True)
+        if 'Phonemes-manual' in Sujeto_1.keys():
+            Sujeto_1['Phonemes-manual'].drop(columns="", inplace=True)
+            Sujeto_2['Phonemes-manual'].drop(columns="", inplace=True)
 
         # Convierto a array
         Funciones.make_array_dict(Sujeto_1)
@@ -489,10 +559,27 @@ class Sesion_class:
                     (ph_shift_2, Processing.matriz_shifteada(Sujeto_2['Phonemes'][i], self.delays)))
             Sujeto_2['Phonemes'] = ph_shift_2
 
+        if 'Phonemes-manual' in Sujeto_1.keys():
+            Sujeto_1['Phonemes-manual'] = Sujeto_1['Phonemes-manual'].transpose()
+            Sujeto_2['Phonemes-manual'] = Sujeto_2['Phonemes-manual'].transpose()
+
+            print('Computing shifted matrix for the Phonemes')
+            ph_shift_1 = Processing.matriz_shifteada(Sujeto_1['Phonemes-manual'][0], self.delays)
+            for i in np.arange(1, len(Sujeto_1['Phonemes-manual'])):
+                ph_shift_1 = np.hstack(
+                    (ph_shift_1, Processing.matriz_shifteada(Sujeto_1['Phonemes-manual'][i], self.delays)))
+            Sujeto_1['Phonemes-manual'] = ph_shift_1
+
+            ph_shift_2 = Processing.matriz_shifteada(Sujeto_2['Phonemes-manual'][0], self.delays)
+            for i in np.arange(1, len(Sujeto_2['Phonemes-manual'])):
+                ph_shift_2 = np.hstack(
+                    (ph_shift_2, Processing.matriz_shifteada(Sujeto_2['Phonemes-manual'][i], self.delays)))
+            Sujeto_2['Phonemes-manual'] = ph_shift_2
+
         keys = list(Sujeto_1.keys())
         keys.remove('EEG')
         for key in keys:
-            if key != 'Spectrogram' and key != 'Phonemes':
+            if key != 'Spectrogram' and key != 'Phonemes' and key != 'Phonemes-manual':
                 Sujeto_1[key] = Processing.matriz_shifteada(Sujeto_1[key], self.delays)
                 Sujeto_2[key] = Processing.matriz_shifteada(Sujeto_2[key], self.delays)
 
@@ -515,6 +602,7 @@ class Sesion_class:
 
         Paths['Spectrogram'] = self.procesed_data_path + 'Spectrogram/Sit_{}/'.format(self.situacion)
         Paths['Phonemes'] = self.procesed_data_path + 'Phonemes/Sit_{}/'.format(self.situacion)
+        Paths['Phonemes-manual'] = self.procesed_data_path + 'Phonemes-manual/Sit_{}/'.format(self.situacion)
 
         for key in Sujeto_1.keys():
             # Save Preprocesed Data
@@ -601,6 +689,13 @@ class Sesion_class:
                 stimuli_para_sujeto_1, stimuli_para_sujeto_2 = pickle.load(f)
                 f.close()
 
+            if stimuli == 'Phonemes-manual':
+                f = open(
+                    self.procesed_data_path + 'Phonemes-manual/Sit_{}/Sesion{}.pkl'.format(self.situacion, self.sesion),
+                    'rb')
+                stimuli_para_sujeto_1, stimuli_para_sujeto_2 = pickle.load(f)
+                f.close()
+
             Sujeto_1[stimuli] = stimuli_para_sujeto_1
             Sujeto_2[stimuli] = stimuli_para_sujeto_2
 
@@ -611,7 +706,7 @@ class Sesion_class:
 
 def Load_Data(sesion, stim, Band, sr, tmin, tmax, procesed_data_path, situacion='Escucha', Causal_filter_EEG=True,
               Env_Filter=False, valores_faltantes=0, Calculate_pitch=False, SilenceThreshold=0.03):
-    possible_stims = ['Envelope', 'Pitch', 'PitchMask', 'Spectrogram', 'Phonemes']
+    possible_stims = ['Envelope', 'Pitch', 'PitchMask', 'Spectrogram', 'Phonemes', 'Phonemes-manual']
 
     if all(stimulus in possible_stims for stimulus in stim.split('_')):
 

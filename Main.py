@@ -36,7 +36,7 @@ except:
     print('\n\nAlphas file not found.\n\n')
 
 # Stimuli and EEG
-Stims = ['Spectrogram_Phonemes']
+Stims = ['Phonemes-manual']
 Bands = ['Theta']
 
 # Standarization
@@ -98,6 +98,7 @@ for Band in Bands:
             Sujeto_1, Sujeto_2 = Load.Load_Data(sesion=sesion, stim=stim, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
                                                 procesed_data_path=procesed_data_path, situacion=situacion,
                                                 SilenceThreshold=0.03)
+
 
             # LOAD EEG BY SUBJECT
             eeg_sujeto_1, eeg_sujeto_2, info = Sujeto_1['EEG'], Sujeto_2['EEG'], Sujeto_1['info']

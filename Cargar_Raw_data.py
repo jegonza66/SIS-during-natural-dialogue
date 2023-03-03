@@ -34,11 +34,13 @@ sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
 all_labels = []
 
 for sesion in sesiones:
-    for trial in range(1, 15):
-        for channel in [1,2]:
+    for trial in range(1, 16):
+        for channel in [1, 2]:
             try:
                 phn_fname = "Datos/phonemes/S" + str(sesion) + "/s" + str(sesion) + ".objects." + "{:02d}".format(trial) + ".channel" + \
                             str(channel) + ".aligned_fa.TextGrid"
+                phn_fname = "Datos/phonemes/S" + str(sesion) + "/manual/s" + str(sesion) + "_objects_" + "{:02d}".format(
+                    trial) + "_channel" + str(channel) + "_aligned_faTAMARA.TextGrid"
 
                 phrases_fname = "Datos/phrases/S" + str(sesion) + "/s" + str(sesion) + ".objects." + "{:02d}".format(trial) + ".channel" + str(
                         channel) + ".phrases"
@@ -60,8 +62,12 @@ for sesion in sesiones:
 
                 for ph in phonemes:
                     label = ph.text.transcode()
+                    label = label.replace(' ', '')
+                    label = label.replace('º', '')
+                    label = label.replace('-', '')
                     # Rename silences
-                    if label == 'sil' or label == 'sp':
+                    if label == 'sil' or label == 'sp' or label == 'sile' or label == 'silsil'\
+                            or label == 'SP' or label == 's¡p' or label == 'sils':
                         label = ""
                     labels.append(label)
                     times.append((ph.xmin, ph.xmax))
@@ -77,9 +83,7 @@ for sesion in sesiones:
 
                 all_labels.append(unique_labels)
             except:
-                print(sesion)
-                print(trial)
-                print(channel)
+                print(f'Could not upload Sesion: {sesion} - Trial {trial} - Channel {channel}')
 
 all_labels = Funciones.flatten_list(all_labels)
 
@@ -90,6 +94,13 @@ unique_labels = (list(labels_set))
 unique_labels.sort()
 
 ph_labels = ['', 'CH', 'NY', 'R', 'a', 'b', 'd', 'e', 'f', 'g', 'i', 'k', 'l', 'm', 'n', 'o', 'p', 'r', 's', 't', 'u', 'x', 'y']
+ph_labels_man = ['', '(d)o', 'CH', 'NY', 'R', 'a', 'ap', 'b', 'chas', 'd', 'e', 'es', 'f', 'g', 'i', 'k', 'l', 'lg',
+                 'm', 'n', 'ns', 'o', 'p', 'r', 's', 't', 'u', 'x', 'y']
+
+ph_labels_man = ['', '(d)o', 'A', 'AH', 'CH', 'F', 'NY', 'R', 'SP', 'Y', 'a', 'ap', 'b', 'br', 'c', 'chas', 'd', 'de',
+                 'e', 'es', 'f', 'g', 'h', 'i', 'k', 'l', 'l-', 'lg', 'm', 'n', 'ns', 'o', 'p', 'r', 's', 'si', 'sils',
+                 's¡p', 'sº', 't', 'u', 'v', 'x', 'y']
+
 
 # WAV
 wav_fname = "Datos/wavs/S" + str(s) + "/s" + str(s) + ".objects." + "{:02d}".format(trial) + ".channel" + str(

@@ -3,18 +3,17 @@ import numpy as np
 import os
 import pickle
 from sklearn.model_selection import KFold
-import Load_All
+import New_load as Load
 import Models
 import Processing
 
 Display_figures_Trace = False
 Save_figures_Trace = True
+save_alphas = True
 
+Stims = ['Phonemes', 'Spectrogram_Phonemes']
+Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1']
 
-Stims = ['Envelope', 'Spectrogram']
-Bands = ['Theta']
-
-min_trace_derivate = 0
 Corr_limit = 0.01
 
 alphas_fname = 'saves/Alphas/Alphas_Corr{}.pkl'.format(Corr_limit)
@@ -75,14 +74,14 @@ for Band in Bands:
                 Alphas_Sesion = {}
 
             # LOAD DATA BY SUBJECT
-            Sujeto_1, Sujeto_2 = Load_All.Load_Data(sesion=sesion, stim=stim, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
+            Sujeto_1, Sujeto_2 = Load.Load_Data(sesion=sesion, stim=stim, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
                                                     procesed_data_path=procesed_data_path)
 
             # LOAD EEG BY SUBJECT
             eeg_sujeto_1, eeg_sujeto_2, info = Sujeto_1['EEG'], Sujeto_2['EEG'], Sujeto_1['info']
 
             # LOAD STIMULUS BY SUBJECT
-            dstims_para_sujeto_1, dstims_para_sujeto_2 = Load_All.Estimulos(stim=stim, Sujeto_1=Sujeto_1,
+            dstims_para_sujeto_1, dstims_para_sujeto_2 = Load.Estimulos(stim=stim, Sujeto_1=Sujeto_1,
                                                                             Sujeto_2=Sujeto_2)
             Len_Estimulos = [len(dstims_para_sujeto_1[i][0]) for i in range(len(dstims_para_sujeto_1))]
 
@@ -199,8 +198,9 @@ for Band in Bands:
         Alphas[Band] = Alphas_Band
 
         # Save Alphas
-        # f = open(alphas_fname, 'wb')
-        # pickle.dump(Alphas, f)
-        # f.close()
+        if save_alphas:
+            f = open(alphas_fname, 'wb')
+            pickle.dump(Alphas, f)
+            f.close()
 
 
