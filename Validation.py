@@ -48,7 +48,7 @@ for Band in Bands:
         # Defino tiempos
         sr = 128
         n_canales = 128
-        tmin, tmax = -0.6, -0.003
+        tmin, tmax = -0.6, 0
         delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
         times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr,
                             len(delays))
