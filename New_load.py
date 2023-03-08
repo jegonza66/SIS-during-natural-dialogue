@@ -512,7 +512,8 @@ class Sesion_class:
             # Save instants Data
             os.makedirs(self.samples_info_path, exist_ok=True)
             f = open(self.samples_info_path + 'samples_info_{}.pkl'.format(self.sesion), 'wb')
-            pickle.dump(samples_info['keep_indexes1'], f)
+            pickle.dump(samples_info, f)
+            f.close()
 
         # Dropeo columna de silencio de Phonemes
         if 'Phonemes' in Sujeto_1.keys():
