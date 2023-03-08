@@ -36,8 +36,11 @@ except:
     print('\n\nAlphas file not found.\n\n')
 
 # Stimuli and EEG
-Stims = ['Phonemes', 'Spectrogram', 'Phonemes_Spectrogram']
+Stims = ['Phonemes', 'Spectrogram_Phonemes']
 Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1']
+
+Stims = ['Envelope']
+Bands = ['Theta']
 
 # Standarization
 Stims_preprocess = 'Normalize'

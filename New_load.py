@@ -511,7 +511,7 @@ class Sesion_class:
             samples_info['keep_indexes2'] = Funciones.flatten_list(samples_info['keep_indexes2'])
             # Save instants Data
             os.makedirs(self.samples_info_path, exist_ok=True)
-            f = open(self.samples_info_path + 'sampels_info_{}.pkl'.format(self.sesion), 'wb')
+            f = open(self.samples_info_path + 'samples_info_{}.pkl'.format(self.sesion), 'wb')
             pickle.dump(samples_info['keep_indexes1'], f)
 
         # Dropeo columna de silencio de Phonemes
