@@ -87,7 +87,7 @@ def igualar_largos_dict2(dict, momentos):
     minimo_largo = min([dict[key].shape[0] for key in keys] + [len(momentos)])
 
     for key in keys:
-            if dict[key].shape[0] > minimo_largo:
+        if dict[key].shape[0] > minimo_largo:
                 dict[key] = dict[key][:minimo_largo]
     if len(momentos) > minimo_largo:
         momentos = momentos[:minimo_largo]
