@@ -93,6 +93,7 @@ class Trial_channel:
 
         # If use envelope amplitude to make continuous stimuli
         diferencia = np.sum(samples) - len(envelope)
+
         if diferencia > 0:
             for i in [-i-1 for i in range(len(samples))]:
                 if diferencia > samples[i]:

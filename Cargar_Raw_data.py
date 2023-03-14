@@ -9,7 +9,8 @@ from numpy.fft import fft, fftfreq
 import parselmouth
 import opensmile
 from parselmouth.praat import call
-
+import textgrids
+import os
 import Funciones
 
 ## PARAMETROS
@@ -27,20 +28,23 @@ tmin, tmax = -0.6, -0.003
 delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
 
 ## Phonemes
-import textgrids
 
 sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
 
 all_labels = []
 
 for sesion in sesiones:
-    for trial in range(1, 16):
+
+    phn_path = "Datos/phonemes/S" + str(sesion) + "/"
+    trials = list(set([int(fname.split('.')[2]) for fname in os.listdir(phn_path) if
+                       os.path.isfile(phn_path + f'/{fname}')]))
+    for trial in trials:
         for channel in [1, 2]:
             try:
                 phn_fname = "Datos/phonemes/S" + str(sesion) + "/s" + str(sesion) + ".objects." + "{:02d}".format(trial) + ".channel" + \
                             str(channel) + ".aligned_fa.TextGrid"
-                phn_fname = "Datos/phonemes/S" + str(sesion) + "/manual/s" + str(sesion) + "_objects_" + "{:02d}".format(
-                    trial) + "_channel" + str(channel) + "_aligned_faTAMARA.TextGrid"
+                # phn_fname = "Datos/phonemes/S" + str(sesion) + "/manual/s" + str(sesion) + "_objects_" + "{:02d}".format(
+                #     trial) + "_channel" + str(channel) + "_aligned_faTAMARA.TextGrid"
 
                 phrases_fname = "Datos/phrases/S" + str(sesion) + "/s" + str(sesion) + ".objects." + "{:02d}".format(trial) + ".channel" + str(
                         channel) + ".phrases"

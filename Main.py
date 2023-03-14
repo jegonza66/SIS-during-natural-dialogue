@@ -14,6 +14,7 @@ import Processing
 startTime = datetime.now()
 # Define Parameters
 sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
+sesiones = [23]
 total_subjects = len(sesiones)*2
 tmin, tmax = -0.6, 0
 sr = 128
@@ -39,6 +40,8 @@ except:
 Stims = ['Spectrogram', 'Phonemes', 'Spectrogram_Phonemes']
 Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1']
 
+Stims = ['Envelope']
+Bands = ['Theta']
 
 # Standarization
 Stims_preprocess = 'Normalize'
@@ -50,9 +53,9 @@ Statistical_test = True
 # Save / Display Figures
 Display_Ind_Figures = False
 Display_Total_Figures = False
-Save_Ind_Figures = True
-Save_Total_Figures = True
-Save_Final_Correlation = True
+Save_Ind_Figures = False
+Save_Total_Figures = False
+Save_Final_Correlation = False
 
 # Save mean correlations
 Mean_Correlations_fname = 'saves/{}/{}/Final_Correlation/tmin{}_tmax{}/Mean_Correlations.pkl'.format(model, situacion, tmin, tmax)
