@@ -55,7 +55,7 @@ Display_Ind_Figures = False
 Display_Total_Figures = False
 Save_Ind_Figures = False
 Save_Total_Figures = False
-Save_Final_Correlation = False
+Save_Results = False
 
 # Save mean correlations
 Mean_Correlations_fname = 'saves/{}/{}/Final_Correlation/tmin{}_tmax{}/Mean_Correlations.pkl'.format(model, situacion, tmin, tmax)
@@ -346,14 +346,9 @@ for Band in Bands:
         Plot.Channel_wise_correlation_topomap(Pesos_totales_sujetos_todos_canales, info, Display_Total_Figures,
                                               Save_Total_Figures, Run_graficos_path)
 
-        # Save final weights
-        f = open(Path_original + 'Pesos_Totales_{}_{}.pkl'.format(stim, Band), 'wb')
-        pickle.dump(Pesos_totales, f)
-        f.close()
-
         # SAVE FINAL CORRELATION
         Mean_Correlations[Band] = Mean_Correlations_Band
-        if Save_Final_Correlation and sujeto_total == 18:
+        if Save_Results and sujeto_total == 18:
             os.makedirs(save_path, exist_ok=True)
             f = open(save_path + '{}_EEG_{}.pkl'.format(stim, Band), 'wb')
             pickle.dump([Correlaciones_totales_sujetos, Canales_repetidos_corr_sujetos], f)
@@ -361,6 +356,11 @@ for Band in Bands:
 
             f = open(Mean_Correlations_fname, 'wb')
             pickle.dump(Mean_Correlations, f)
+            f.close()
+
+            # Save final weights
+            f = open(Path_original + 'Pesos_Totales_{}_{}.pkl'.format(stim, Band), 'wb')
+            pickle.dump(Pesos_totales, f)
             f.close()
 
 print(datetime.now() - startTime)
