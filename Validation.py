@@ -11,12 +11,15 @@ Display_figures_Trace = False
 Save_figures_Trace = True
 save_alphas = True
 
-Stims = ['Phonemes', 'Spectrogram_Phonemes']
-Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1']
+Stims = ['Envelope', 'Pitch', 'Spectrogram', 'Phonemes', 'Envelope_Pitch', 'Envelope_Spectrogram', 'Envelope_Phonemes',
+         'Pitch_Spectrogram', 'Pitch_Phonemes', 'Spectrogram_Phonemes', 'Envelope_Pitch_Spectrogram',
+         'Envelope_Pitch_Phonemes', 'Envelope_Spectrogram_Phonemes', 'Pitch_Spectrogram_Phonemes',
+         'Envelope_Pitch_Spectrogram_Phonemes']
+Bands = ['Theta']
 
 Corr_limit = 0.01
 
-alphas_fname = 'saves/Alphas/Alphas_Corr{}.pkl'.format(Corr_limit)
+alphas_fname = 'saves/Alphas/Alphas_Corr{}_ph.pkl'.format(Corr_limit)
 
 try:
     f = open(alphas_fname, 'rb')

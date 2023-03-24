@@ -100,8 +100,8 @@ def igualar_largos_dict_sample_data(dict, momentos, minimo_largo):
     keys.remove('info')
 
     for key in keys:
-            if dict[key].shape[0] > minimo_largo:
-                dict[key] = dict[key][:minimo_largo]
+        if dict[key].shape[0] > minimo_largo:
+            dict[key] = dict[key][:minimo_largo]
     if len(momentos) > minimo_largo:
         momentos = momentos[:minimo_largo]
 

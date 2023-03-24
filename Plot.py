@@ -65,7 +65,7 @@ def plot_cabezas_canales(channel_names, info, sesion, sujeto, Valores_promedio, 
         plt.colorbar(im[0], ax=[axs[0], axs[1]], shrink=0.85, label=name, orientation='horizontal',
                      boundaries=np.linspace(Valores_promedio.min().round(decimals=3),
                                             Valores_promedio.max().round(decimals=3), 100),
-                     ticks=[np.linspace(Valores_promedio.min(), Valores_promedio.max(), 9).round(decimals=3)])
+                     ticks=np.linspace(Valores_promedio.min(), Valores_promedio.max(), 9).round(decimals=3))
 
     else:
         fig, ax = plt.subplots()
@@ -76,7 +76,7 @@ def plot_cabezas_canales(channel_names, info, sesion, sujeto, Valores_promedio, 
         plt.colorbar(im[0], ax=ax, shrink=0.85, label=name, orientation='horizontal',
                      boundaries=np.linspace(Valores_promedio.min().round(decimals=3),
                                             Valores_promedio.max().round(decimals=3), 100),
-                     ticks=[np.linspace(Valores_promedio.min(), Valores_promedio.max(), 9).round(decimals=3)])
+                     ticks=np.linspace(Valores_promedio.min(), Valores_promedio.max(), 9).round(decimals=3))
         fig.tight_layout()
     if Save:
         save_path_cabezas = Run_graficos_path + 'Cabezas_canales/'
@@ -829,8 +829,8 @@ def Plot_cabezas_instantes(Pesos_totales_sujetos_todos_canales, info, Band, stim
                          boundaries=np.linspace(
                              Pesos[:, instantes_index[j]].min(),
                              Pesos[:, instantes_index[j]].max(), 100).round(3),
-                         ticks=[np.linspace(Pesos[:, instantes_index[j]].min(),
-                                            Pesos[:, instantes_index[j]].max(), 4).round(3)])
+                         ticks=np.linspace(Pesos[:, instantes_index[j]].min(),
+                                            Pesos[:, instantes_index[j]].max(), 4).round(3))
             cbar.ax.tick_params(labelsize=15)
 
         fig.tight_layout()
@@ -848,7 +848,7 @@ def pearsonr_pval(x, y):
     return stats.pearsonr(x, y)[1]
 
 
-def Matriz_corr_channel_wise(Pesos_totales_sujetos_todos_canales, stim, Len_Estimulos, info, times, Display, Save, Run_graficos_path):
+def Matriz_corr_channel_wise(Pesos_totales_sujetos_todos_canales, stim, Len_Estimulos, info, times, sesiones, Display, Save, Run_graficos_path):
 
     Stims_Order = stim.split('_')
     Cant_Estimulos = len(Len_Estimulos)
@@ -859,17 +859,17 @@ def Matriz_corr_channel_wise(Pesos_totales_sujetos_todos_canales, stim, Len_Esti
             Pesos_totales_sujetos_todos_canales_reshaped = Pesos_totales_sujetos_todos_canales[:,
                                           sum(Len_Estimulos[j] for j in range(k)):sum(
                                               Len_Estimulos[j] for j in range(k + 1)), :]. \
-                reshape(info['nchan'], 16, len(times), 18).mean(1)
+                reshape(info['nchan'], 16, len(times), len(sesiones)*2).mean(1)
         elif Stims_Order[k] == 'Phonemes':
             Pesos_totales_sujetos_todos_canales_reshaped = Pesos_totales_sujetos_todos_canales[:,
                                           sum(Len_Estimulos[j] for j in range(k)):sum(
                                               Len_Estimulos[j] for j in range(k + 1)), :]. \
-                reshape(info['nchan'], len(exp_info.ph_labels), len(times), 18).mean(1)
+                reshape(info['nchan'], len(exp_info.ph_labels), len(times), len(sesiones)*2).mean(1)
         elif Stims_Order[k] == 'Phonemes-manual':
             Pesos_totales_sujetos_todos_canales_reshaped = Pesos_totales_sujetos_todos_canales[:,
                                           sum(Len_Estimulos[j] for j in range(k)):sum(
                                               Len_Estimulos[j] for j in range(k + 1)), :]. \
-                reshape(info['nchan'], len(exp_info.ph_labels_man), len(times), 18).mean(1)
+                reshape(info['nchan'], len(exp_info.ph_labels_man), len(times), len(sesiones)*2).mean(1)
         else:
             Pesos_totales_sujetos_todos_canales_reshaped = Pesos_totales_sujetos_todos_canales
 
@@ -1309,8 +1309,8 @@ def Plot_instantes_interes(Pesos_totales_sujetos_todos_canales, info, Band, time
             plt.colorbar(im[0], ax=axs[i + 1], orientation='vertical', shrink=0.8,
                          boundaries=np.linspace(evoked._data[:, instantes_index[i]].min().round(decimals=2),
                                                 evoked._data[:, instantes_index[i]].max().round(decimals=2), 100),
-                         ticks=[np.linspace(evoked._data[:, instantes_index[i]].min(),
-                                            evoked._data[:, instantes_index[i]].max(), 4).round(decimals=2)])
+                         ticks=np.linspace(evoked._data[:, instantes_index[i]].min(),
+                                            evoked._data[:, instantes_index[i]].max(), 4).round(decimals=2))
 
         axs[i + 2].remove()
         axs[i + 4].remove()
@@ -1494,9 +1494,9 @@ def Plot_instantes_casera(Pesos_totales_sujetos_todos_canales, info, Band, times
                      boundaries=np.linspace(
                          Pesos_totales_sujetos_todos_canales_copy[instantes_index[i]].min().round(decimals=2),
                          Pesos_totales_sujetos_todos_canales_copy[instantes_index[i]].max().round(decimals=2), 100),
-                     ticks=[np.linspace(Pesos_totales_sujetos_todos_canales_copy[instantes_index[i]].min(),
+                     ticks=np.linspace(Pesos_totales_sujetos_todos_canales_copy[instantes_index[i]].min(),
                                         Pesos_totales_sujetos_todos_canales_copy[instantes_index[i]].max(), 4).round(
-                         decimals=2)])
+                         decimals=2))
 
     axs[0, -1].remove()
     for ax_row in axs[1:]:

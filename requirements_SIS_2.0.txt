@@ -1,0 +1,11 @@
+librosa==0.8.1
+mne==0.24.0
+pandas==1.4.4
+scikit-learn==1.2.1
+numpy
+praatio==4.3.0
+praat-parselmouth
+praat-textgrids==1.4.0
+opensmile==2.2.0
+seaborn
+statannot

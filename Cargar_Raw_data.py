@@ -12,6 +12,7 @@ from parselmouth.praat import call
 import textgrids
 import os
 import Funciones
+import seaborn as sn
 
 ## PARAMETROS
 s = 21
@@ -26,6 +27,82 @@ sr = 128
 audio_sr = 16000
 tmin, tmax = -0.6, -0.003
 delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
+
+
+## PHN features
+
+
+
+sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
+
+all_labels = []
+
+for sesion in sesiones:
+
+    phn_path = "Datos/phonemes/S" + str(sesion) + "/"
+    trials = list(set([int(fname.split('.')[2]) for fname in os.listdir(phn_path) if
+                       os.path.isfile(phn_path + f'/{fname}')]))
+    for trial in trials:
+        for channel in [1, 2]:
+            try:
+                phn_fname = "Datos/phonemes/S" + str(sesion) + "/s" + str(sesion) + ".objects." + "{:02d}".format(trial) + ".channel" + \
+                            str(channel) + ".aligned_fa.TextGrid"
+                # phn_fname = "Datos/phonemes/S" + str(sesion) + "/manual/s" + str(sesion) + "_objects_" + "{:02d}".format(
+                #     trial) + "_channel" + str(channel) + "_aligned_faTAMARA.TextGrid"
+
+                phrases_fname = "Datos/phrases/S" + str(sesion) + "/s" + str(sesion) + ".objects." + "{:02d}".format(trial) + ".channel" + str(
+                        channel) + ".phrases"
+
+                # Get trial total length
+                phrases = pd.read_table(phrases_fname, header=None, sep="\t")
+                trial_tmax = phrases[1].iloc[-1]
+
+                # Phonemes
+                grid = textgrids.TextGrid(phn_fname)
+
+                phonemes = grid['transcription : phones']
+                phonemes[0].xmin = 0.
+
+                # Parse
+                labels = []
+                times = []
+                samples = []
+
+                for ph in phonemes:
+                    label = ph.text.transcode()
+                    label = label.replace(' ', '')
+                    label = label.replace('º', '')
+                    label = label.replace('-', '')
+                    # Rename silences
+                    if label == 'sil' or label == 'sp' or label == 'sile' or label == 'silsil'\
+                            or label == 'SP' or label == 's¡p' or label == 'sils':
+                        label = ""
+                    labels.append(label)
+                    times.append((ph.xmin, ph.xmax))
+                    samples.append(np.round((ph.xmax - ph.xmin) * sr).astype("int"))
+
+                labels.append("")
+                times.append((ph.xmin, trial_tmax))
+                samples.append(np.round((trial_tmax - ph.xmax) * sr).astype("int"))
+
+                # Get unique phonemes
+                labels_set = set(labels)
+                unique_labels = (list(labels_set))
+
+                all_labels.append(unique_labels)
+            except:
+                print(f'Could not upload Sesion: {sesion} - Trial {trial} - Channel {channel}')
+
+
+
+dfvowels = pd.read_csv('vowels.csv', header=None, index_col=0)
+dfconsonants = pd.read_csv('consonants.csv', header=None, index_col=0)
+dfarpabet = pd.concat([pd.get_dummies(dfconsonants), pd.get_dummies(dfvowels)]).fillna(0)
+dfarpabet.index.name = 'arpabet'
+dfarpabet = dfarpabet.sort_values('arpabet')
+plt.figure(figsize=(12, 12))
+sn.heatmap(dfarpabet)
+
 
 ## Phonemes
 

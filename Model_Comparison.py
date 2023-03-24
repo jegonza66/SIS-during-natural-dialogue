@@ -254,18 +254,16 @@ import matplotlib.pyplot as plt
 import os
 import seaborn as sn
 
+Save_fig = True
 model = 'Ridge'
 situacion = 'Escucha'
+tmin, tmax = -0.6, 0
 Run_graficos_path = 'gráficos/Model_Comparison/{}/{}/tmin{}_tmax{}/Violin Plots/'.format(model, situacion, tmin, tmax)
-Save_fig = True
-
-tmin, tmax = -0.6, -0.003
-
-Correlaciones = {}
 
 Band = 'Theta'
 Stims = ['Spectrogram', 'Envelope', 'Pitch', 'Shimmer']
 
+Correlaciones = {}
 for stim in Stims:
     f = open('saves/{}/{}/Final_Correlation/tmin{}_tmax{}/{}_EEG_{}.pkl'.format(model, situacion, tmin, tmax, stim, Band), 'rb')
     Corr, Pass = pickle.load(f)
@@ -273,6 +271,7 @@ for stim in Stims:
 
     Correlaciones[stim] = Corr.mean(0)
 
+# Violin plot
 plt.ion()
 plt.figure(figsize=(19, 5))
 sn.violinplot(data=pd.DataFrame(Correlaciones))
@@ -286,6 +285,33 @@ if Save_fig:
     os.makedirs(Run_graficos_path, exist_ok=True)
     plt.savefig(Run_graficos_path + '{}.png'.format(Band))
     plt.savefig(Run_graficos_path + '{}.svg'.format(Band))
+
+# Box plot
+# my_pal = {'All': 'C0', 'Delta': 'C0', 'Theta': 'C0', 'Alpha': 'C0', 'Beta_1': 'C0'}
+
+fig, ax = plt.subplots()
+ax = sn.boxplot(data=pd.DataFrame(Correlaciones), width=0.35)
+ax.set_ylabel('Correlation')
+# ax = sn.violinplot(x='Band', y='Corr', data=Correlaciones, width=0.35)
+for patch in ax.artists:
+    r, g, b, a = patch.get_facecolor()
+    patch.set_facecolor((r, g, b, .4))
+
+# Create an array with the colors you want to use
+# colors = ["C0", "grey"]
+# # Set your custom color palette
+# palette = sn.color_palette(colors)
+sn.swarmplot(data=pd.DataFrame(Correlaciones), size=2, alpha=0.4)
+plt.tick_params(labelsize=13)
+ax.xaxis.label.set_size(15)
+ax.yaxis.label.set_size(15)
+plt.grid()
+fig.tight_layout()
+
+if Save_fig:
+    os.makedirs(Run_graficos_path, exist_ok=True)
+    plt.savefig(Run_graficos_path + '{}.png'.format(stim))
+    plt.savefig(Run_graficos_path + '{}.svg'.format(stim))
 
 ## Violin Plot Situation
 import pandas as pd

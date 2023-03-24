@@ -9,8 +9,6 @@ from scipy import signal as sgn
 import platform
 from praatio import pitch_and_intensity
 import opensmile
-import parselmouth
-from parselmouth.praat import call
 import Processing
 import Funciones
 import textgrids
@@ -87,10 +85,6 @@ class Trial_channel:
         times.append((ph.xmin, trial_tmax))
         samples.append(np.round((trial_tmax - ph.xmax) * self.sr).astype("int"))
 
-        # Get unique phonemes
-        # labels_set = set(labels)
-        # unique_labels = (list(labels_set))
-
         # If use envelope amplitude to make continuous stimuli
         diferencia = np.sum(samples) - len(envelope)
 
@@ -114,9 +108,15 @@ class Trial_channel:
 
         for i, phoneme in enumerate(phonemes_tgrid):
             phonemes_df.loc[i, phoneme] = envelope[i]
-            # df.loc[i, phoneme] = 1
+            # phonemes_df.loc[i, phoneme] = 1
 
         return phonemes_df
+
+
+    def phn_features(self):
+        x=1
+
+
 
     def f_Phonemes_manual(self, envelope):
 
@@ -503,7 +503,12 @@ class Sesion_class:
                         Sujeto_2[key] = Sujeto_2[key].append(Trial_sujeto_2[key])
 
             except:
-                pass
+                # Empty trial
+                samples_info['trial_lengths1'].append(0)
+                samples_info['trial_lengths2'].append(0)
+                samples_info['keep_indexes1'].append([0])
+                samples_info['keep_indexes2'].append([0])
+
 
         info = Trial_channel_1['info']
 

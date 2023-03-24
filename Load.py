@@ -14,6 +14,8 @@ from parselmouth.praat import call
 import Processing
 import Funciones
 import textgrids
+import setup
+exp_info = setup.exp_info()
 
 
 class Trial_channel:
@@ -45,6 +47,78 @@ class Trial_channel:
             trial) + ".channel" + str(channel) + ".wav"
         self.pitch_fname = "Datos/Pitch_threshold_{}/S".format(SilenceThreshold) + str(s) + "/s" + str(s) + ".objects." \
                            + "{:02d}".format(trial) + ".channel" + str(channel) + ".txt"
+        self.phn_fname = "Datos/phonemes/S" + str(s) + "/s" + str(s) + ".objects." + "{:02d}".format(
+            trial) + ".channel" + str(channel) + ".aligned_fa.TextGrid"
+        self.phn_fname_manual = "Datos/phonemes/S" + str(s) + "/manual/s" + str(s) + "_objects_" + "{:02d}".format(
+            trial) + "_channel" + str(channel) + "_aligned_faTAMARA.TextGrid"
+        self.phrases_fname = "Datos/phrases/S" + str(s) + "/s" + str(s) + ".objects." + "{:02d}".format(
+            trial) + ".channel" + str(
+            channel) + ".phrases"
+
+
+    def f_phonemes(self, envelope):
+        # Get trial total length
+        phrases = pd.read_table(self.phrases_fname, header=None, sep="\t")
+        trial_tmax = phrases[1].iloc[-1]
+
+        # Load transcription
+        grid = textgrids.TextGrid(self.phn_fname)
+        # Get phonemes
+        phonemes_grid = grid['transcription : phones']
+        # Extend first silence time to trial start time
+        phonemes_grid[0].xmin = 0.
+
+        # Parse
+        labels = []
+        times = []
+        samples = []
+
+        for ph in phonemes_grid:
+            label = ph.text.transcode()
+            # Rename silences
+            if label == 'sil' or label == 'sp':
+                label = ""
+            labels.append(label)
+            times.append((ph.xmin, ph.xmax))
+            samples.append(np.round((ph.xmax - ph.xmin) * self.sr).astype("int"))
+
+        # Extend last silence to trial end time
+        labels.append("")
+        times.append((ph.xmin, trial_tmax))
+        samples.append(np.round((trial_tmax - ph.xmax) * self.sr).astype("int"))
+
+        # If use envelope amplitude to make continuous stimuli
+        diferencia = np.sum(samples) - len(envelope)
+
+        if diferencia > 0:
+            for i in [-i - 1 for i in range(len(samples))]:
+                if diferencia > samples[i]:
+                    diferencia -= samples[i]
+                    samples[i] = 0
+                # Cuando samples es mayor que diferencia, le resto la diferencia a las samples
+                else:
+                    samples[i] -= diferencia
+                    break
+        elif diferencia < 0:
+            samples[-1] -= diferencia
+
+        # Make empty df of phonemes
+        phonemes_df = pd.DataFrame(0, index=np.arange(np.sum(samples)), columns=exp_info.ph_labels)
+
+        # Get samples number instead of time
+        phonemes_tgrid = np.repeat(labels, samples)
+
+        for i, phoneme in enumerate(phonemes_tgrid):
+            phonemes_df.loc[i, phoneme] = envelope[i]
+            # phonemes_df.loc[i, phoneme] = 1
+
+        phonemes_array = phonemes_df.to_numpy()
+        phonemes_array.transpose()
+        phonemes_shift = Processing.matriz_shifteada(phonemes_array[0], self.delays)
+        for i in np.arange(1, len(phonemes_array)):
+            phonemes_shift = np.hstack((phonemes_shift, Processing.matriz_shifteada(phonemes_array[i], self.delays)))
+
+        return phonemes_shift
 
 
     def f_eeg(self):
@@ -227,6 +301,7 @@ class Trial_channel:
         channel['envelope'] = self.f_envelope()
         channel['pitch'], channel['pitch_der'] = self.load_pitch()
         channel['spectrogram'] = self.f_spectrogram()
+        channel['Phonemes'] = self.f_phonemes(envelope=self.envelope)
         # channel['jitter'], channel['shimmer'] = self.f_jitter_shimmer()
         # channel['cssp'] = self.f_cssp()
         return channel
@@ -254,18 +329,19 @@ class Sesion_class:
         self.Calculate_pitch = Calculate_pitch
         self.SilenceThreshold = SilenceThreshold
         self.procesed_data_path = procesed_data_path
+        self.phn_path = "Datos/phonemes/S" + str(self.sesion) + "/"
 
     def load_from_raw(self):
         # Armo estructura de datos de sujeto
         Sujeto_1 = {'EEG': pd.DataFrame(), 'Envelope': pd.DataFrame(), 'Spectrogram': pd.DataFrame(),
-                    'Pitch': pd.DataFrame()}
+                    'Pitch': pd.DataFrame(), 'Phonemes': pd.DataFrame()}
 
         Sujeto_2 = {'EEG': pd.DataFrame(), 'Envelope': pd.DataFrame(), 'Spectrogram': pd.DataFrame(),
-                    'Pitch': pd.DataFrame()}
+                    'Pitch': pd.DataFrame(), 'Phonemes': pd.DataFrame()}
 
-        run = True
-        trial = 1
-        while run:
+        trials = list(set([int(fname.split('.')[2]) for fname in os.listdir(self.phn_path) if
+                           os.path.isfile(self.phn_path + f'/{fname}')]))
+        for trial in trials:
             try:
                 if self.Calculate_pitch:
                     Trial_channel(s=self.sesion, trial=trial, channel=1,
@@ -312,10 +388,6 @@ class Sesion_class:
                 momentos_sujeto_1_trial = Processing.labeling(self.sesion, trial, canal_hablante=2, sr=self.sr)
                 momentos_sujeto_2_trial = Processing.labeling(self.sesion, trial, canal_hablante=1, sr=self.sr)
 
-            except:
-                run = False
-
-            if run:
                 # Match lengths of variables
                 momentos_sujeto_1_trial = Funciones.igualar_largos_dict(Trial_sujeto_1, momentos_sujeto_1_trial)
                 momentos_sujeto_2_trial = Funciones.igualar_largos_dict(Trial_sujeto_2, momentos_sujeto_2_trial)
@@ -330,22 +402,34 @@ class Sesion_class:
                 Funciones.make_df_dict(Trial_sujeto_1)
                 Funciones.make_df_dict(Trial_sujeto_2)
 
+                # # Adjunto a datos de sujeto
+                # if len(Trial_sujeto_1['eeg']):
+                #     Sujeto_1['EEG'] = Sujeto_1['EEG'].append(Trial_sujeto_1['eeg'])
+                #     Sujeto_1['Envelope'] = Sujeto_1['Envelope'].append((Trial_sujeto_1['envelope']))
+                #     Sujeto_1['Pitch'] = Sujeto_1['Pitch'].append((Trial_sujeto_1['pitch']))
+                #     Sujeto_1['Spectrogram'] = Sujeto_1['Spectrogram'].append((Trial_sujeto_1['spectrogram']))
+                #
+                # if len(Trial_sujeto_2['eeg']):
+                #     Sujeto_2['EEG'] = Sujeto_2['EEG'].append(Trial_sujeto_2['eeg'])
+                #     Sujeto_2['Envelope'] = Sujeto_2['Envelope'].append((Trial_sujeto_2['envelope']))
+                #     Sujeto_2['Pitch'] = Sujeto_2['Pitch'].append((Trial_sujeto_2['pitch']))
+                #     Sujeto_2['Spectrogram'] = Sujeto_2['Spectrogram'].append((Trial_sujeto_2['spectrogram']))
                 # Adjunto a datos de sujeto
-                if len(Trial_sujeto_1['eeg']):
-                    Sujeto_1['EEG'] = Sujeto_1['EEG'].append(Trial_sujeto_1['eeg'])
-                    Sujeto_1['Envelope'] = Sujeto_1['Envelope'].append((Trial_sujeto_1['envelope']))
-                    Sujeto_1['Pitch'] = Sujeto_1['Pitch'].append((Trial_sujeto_1['pitch']))
-                    Sujeto_1['Spectrogram'] = Sujeto_1['Spectrogram'].append((Trial_sujeto_1['spectrogram']))
+                if len(Trial_sujeto_1['EEG']):
+                    for key in list(Sujeto_1.keys()):
+                        Sujeto_1[key] = Sujeto_1[key].append(Trial_sujeto_1[key])
 
-                if len(Trial_sujeto_2['eeg']):
-                    Sujeto_2['EEG'] = Sujeto_2['EEG'].append(Trial_sujeto_2['eeg'])
-                    Sujeto_2['Envelope'] = Sujeto_2['Envelope'].append((Trial_sujeto_2['envelope']))
-                    Sujeto_2['Pitch'] = Sujeto_2['Pitch'].append((Trial_sujeto_2['pitch']))
-                    Sujeto_2['Spectrogram'] = Sujeto_2['Spectrogram'].append((Trial_sujeto_2['spectrogram']))
+                if len(Trial_sujeto_2['EEG']):
+                    for key in list(Sujeto_2.keys()):
+                        Sujeto_2[key] = Sujeto_2[key].append(Trial_sujeto_2[key])
 
-                trial += 1
+            except:
+                pass
 
         info = Trial_channel_1['info']
+
+        Sujeto_1['Phonemes'].drop(columns="", inplace=True)
+        Sujeto_2['Phonemes'].drop(columns="", inplace=True)
 
         # Add pitch mask stim
         Pitch_mask_1 = pd.DataFrame().reindex_like(Sujeto_1['Pitch'])
@@ -363,52 +447,78 @@ class Sesion_class:
         Funciones.make_array_dict(Sujeto_2)
 
         # Define Save Paths
-        EEG_path = self.procesed_data_path + 'EEG/'
-        if self.Band and self.Causal_filter_EEG: EEG_path += 'Causal_'
-        EEG_path += 'Sit_{}_Band_{}/'.format(self.situacion, self.Band)
+        # EEG_path = self.procesed_data_path + 'EEG/'
+        # if self.Band and self.Causal_filter_EEG: EEG_path += 'Causal_'
+        # EEG_path += 'Sit_{}_Band_{}/'.format(self.situacion, self.Band)
+        #
+        # Envelope_path = self.procesed_data_path + 'Envelope/Sit_{}/'.format(self.situacion)
+        #
+        # Pitch_path = self.procesed_data_path + 'Pitch_threshold_{}/Sit_{}_Faltantes_{}/'.format(self.SilenceThreshold,
+        #                                                                                         self.situacion,
+        #                                                                                         self.valores_faltantes)
+        #
+        # Pitch_mask_path = self.procesed_data_path + 'Pitch_mask_threshold_{}/Sit_{}_Faltantes_{}/'.format(self.SilenceThreshold,
+        #                                                                                         self.situacion,
+        #                                                                                         self.valores_faltantes)
+        # Spectrogram_path = self.procesed_data_path + 'Spectrogram/Sit_{}/'.format(self.situacion)
+        #
+        #
+        # for path in [EEG_path, Envelope_path, Pitch_path, Pitch_mask_path, Spectrogram_path]:
+        #     try:
+        #         os.makedirs(path)
+        #     except:
+        #         pass
 
-        Envelope_path = self.procesed_data_path + 'Envelope/Sit_{}/'.format(self.situacion)
+        Paths = {}
+        Paths['EEG'] = self.procesed_data_path + 'EEG/'
+        if self.Band and self.Causal_filter_EEG: Paths['EEG'] += 'Causal_'
+        Paths['EEG'] += 'Sit_{}_Band_{}/'.format(self.situacion, self.Band)
 
-        Pitch_path = self.procesed_data_path + 'Pitch_threshold_{}/Sit_{}_Faltantes_{}/'.format(self.SilenceThreshold,
-                                                                                                self.situacion,
-                                                                                                self.valores_faltantes)
+        Paths['Envelope'] = self.procesed_data_path + 'Envelope/Sit_{}/'.format(self.situacion)
 
-        Pitch_mask_path = self.procesed_data_path + 'Pitch_mask_threshold_{}/Sit_{}_Faltantes_{}/'.format(self.SilenceThreshold,
-                                                                                                self.situacion,
-                                                                                                self.valores_faltantes)
-        Spectrogram_path = self.procesed_data_path + 'Spectrogram/Sit_{}/'.format(self.situacion)
+        Paths['Pitch'] = self.procesed_data_path + 'Pitch_threshold_{}/Sit_{}_Faltantes_{}/'.format(
+            self.SilenceThreshold,
+            self.situacion,
+            self.valores_faltantes)
 
-
-        for path in [EEG_path, Envelope_path, Pitch_path, Pitch_mask_path, Spectrogram_path]:
-            try:
-                os.makedirs(path)
-            except:
-                pass
+        Paths['Spectrogram'] = self.procesed_data_path + 'Spectrogram/Sit_{}/'.format(self.situacion)
+        Paths['Phonemes'] = self.procesed_data_path + 'Phonemes/Sit_{}/'.format(self.situacion)
 
         # Save Preprocesed Data
-        f = open(EEG_path + 'Sesion{}.pkl'.format(self.sesion), 'wb')
-        pickle.dump([Sujeto_1['EEG'], Sujeto_2['EEG']], f)
-        f.close()
-
-        f = open(Envelope_path + 'Sesion{}.pkl'.format(self.sesion), 'wb')
-        pickle.dump([Sujeto_1['Envelope'], Sujeto_2['Envelope']], f)
-        f.close()
-
-        f = open(Pitch_path + 'Sesion{}.pkl'.format(self.sesion), 'wb')
-        pickle.dump([Sujeto_1['Pitch'], Sujeto_2['Pitch']], f)
-        f.close()
-
-        f = open(Pitch_mask_path + 'Sesion{}.pkl'.format(self.sesion), 'wb')
-        pickle.dump([Sujeto_1['PitchMask'], Sujeto_2['PitchMask']], f)
-        f.close()
-
-        f = open(Spectrogram_path + 'Sesion{}.pkl'.format(self.sesion), 'wb')
-        pickle.dump([Sujeto_1['Spectrogram'], Sujeto_2['Spectrogram']], f)
-        f.close()
+        for key in Sujeto_1.keys():
+            # Save Preprocesed Data
+            os.makedirs(Paths[key], exist_ok=True)
+            f = open(Paths[key] + 'Sesion{}.pkl'.format(self.sesion), 'wb')
+            pickle.dump([Sujeto_1[key], Sujeto_2[key]], f)
+            f.close()
 
         f = open(self.procesed_data_path + 'EEG/info.pkl', 'wb')
         pickle.dump(info, f)
         f.close()
+
+        # f = open(EEG_path + 'Sesion{}.pkl'.format(self.sesion), 'wb')
+        # pickle.dump([Sujeto_1['EEG'], Sujeto_2['EEG']], f)
+        # f.close()
+        #
+        # f = open(Envelope_path + 'Sesion{}.pkl'.format(self.sesion), 'wb')
+        # pickle.dump([Sujeto_1['Envelope'], Sujeto_2['Envelope']], f)
+        # f.close()
+        #
+        # f = open(Pitch_path + 'Sesion{}.pkl'.format(self.sesion), 'wb')
+        # pickle.dump([Sujeto_1['Pitch'], Sujeto_2['Pitch']], f)
+        # f.close()
+        #
+        # f = open(Pitch_mask_path + 'Sesion{}.pkl'.format(self.sesion), 'wb')
+        # pickle.dump([Sujeto_1['PitchMask'], Sujeto_2['PitchMask']], f)
+        # f.close()
+        #
+        # f = open(Spectrogram_path + 'Sesion{}.pkl'.format(self.sesion), 'wb')
+        # pickle.dump([Sujeto_1['Spectrogram'], Sujeto_2['Spectrogram']], f)
+        # f.close()
+        #
+        # f = open(self.procesed_data_path + 'EEG/info.pkl', 'wb')
+        # pickle.dump(info, f)
+        # f.close()
 
         # Redefine Subjects dictionaries to return only used stimuli
         Sujeto_1_return = {key: Sujeto_1[key] for key in self.stim.split('_')}
@@ -485,7 +595,7 @@ class Sesion_class:
 def Load_Data(sesion, stim, Band, sr, tmin, tmax, procesed_data_path, situacion='Escucha', Causal_filter_EEG=True,
               Env_Filter=False, valores_faltantes=0, Calculate_pitch=False, SilenceThreshold=0.03):
 
-    possible_stims = ['Envelope', 'Pitch', 'PitchMask', 'Spectrogram']
+    possible_stims = ['Envelope', 'Pitch', 'PitchMask', 'Spectrogram', 'Phonemes']
 
     if all(stimulus in possible_stims for stimulus in stim.split('_')):
 

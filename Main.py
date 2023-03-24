@@ -5,7 +5,7 @@ from sklearn.model_selection import KFold
 from datetime import datetime
 
 import New_load as Load
-# import Load_light as Load
+# import Load as Load
 import Models
 import Plot
 import Processing
@@ -14,7 +14,6 @@ import Processing
 startTime = datetime.now()
 # Define Parameters
 sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
-sesiones = [23]
 total_subjects = len(sesiones)*2
 tmin, tmax = -0.6, 0
 sr = 128
@@ -28,7 +27,7 @@ model = 'Ridge'
 
 set_alpha = None
 Alpha_Corr_limit = 0.01
-alphas_fname = 'saves/Alphas/Alphas_Corr{}.pkl'.format(Alpha_Corr_limit)
+alphas_fname = 'saves/Alphas/Alphas_Corr{}_ph.pkl'.format(Alpha_Corr_limit)
 try:
     f = open(alphas_fname, 'rb')
     Alphas = pickle.load(f)
@@ -37,10 +36,11 @@ except:
     print('\n\nAlphas file not found.\n\n')
 
 # Stimuli and EEG
-Stims = ['Spectrogram', 'Phonemes', 'Spectrogram_Phonemes']
-Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1']
+Stims = ['Envelope', 'Pitch', 'Spectrogram', 'Phonemes', 'Envelope_Pitch', 'Envelope_Spectrogram', 'Envelope_Phonemes',
+         'Pitch_Spectrogram', 'Pitch_Phonemes', 'Spectrogram_Phonemes', 'Envelope_Pitch_Spectrogram',
+         'Envelope_Pitch_Phonemes', 'Envelope_Spectrogram_Phonemes', 'Pitch_Spectrogram_Phonemes',
+         'Envelope_Pitch_Spectrogram_Phonemes']
 
-Stims = ['Envelope']
 Bands = ['Theta']
 
 # Standarization
@@ -48,14 +48,14 @@ Stims_preprocess = 'Normalize'
 EEG_preprocess = 'Standarize'
 
 # Random permutations
-Statistical_test = True
+Statistical_test = False
 
 # Save / Display Figures
 Display_Ind_Figures = False
 Display_Total_Figures = False
-Save_Ind_Figures = False
-Save_Total_Figures = False
-Save_Results = False
+Save_Ind_Figures = True
+Save_Total_Figures = True
+Save_Results = True
 
 # Save mean correlations
 Mean_Correlations_fname = 'saves/{}/{}/Final_Correlation/tmin{}_tmax{}/Mean_Correlations.pkl'.format(model, situacion, tmin, tmax)
@@ -335,7 +335,7 @@ for Band in Bands:
                                        Save_Total_Figures, Run_graficos_path, Len_Estimulos, stim, Band, ERP=True)
 
         # Matriz de Correlacion
-        Plot.Matriz_corr_channel_wise(Pesos_totales_sujetos_todos_canales, stim, Len_Estimulos, info, times, Display_Total_Figures, Save_Total_Figures,
+        Plot.Matriz_corr_channel_wise(Pesos_totales_sujetos_todos_canales, stim, Len_Estimulos, info, times, sesiones, Display_Total_Figures, Save_Total_Figures,
                                       Run_graficos_path)
         try:
             _ = Plot.Plot_cabezas_instantes(Pesos_totales_sujetos_todos_canales, info, Band, stim, times, sr, Display_Total_Figures,
@@ -362,5 +362,8 @@ for Band in Bands:
             f = open(Path_original + 'Pesos_Totales_{}_{}.pkl'.format(stim, Band), 'wb')
             pickle.dump(Pesos_totales, f)
             f.close()
+
+            # LOAD STIMULUS BY SUBJECT
+            dstims_para_sujeto_1, dstims_para_sujeto_2
 
 print(datetime.now() - startTime)
