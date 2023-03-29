@@ -11,10 +11,7 @@ Display_figures_Trace = False
 Save_figures_Trace = True
 save_alphas = True
 
-Stims = ['Envelope', 'Pitch', 'Spectrogram', 'Phonemes', 'Envelope_Pitch', 'Envelope_Spectrogram', 'Envelope_Phonemes',
-         'Pitch_Spectrogram', 'Pitch_Phonemes', 'Spectrogram_Phonemes', 'Envelope_Pitch_Spectrogram',
-         'Envelope_Pitch_Phonemes', 'Envelope_Spectrogram_Phonemes', 'Pitch_Spectrogram_Phonemes',
-         'Envelope_Pitch_Spectrogram_Phonemes']
+Stims = ['Envelope_Pitch_Spectrogram_Phonemes']
 Bands = ['Theta']
 
 Corr_limit = 0.01

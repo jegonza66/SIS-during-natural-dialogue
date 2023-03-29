@@ -9,3 +9,4 @@ praat-textgrids==1.4.0
 opensmile==2.2.0
 seaborn
 statannot
+matplotlib-venn

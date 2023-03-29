@@ -7,81 +7,46 @@ from scipy.spatial import ConvexHull
 
 model = 'Ridge'
 situacion = 'Escucha'
-tmin, tmax = -0.6, -0.003
+tmin, tmax = -0.6, 0
 
 Run_graficos_path = 'gráficos/Model_Comparison/{}/{}/tmin{}_tmax{}/Convex_Hull/'.format(model, situacion, tmin, tmax)
 Save_fig = True
 
-Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'All']
+Bands = ['Theta']
+Stims = 'Envelope_Pitch_Phonemes'
+sub_stims = Stims.split('_')
+Corr = {}
+Pass = {}
 
 for Band in Bands:
-    f = open('saves/{}/{}/Final_Correlation/tmin{}_tmax{}/Envelope_EEG_{}.pkl'.format(model, situacion, tmin, tmax, Band), 'rb')
-    Corr_Envelope, Pass_Envelope = pickle.load(f)
-    f.close()
+    for stim in sub_stims + [Stims]:
+        f = open('saves/{}/{}/Final_Correlation/tmin{}_tmax{}/{}_EEG_{}.pkl'.format(model, situacion, tmin, tmax,
+                                                                                    stim, Band), 'rb')
 
-    f = open('saves/{}/{}/Final_Correlation/tmin{}_tmax{}/Pitch_EEG_{}.pkl'.format(model, situacion, tmin, tmax, Band), 'rb')
-    Corr_Pitch, Pass_Pitch = pickle.load(f)
-    f.close()
-
-    f = open(
-        'saves/{}/{}/Final_Correlation/tmin{}_tmax{}/Spectrogram_EEG_{}.pkl'.format(model, situacion, tmin, tmax, Band), 'rb')
-    Corr_Spectrogram, Pass_Spectrogram = pickle.load(f)
-    f.close()
-
-    f = open(
-        'saves/{}/{}/Final_Correlation/tmin{}_tmax{}/Envelope_Pitch_Spectrogram_EEG_{}.pkl'.format(model, situacion, tmin, tmax, Band),
-        'rb')
-    Corr_Envelope_Pitch_Spectrogram, Pass_Envelope_Pitch_Spectrogram = pickle.load(f)
-    f.close()
-
-
-    Corr_Envelope = Corr_Envelope.ravel()
-    Corr_Pitch = Corr_Pitch.ravel()
-    Corr_Spectrogram = Corr_Spectrogram.ravel()
-    Corr_Envelope_Pitch_Spectrogram = Corr_Envelope_Pitch_Spectrogram.ravel()
-
-    Pass_Envelope = Pass_Envelope.ravel()
-    Pass_Pitch = Pass_Pitch.ravel()
-    Pass_Spectrogram = Pass_Spectrogram.ravel()
-    Pass_Envelope_Pitch_Spectrogram = Pass_Envelope_Pitch_Spectrogram.ravel()
-
-    Envelope_points = np.array([Corr_Envelope_Pitch_Spectrogram, Corr_Envelope]).transpose()
-    Pitch_points = np.array([Corr_Envelope_Pitch_Spectrogram, Corr_Pitch]).transpose()
-    Spectrogram_points = np.array([Corr_Envelope_Pitch_Spectrogram, Corr_Spectrogram]).transpose()
-
-    Envelope_hull = ConvexHull(Envelope_points)
-    Pitch_hull = ConvexHull(Pitch_points)
-    Spectrogram_hull = ConvexHull(Spectrogram_points)
+        corr_data, pass_data = pickle.load(f)
+        Corr[stim] = corr_data.ravel()
+        Pass[stim] = pass_data.ravel()
+        f.close()
 
     # PLOT
     plt.ion()
     plt.figure()
     plt.title(Band)
 
-    # Plot surviving
-    plt.plot(Corr_Envelope_Pitch_Spectrogram[Pass_Envelope != 0], Corr_Envelope[Pass_Envelope != 0], '.', color='C0',
-             label='Envelope', ms=2.5)
-    plt.plot(Corr_Envelope_Pitch_Spectrogram[Pass_Pitch != 0], Corr_Pitch[Pass_Pitch != 0], '.', color='C1', label='Pitch'
-             , ms=2.5)
-    plt.plot(Corr_Envelope_Pitch_Spectrogram[Pass_Spectrogram != 0], Corr_Spectrogram[Pass_Spectrogram != 0], '.', color='C2',
-             label='Spectrogram', ms=2.5)
+    for i, stim in enumerate(sub_stims):
+        stim_points = np.array([Corr[Stims], Corr[stim]]).transpose()
+        stim_hull = ConvexHull(stim_points)
 
-    # Plot dead
-    plt.plot(Corr_Envelope_Pitch_Spectrogram[Pass_Envelope == 0], Corr_Envelope[Pass_Envelope == 0], '.', color='grey',
-             alpha=0.5, label='Perm. test failed', ms=2)
-    plt.plot(Corr_Envelope_Pitch_Spectrogram[Pass_Pitch == 0], Corr_Pitch[Pass_Pitch == 0], '.', color='grey', alpha=0.5,
-             label='Perm. test failed', ms=2)
-    plt.plot(Corr_Envelope_Pitch_Spectrogram[Pass_Spectrogram == 0], Corr_Spectrogram[Pass_Spectrogram == 0], '.', color='grey',
-             alpha=0.5, label='Perm. test failed', ms=2)
+        plt.plot(Corr[Stims][Pass[stim] != 0], Corr[stim][Pass[stim] != 0], '.', color=f'C{i}',
+                 label=stim, ms=2.5)
 
-    plt.fill(Envelope_points[Envelope_hull.vertices, 0], Envelope_points[Envelope_hull.vertices, 1], color='C0',
-             alpha=0.3, lw=0)
-    plt.fill(Pitch_points[Pitch_hull.vertices, 0], Pitch_points[Pitch_hull.vertices, 1], color='C1', alpha=0.3, lw=0)
-    plt.fill(Spectrogram_points[Spectrogram_hull.vertices, 0], Spectrogram_points[Spectrogram_hull.vertices, 1], color='C2',
-             alpha=0.3, lw=0)
+        plt.plot(Corr[Stims][Pass[stim] == 0], Corr[stim][Pass[stim] == 0], '.', color='grey',
+                 alpha=0.5, label='Perm. test failed', ms=2)
+        plt.fill(stim_points[stim_hull.vertices, 0], stim_points[stim_hull.vertices, 1], color=f'C{i}',
+                 alpha=0.3, lw=0)
 
     # Lines
-    plt.plot([plt.xlim()[0], 0.7], [plt.xlim()[0], 0.7], 'k--', zorder = 0)
+    plt.plot([plt.xlim()[0], 0.7], [plt.xlim()[0], 0.7], 'k--', zorder=0)
     xlimit, ylimit = plt.xlim(), plt.ylim()
     plt.hlines(0, xlimit[0], xlimit[1], color='grey', linestyle='dashed')
     plt.vlines(0, ylimit[0], ylimit[1], color='grey', linestyle='dashed')
@@ -98,10 +63,11 @@ for Band in Bands:
     # Save
     plt.tight_layout()
     if Save_fig:
-        Run_graficos_path
-        os.makedirs(Run_graficos_path, exist_ok=True)
-        plt.savefig(Run_graficos_path + '{}.png'.format(Band))
-        plt.savefig(Run_graficos_path + '{}.svg'.format(Band))
+        fig_savepath = Run_graficos_path + f'{Band}/'
+        os.makedirs(fig_savepath, exist_ok=True)
+        plt.savefig(fig_savepath + f'{Stims}.png')
+        plt.savefig(fig_savepath + f'{Stims}.svg')
+
 
 ## Violin / Topo (Bands)
 import pandas as pd
@@ -310,8 +276,8 @@ fig.tight_layout()
 
 if Save_fig:
     os.makedirs(Run_graficos_path, exist_ok=True)
-    plt.savefig(Run_graficos_path + '{}.png'.format(stim))
-    plt.savefig(Run_graficos_path + '{}.svg'.format(stim))
+    plt.savefig(Run_graficos_path + '{}.png'.format(Band))
+    plt.savefig(Run_graficos_path + '{}.svg'.format(Band))
 
 ## Violin Plot Situation
 import pandas as pd
@@ -528,84 +494,134 @@ if Save_fig:
 
 
 ## Venn Diagrams
-from matplotlib_venn import venn3, venn3_circles
+from matplotlib_venn import venn3, venn2  # venn3_circles
 from matplotlib import pyplot as plt
 import pickle
 import os
 import numpy as np
+import copy
 
+tmin, tmax = -0.6, 0
 model = 'Ridge'
 situacion = 'Escucha'
 Run_graficos_path = 'gráficos/Model_Comparison/{}/{}/tmin{}_tmax{}/Venn_Diagrams/'.format(model, situacion, tmin, tmax)
-Save_fig = False
+save_path = 'saves/{}/{}/Final_Correlation/tmin{}_tmax{}/'.format(model, situacion, tmin, tmax)
+Save_fig = True
 
-tmin, tmax = -0.6, -0.003
 
-
-f = open('saves/{}/{}/Final_Correlation/tmin{}_tmax{}/Mean_Correlations.pkl'.format(model, situacion, tmin, tmax), 'rb')
-Mean_Correlations = pickle.load(f)
-f.close()
+# f = open('saves/{}/{}/Final_Correlation/tmin{}_tmax{}/Mean_Correlations.pkl'.format(model, situacion, tmin, tmax), 'rb')
+# Mean_Correlations = pickle.load(f)
+# f.close()
 
 Bands = ['All', 'Delta', 'Theta', 'Alpha', 'Beta_1']
 Bands = ['Theta']
 
+
 for Band in Bands:
-    stims = ['Envelope', 'Pitch', 'Spectrogram']
+    Mean_Correlations = {}
 
-    stims.append('{}_{}'.format(stims[0], stims[1]))
-    stims.append('{}_{}'.format(stims[0], stims[2]))
-    stims.append('{}_{}'.format(stims[1], stims[2]))
-    stims.append('{}_{}_{}'.format(stims[0], stims[1], stims[2]))
+    stims_base = ['Spectrogram', 'Phonemes']
+    stims = copy.copy(stims_base)
 
-    r2_1 = Mean_Correlations[Band][stims[0]][0]**2
-    r2_2 = Mean_Correlations[Band][stims[1]][0]**2
-    r2_3 = Mean_Correlations[Band][stims[2]][0]**2
-    r2_12 = Mean_Correlations[Band][stims[3]][0]**2
-    r2_13 = Mean_Correlations[Band][stims[4]][0]**2
-    r2_23 = Mean_Correlations[Band][stims[5]][0]**2
-    r2_123 = Mean_Correlations[Band][stims[6]][0]**2
+    for i in range(len(stims_base)-1):
+        for j in range(i+1, len(stims_base)):
+            stims.append('{}_{}'.format(stims_base[i], stims_base[j]))
+    stims.append('_'.join(stims_base))
 
-    r2_int_12 = r2_1 + r2_2 - r2_12
-    r2_int_13 = r2_1 + r2_3 - r2_13
-    r2_int_23 = r2_2 + r2_3 - r2_23
+    for stim in stims:
+        # open FInal correlation file
+        f = open(save_path + '{}_EEG_{}.pkl'.format(stim, Band), 'rb')
+        Final_correlation = pickle.load(f)
+        f.close()
 
-    r2_int_123 = r2_123 + r2_1 + r2_2 + r2_3 - r2_12 - r2_13 - r2_23
+        Mean_Correlations[stim] = Final_correlation[0].mean()
 
-    r2u_int_12 = r2_1 + r2_2 - r2_12 - r2_int_123
-    r2u_int_13 = r2_1 + r2_3 - r2_13 - r2_int_123
-    r2u_int_23 = r2_2 + r2_3 - r2_23 - r2_int_123
+    if len(stims_base) == 2:
+        r2_1 = Mean_Correlations[stims[0]] ** 2
+        r2_2 = Mean_Correlations[stims[1]] ** 2
+        r2_12 = Mean_Correlations[stims[2]] ** 2
+        r2_int_12 = r2_1 + r2_2 - r2_12
 
-    # r2u_1 = Mean_Correlations[Band][stims[0]][0]**2 + r2_int_123 - r2_int_12 - r2_int_13
-    r2u_1 = r2_123 - r2_23
-    # r2u_2 = Mean_Correlations[Band][stims[1]][0]**2 + r2_int_123 - r2_int_12 - r2_int_23
-    r2u_2 = r2_123 - r2_13
-    # r2u_3 = Mean_Correlations[Band][stims[2]][0]**2 + r2_int_123 - r2_int_13 - r2_int_23
-    r2u_3 = r2_123 - r2_12
+        r2u_1 = r2_12 - r2_2
+        # r2u_2 = Mean_Correlations[Band][stims[1]][0]**2 + r2_int_123 - r2_int_12 - r2_int_23
+        r2u_2 = r2_12 - r2_1
 
-    sets = [r2u_1, r2u_2, r2u_int_12, r2u_3, r2u_int_13, r2u_int_23, r2_int_123]
-    sets_0 = []
-    for set in sets:
-        if set < 0:
-            set = 0
-        sets_0.append(set)
+        sets = [r2u_1, r2u_2, r2_int_12]
+        sets_0 = []
+        for set in sets:
+            if set < 0:
+                set = 0
+            sets_0.append(set)
 
-    plt.figure()
-    plt.title('{}'.format(Band))
-    venn3(subsets=np.array(sets_0).round(5), set_labels=(stims[0], stims[1], stims[2]), set_colors=('C0', 'C1', 'purple'), alpha=0.45)
+        plt.figure()
+        plt.title('{}'.format(Band))
+        venn2(subsets=np.array(sets_0).round(5), set_labels=(stims[0], stims[1]),
+              set_colors=('C0', 'C1'), alpha=0.45)
+        plt.tight_layout()
 
-    plt.tight_layout()
-    if Save_fig:
-        os.makedirs(Run_graficos_path, exist_ok=True)
-        plt.savefig(Run_graficos_path + '{}.png'.format(Band))
-        plt.savefig(Run_graficos_path + '{}.svg'.format(Band))
+        if Save_fig:
+            fig_savepath = Run_graficos_path + f'{Band}/'
+            os.makedirs(fig_savepath, exist_ok=True)
+            plt.savefig(fig_savepath + f'{stims[-1]}.png')
+            plt.savefig(fig_savepath + f'{stims[-1]}.svg')
 
-    Envelope_percent = r2_1 * 100 /np.sum(sets_0)
-    Pitch_percent = r2_2 * 100 /np.sum(sets_0)
-    Spectrogram_percent = r2_3 * 100 /np.sum(sets_0)
+        stim1_percent = r2_1 * 100 /np.sum(sets_0)
+        stim2_percent = r2_2 * 100 /np.sum(sets_0)
 
-    Envelope_u_percent = r2u_1 * 100 /np.sum(sets_0)
-    Pitch_u_percent = r2u_2 * 100 /np.sum(sets_0)
-    Spectrogram_u_percent = r2u_3 * 100 /np.sum(sets_0)
+        Envelope_u_percent = r2u_1 * 100 /np.sum(sets_0)
+        Pitch_u_percent = r2u_2 * 100 /np.sum(sets_0)
+
+
+    if len(stims_base) == 3:
+        r2_1 = Mean_Correlations[stims[0]]**2
+        r2_2 = Mean_Correlations[stims[1]]**2
+        r2_3 = Mean_Correlations[stims[2]]**2
+        r2_12 = Mean_Correlations[stims[3]]**2
+        r2_13 = Mean_Correlations[stims[4]]**2
+        r2_23 = Mean_Correlations[stims[5]]**2
+        r2_123 = Mean_Correlations[stims[6]]**2
+
+        r2_int_12 = r2_1 + r2_2 - r2_12
+        r2_int_13 = r2_1 + r2_3 - r2_13
+        r2_int_23 = r2_2 + r2_3 - r2_23
+        r2_int_123 = r2_123 + r2_1 + r2_2 + r2_3 - r2_12 - r2_13 - r2_23
+
+        r2u_int_12 = r2_1 + r2_2 - r2_12 - r2_int_123
+        r2u_int_13 = r2_1 + r2_3 - r2_13 - r2_int_123
+        r2u_int_23 = r2_2 + r2_3 - r2_23 - r2_int_123
+
+        # r2u_1 = Mean_Correlations[Band][stims[0]][0]**2 + r2_int_123 - r2_int_12 - r2_int_13
+        r2u_1 = r2_123 - r2_23
+        # r2u_2 = Mean_Correlations[Band][stims[1]][0]**2 + r2_int_123 - r2_int_12 - r2_int_23
+        r2u_2 = r2_123 - r2_13
+        # r2u_3 = Mean_Correlations[Band][stims[2]][0]**2 + r2_int_123 - r2_int_13 - r2_int_23
+        r2u_3 = r2_123 - r2_12
+
+        sets = [r2u_1, r2u_2, r2u_int_12, r2u_3, r2u_int_13, r2u_int_23, r2_int_123]
+        sets_0 = []
+        for set in sets:
+            if set < 0:
+                set = 0
+            sets_0.append(set)
+
+        plt.figure()
+        plt.title('{}'.format(Band))
+        venn3(subsets=np.array(sets_0).round(5), set_labels=(stims[0], stims[1], stims[2]), set_colors=('C0', 'C1', 'purple'), alpha=0.45)
+
+        plt.tight_layout()
+        if Save_fig:
+            fig_savepath = Run_graficos_path + f'{Band}/'
+            os.makedirs(fig_savepath, exist_ok=True)
+            plt.savefig(fig_savepath + f'{stims[-1]}.png')
+            plt.savefig(fig_savepath + f'{stims[-1]}.svg')
+
+# Envelope_percent = r2_1 * 100 /np.sum(sets_0)
+# Pitch_percent = r2_2 * 100 /np.sum(sets_0)
+# Spectrogram_percent = r2_3 * 100 /np.sum(sets_0)
+#
+# Envelope_u_percent = r2u_1 * 100 /np.sum(sets_0)
+# Pitch_u_percent = r2u_2 * 100 /np.sum(sets_0)
+# Spectrogram_u_percent = r2u_3 * 100 /np.sum(sets_0)
 
 ## Box Plot Bandas Decoding
 import pandas as pd

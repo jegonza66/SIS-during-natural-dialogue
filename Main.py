@@ -36,10 +36,7 @@ except:
     print('\n\nAlphas file not found.\n\n')
 
 # Stimuli and EEG
-Stims = ['Envelope', 'Pitch', 'Spectrogram', 'Phonemes', 'Envelope_Pitch', 'Envelope_Spectrogram', 'Envelope_Phonemes',
-         'Pitch_Spectrogram', 'Pitch_Phonemes', 'Spectrogram_Phonemes', 'Envelope_Pitch_Spectrogram',
-         'Envelope_Pitch_Phonemes', 'Envelope_Spectrogram_Phonemes', 'Pitch_Spectrogram_Phonemes',
-         'Envelope_Pitch_Spectrogram_Phonemes']
+Stims = ['Pitch_Spectrogram_Phonemes', 'Envelope_Pitch_Spectrogram_Phonemes']
 
 Bands = ['Theta']
 
@@ -302,6 +299,10 @@ for Band in Bands:
                     Canales_repetidos_rmse_sujetos = np.vstack((Canales_repetidos_rmse_sujetos, Canales_repetidos_rmse_sujeto))
                 sujeto_total += 1
 
+            del Pesos_promedio, Rmse_promedio, Corr_promedio, Corr_buenas_ronda_canal, Rmse_buenos_ronda_canal, Rcorr, Rmse, \
+                eeg_train_val, eeg_test, dstims_train_val, dstims_test, eeg, dstims, dstims_para_sujeto_1, \
+                dstims_para_sujeto_2, Sujeto_1, Sujeto_2, eeg_sujeto_1, eeg_sujeto_2
+
         # Armo cabecita con correlaciones promedio entre sujetos
         Mean_Correlations_Band[stim], lat_test_results_corr = Plot.Cabezas_corr_promedio(Correlaciones_totales_sujetos,
                                                                                          info, Display_Total_Figures,
@@ -309,7 +310,7 @@ for Band in Bands:
                                                                                          Run_graficos_path,
                                                                                          title='Correlation')
 
-        Mean_Correlations_Band[stim], lat_test_results_rmse = Plot.Cabezas_corr_promedio(Rmse_totales_sujetos, info,
+        _, lat_test_results_rmse = Plot.Cabezas_corr_promedio(Rmse_totales_sujetos, info,
                                                                                          Display_Total_Figures,
                                                                                          Save_Total_Figures,
                                                                                          Run_graficos_path,
@@ -363,7 +364,6 @@ for Band in Bands:
             pickle.dump(Pesos_totales, f)
             f.close()
 
-            # LOAD STIMULUS BY SUBJECT
-            dstims_para_sujeto_1, dstims_para_sujeto_2
+        del Pesos_totales
 
 print(datetime.now() - startTime)
