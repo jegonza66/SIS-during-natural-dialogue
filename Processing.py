@@ -23,7 +23,7 @@ def matriz_shifteada(features, delays):
 
 
 def labeling(s, trial, canal_hablante, sr):
-    ubi = "Datos/phrases/S" + str(s) + "/s" + str(s) + ".objects." + "{:02d}".format(trial) + ".channel" + str(
+    ubi = "Data/phrases/S" + str(s) + "/s" + str(s) + ".objects." + "{:02d}".format(trial) + ".channel" + str(
         canal_hablante) + ".phrases"
     h1t = pd.read_table(ubi, header=None, sep="\t")
     # paso los numerales a vacío. Cambio texto por 1 y silencio por 0
@@ -37,7 +37,7 @@ def labeling(s, trial, canal_hablante, sr):
 
     # hago lo mismo con el oyente
     oyente = (canal_hablante - 3) * -1
-    ubi = "Datos/phrases/S" + str(s) + "/s" + str(s) + ".objects." + "{:02d}".format(trial) + ".channel" + str(
+    ubi = "Data/phrases/S" + str(s) + "/s" + str(s) + ".objects." + "{:02d}".format(trial) + ".channel" + str(
         oyente) + ".phrases"
     h2t = pd.read_table(ubi, header=None, sep="\t")
     # paso los numerales a vacío. Cambio texto por 1 y silencio por 0

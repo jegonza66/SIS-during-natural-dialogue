@@ -38,13 +38,13 @@ class Trial_channel:
         self.Causal_filter_EEG = Causal_filter_EEG
         self.Env_Filter = Env_Filter
 
-        self.eeg_fname = "Datos/EEG/S" + str(s) + "/s" + str(s) + "-" + str(channel) + "-Trial" + str(
+        self.eeg_fname = "Data/EEG/S" + str(s) + "/s" + str(s) + "-" + str(channel) + "-Trial" + str(
             trial) + "-Deci-Filter-Trim-ICA-Pruned.set"
-        self.wav_fname = "Datos/wavs/S" + str(s) + "/s" + str(s) + ".objects." + "{:02d}".format(
+        self.wav_fname = "Data/wavs/S" + str(s) + "/s" + str(s) + ".objects." + "{:02d}".format(
             trial) + ".channel" + str(channel) + ".wav"
-        self.pitch_fname = "Datos/Pitch_threshold_{}/S".format(SilenceThreshold) + str(s) + "/s" + str(s) + ".objects." \
+        self.pitch_fname = "Data/Pitch_threshold_{}/S".format(SilenceThreshold) + str(s) + "/s" + str(s) + ".objects." \
                            + "{:02d}".format(trial) + ".channel" + str(channel) + ".txt"
-        self.phrases_fname = "Datos/phrases/S" + str(s) + "/s" + str(s) + ".objects." + "{:02d}".format(
+        self.phrases_fname = "Data/phrases/S" + str(s) + "/s" + str(s) + ".objects." + "{:02d}".format(
             trial) + ".channel" + str(
             channel) + ".phrases"
 
@@ -103,11 +103,10 @@ class Trial_channel:
     def f_calculate_pitch(self):
         if platform.system() == 'Linux':
             praatEXE = 'Praat/praat'
-            output_folder = 'Datos/Pitch_threshold_{}'.format(self.SilenceThreshold)
+            output_folder = 'Data/Pitch_threshold_{}'.format(self.SilenceThreshold)
         else:
             praatEXE = r"C:\Program Files\Praat\Praat.exe"
-            output_folder = "C:/Users/joaco/Desktop/Joac/Facultad/Tesis/Código/Datos/Pitch_threshold_{}".format(
-                self.SilenceThreshold)
+            output_folder = "Data/Pitch_threshold_{}".format(self.SilenceThreshold)
         try:
             os.makedirs(output_folder)
         except:

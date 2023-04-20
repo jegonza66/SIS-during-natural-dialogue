@@ -1,8 +1,9 @@
 .ipynb_checkpoints/
 .pylint.d/
-Datos/
 gráficos/
 saves/
 Praat/
 __pycache__/
 .idea/
+Data_/
+
