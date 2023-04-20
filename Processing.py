@@ -126,34 +126,7 @@ def band_freq(band):
     return l_freq, h_freq
 
 
-def preproc_dict(momentos_escucha, delays, situacion, dict):
-    momentos_escucha_matriz = matriz_shifteada(momentos_escucha, delays).astype(float)
-
-    if situacion == 'Todo':
-        return
-
-    elif situacion == 'Silencio':
-        situacion = 0
-    elif situacion == 'Escucha':
-        situacion = 1
-    elif situacion == 'Habla' or situacion == 'Habla_Propia':
-        situacion = 2
-    elif situacion == 'Ambos' or situacion == 'Ambos_Habla':
-        situacion = 3
-
-    momentos_escucha_matriz[momentos_escucha_matriz == situacion] = float("nan")
-
-    keep_indexes = pd.isnull(momentos_escucha_matriz).all(1).nonzero()[0]
-
-    keys = list(dict.keys())
-    keys.remove('info')
-
-    for key in keys:
-        dict[key] = dict[key][keep_indexes, :]
-
-    return keep_indexes
-
-def preproc_dict2(momentos_escucha, delays, situacion):
+def preproc_dict(momentos_escucha, delays, situacion):
     momentos_escucha_matriz = matriz_shifteada(momentos_escucha, delays).astype(float)
 
     if situacion == 'Todo':

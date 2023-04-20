@@ -2,7 +2,7 @@ import pickle
 import numpy as np
 from sklearn.model_selection import KFold
 
-import Load
+import New_load as Load
 import Funciones
 import Models
 import Plot

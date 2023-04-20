@@ -4,8 +4,7 @@ import numpy as np
 from sklearn.model_selection import KFold
 from datetime import datetime
 
-import Load
-# import Load_light as Load
+import New_load as Load
 import Models
 import Plot
 import Processing
@@ -22,7 +21,7 @@ times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.
 times = np.flip(-times)
 situacion = 'Escucha'
 
-# Model parameters ('Ridge' or 'mtrf')
+# Model
 model = 'Ridge'
 
 set_alpha = None
@@ -165,18 +164,6 @@ for Band in Bands:
                     # Ajusto el modelo y guardo
                     if model == 'Ridge':
                         Model = Models.Ridge(alpha)
-                        Model.fit(dstims_train_val, eeg_train_val)
-                        Pesos_ronda_canales[fold] = Model.coefs
-
-                        # Predigo en test set y guardo
-                        predicted = Model.predict(dstims_test)
-                        Predicciones[fold] = predicted
-
-                    elif model == 'mtrf':
-                        # get the time lag of the present index to take from the delayed matrix stimuli
-                        present_stim_index = np.where(delays==0)[0][0]
-
-                        Model = Models.mne_mtrf(-tmax, -tmin, sr, alpha, present_stim_index)
                         Model.fit(dstims_train_val, eeg_train_val)
                         Pesos_ronda_canales[fold] = Model.coefs
 

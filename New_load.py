@@ -11,9 +11,8 @@ from praatio import pitch_and_intensity
 import opensmile
 import Processing
 import Funciones
-import textgrids
-import setup
-exp_info = setup.exp_info()
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 
 class Trial_channel:
@@ -45,149 +44,15 @@ class Trial_channel:
             trial) + ".channel" + str(channel) + ".wav"
         self.pitch_fname = "Datos/Pitch_threshold_{}/S".format(SilenceThreshold) + str(s) + "/s" + str(s) + ".objects." \
                            + "{:02d}".format(trial) + ".channel" + str(channel) + ".txt"
-        self.phn_fname = "Datos/phonemes/S" + str(s) + "/s" + str(s) + ".objects." + "{:02d}".format(
-            trial) + ".channel" + str(channel) + ".aligned_fa.TextGrid"
-        self.phn_fname_manual = "Datos/phonemes/S" + str(s) + "/manual/s" + str(s) + "_objects_" + "{:02d}".format(
-            trial) + "_channel" + str(channel) + "_aligned_faTAMARA.TextGrid"
         self.phrases_fname = "Datos/phrases/S" + str(s) + "/s" + str(s) + ".objects." + "{:02d}".format(
             trial) + ".channel" + str(
             channel) + ".phrases"
-
-    def f_phonemes(self, envelope):
-
-        # Get trial total length
-        phrases = pd.read_table(self.phrases_fname, header=None, sep="\t")
-        trial_tmax = phrases[1].iloc[-1]
-
-        # Load transcription
-        grid = textgrids.TextGrid(self.phn_fname)
-        # Get phonemes
-        phonemes_grid = grid['transcription : phones']
-        # Extend first silence time to trial start time
-        phonemes_grid[0].xmin = 0.
-
-        # Parse
-        labels = []
-        times = []
-        samples = []
-
-        for ph in phonemes_grid:
-            label = ph.text.transcode()
-            # Rename silences
-            if label == 'sil' or label == 'sp':
-                label = ""
-            labels.append(label)
-            times.append((ph.xmin, ph.xmax))
-            samples.append(np.round((ph.xmax - ph.xmin) * self.sr).astype("int"))
-
-        # Extend last silence to trial end time
-        labels.append("")
-        times.append((ph.xmin, trial_tmax))
-        samples.append(np.round((trial_tmax - ph.xmax) * self.sr).astype("int"))
-
-        # If use envelope amplitude to make continuous stimuli
-        diferencia = np.sum(samples) - len(envelope)
-
-        if diferencia > 0:
-            for i in [-i-1 for i in range(len(samples))]:
-                if diferencia > samples[i]:
-                    diferencia -= samples[i]
-                    samples[i] = 0
-                # Cuando samples es mayor que diferencia, le resto la diferencia a las samples
-                else:
-                    samples[i] -= diferencia
-                    break
-        elif diferencia < 0:
-            samples[-1] -= diferencia
-
-        # Make empty df of phonemes
-        phonemes_df = pd.DataFrame(0, index=np.arange(np.sum(samples)), columns=exp_info.ph_labels)
-
-        # Get samples number instead of time
-        phonemes_tgrid = np.repeat(labels, samples)
-
-        for i, phoneme in enumerate(phonemes_tgrid):
-            phonemes_df.loc[i, phoneme] = envelope[i]
-            # phonemes_df.loc[i, phoneme] = 1
-
-        return phonemes_df
-
-
-    def phn_features(self):
-        x=1
-
-
-
-    def f_Phonemes_manual(self, envelope):
-
-        # Get trial total length
-        phrases = pd.read_table(self.phrases_fname, header=None, sep="\t")
-        trial_tmax = phrases[1].iloc[-1]
-
-        # Load transcription
-        grid = textgrids.TextGrid(self.phn_fname_manual)
-        # Get phonemes
-        phonemes_grid = grid['transcription : phones']
-        # Extend first silence time to trial start time
-        phonemes_grid[0].xmin = 0.
-
-        # Parse
-        labels = []
-        times = []
-        samples = []
-
-        for ph in phonemes_grid:
-            label = ph.text.transcode()
-            label = label.replace(' ', '')
-            label = label.replace('º', '')
-            label = label.replace('-', '')
-            # Rename silences
-            if label == 'sil' or label == 'sp' or label == 'sile' or label == 'silsil' \
-                    or label == 'SP' or label == 's¡p' or label == 'sils':
-                label = ""
-            labels.append(label)
-            times.append((ph.xmin, ph.xmax))
-            samples.append(np.round((ph.xmax - ph.xmin) * self.sr).astype("int"))
-
-        # Extend last silence to trial end time
-        labels.append("")
-        times.append((ph.xmin, trial_tmax))
-        samples.append(np.round((trial_tmax - ph.xmax) * self.sr).astype("int"))
-
-        # If use envelope amplitude to make continuous stimuli
-        diferencia = np.sum(samples) - len(envelope)
-        if diferencia > 0:
-            for i in [-i-1 for i in range(len(samples))]:
-                if diferencia > samples[i]:
-                    diferencia -= samples[i]
-                    samples[i] = 0
-                # Cuando samples es mayor que diferencia, le resto la diferencia a las samples
-                else:
-                    samples[i] -= diferencia
-                    break
-        elif diferencia < 0:
-            samples[-1] -= diferencia
-
-        # Make empty df of phonemes
-        phonemes_df = pd.DataFrame(0, index=np.arange(np.sum(samples)), columns=exp_info.ph_labels_man)
-
-        # Get samples number instead of time
-        phonemes_tgrid = np.repeat(labels, samples)
-
-        for i, phoneme in enumerate(phonemes_tgrid):
-            phonemes_df.loc[i, phoneme] = envelope[i]
-            # df.loc[i, phoneme] = 1
-
-        return phonemes_df
 
 
     def f_eeg(self):
         eeg = mne.io.read_raw_eeglab(self.eeg_fname)
         eeg_freq = eeg.info.get("sfreq")
         eeg.load_data()
-
-        # Independent sources
-        # eeg = mne.preprocessing.compute_current_source_density(eeg)
 
         # Hago un lowpass
         if self.Band:
@@ -230,7 +95,7 @@ class Trial_channel:
         envelope = np.array([np.mean(envelope[i:i + window_size]) for i in range(0, len(envelope), stride) if
                              i + window_size <= len(envelope)])
         envelope = envelope.ravel().flatten()
-        # envelope_mat = Processing.matriz_shifteada(envelope, self.delays)  # armo la matriz shifteada
+
         self.envelope = envelope
 
         return np.array(envelope)
@@ -261,9 +126,7 @@ class Trial_channel:
     def load_pitch(self):
         read_file = pd.read_csv(self.pitch_fname)
 
-        # time = np.array(read_file['time'])
         pitch = np.array(read_file['pitch'])
-        # intensity = np.array(read_file['intensity'])
 
         pitch[pitch == '--undefined--'] = np.nan
         pitch = np.array(pitch, dtype=np.float32)
@@ -277,9 +140,6 @@ class Trial_channel:
 
         pitch = np.array(np.repeat(pitch, self.audio_sr * self.sampleStep), dtype=np.float32)
         pitch = Processing.subsamplear(pitch, 125)
-        # pitch = Processing.matriz_shifteada(pitch, self.delays)
-
-        # pitch_der = Processing.matriz_shifteada(pitch_der, self.delays)
 
         return np.array(pitch)
 
@@ -298,35 +158,12 @@ class Trial_channel:
         mcm = Funciones.minimo_comun_multiplo(len(jitter), len(self.envelope))
         jitter = np.repeat(jitter, mcm / len(jitter))
         jitter = Processing.subsamplear(jitter, mcm / len(self.envelope))
-        # jitter = Processing.matriz_shifteada(jitter, self.delays)
 
         mcm = Funciones.minimo_comun_multiplo(len(shimmer), len(self.envelope))
         shimmer = np.repeat(shimmer, mcm / len(shimmer))
         shimmer = Processing.subsamplear(shimmer, mcm / len(self.envelope))
-        # shimmer = Processing.matriz_shifteada(shimmer, self.delays)
 
         return jitter, shimmer
-
-    # def f_cssp(self):
-
-    # snd = parselmouth.Sound(self.wav_fname)
-    # data = []
-    # frame_length = 0.2
-    # hop_length = 1/128
-    # t1s = np.arange(0, snd.duration - frame_length, hop_length)
-    # times = zip(t1s, t1s + frame_length)
-    #
-    # for t1, t2 in times:
-    #     powercepstrogram = call(snd.extract_part(t1, t2), "To PowerCepstrogram", 60, 0.0020001, 5000, 50)
-    #     cpps = call(powercepstrogram, "Get CPPS", "yes", 0.02, 0.0005, 60, 330, 0.05, "Parabolic", 0.001, 0,
-    #                 "Exponential decay", "Robust")
-    #     data.append(cpps)
-    #
-    # cssp = np.array(np.repeat(data, self.audio_sr * self.sampleStep))
-    # cssp = Processing.subsamplear(cssp, 125)
-    # cssp = Processing.matriz_shifteada(cssp, self.delays)
-
-    # return cssp
 
     def f_spectrogram(self):
         wav = wavfile.read(self.wav_fname)[1]
@@ -339,11 +176,6 @@ class Trial_channel:
         S = librosa.feature.melspectrogram(wav, sr=self.audio_sr, n_fft=n_fft, hop_length=hop_length, n_mels=n_mels)
         S_DB = librosa.power_to_db(S, ref=np.max)
         S_DB = S_DB.transpose()
-
-        # # Shifted matrix row by row
-        # spec_shift = Processing.matriz_shifteada(S_DB[0], self.delays)
-        # for i in np.arange(1, len(S_DB)):
-        #     spec_shift = np.hstack((spec_shift, Processing.matriz_shifteada(S_DB[i], self.delays)))
 
         return np.array(S_DB)
 
@@ -358,12 +190,8 @@ class Trial_channel:
             channel['Pitch'] = self.load_pitch()
         if 'Spectrogram' in stims:
             channel['Spectrogram'] = self.f_spectrogram()
-        if 'Phonemes' in stims:
-            channel['Envelope'] = self.f_envelope()
-            channel['Phonemes'] = self.f_phonemes(envelope=self.envelope)
-        if 'Phonemes-manual' in stims:
-            channel['Envelope'] = self.f_envelope()
-            channel['Phonemes-manual'] = self.f_Phonemes_manual(envelope=self.envelope)
+        if 'Shimmer' in stims:
+           _, channel['shimmer'] = self.f_jitter_shimmer()
 
         return channel
 
@@ -391,7 +219,7 @@ class Sesion_class:
         self.SilenceThreshold = SilenceThreshold
         self.procesed_data_path = procesed_data_path
         self.samples_info_path = self.procesed_data_path + 'samples_info/Sit_{}/'.format(self.situacion)
-        self.phn_path = "Datos/phonemes/S" + str(self.sesion) + "/"
+        self.phrases_path = "Data/phrases/S" + str(sesion) + "/"
 
 
     def load_from_raw(self):
@@ -413,7 +241,7 @@ class Sesion_class:
             loaded_samples_info = False
             samples_info = {'keep_indexes1': [], 'keep_indexes2': [], 'trial_lengths1': [0], 'trial_lengths2': [0]}
 
-        trials = list(set([int(fname.split('.')[2]) for fname in os.listdir(self.phn_path) if os.path.isfile(self.phn_path + f'/{fname}')]))
+        trials = list(set([int(fname.split('.')[2]) for fname in os.listdir(self.phrases_path) if os.path.isfile(self.phrases_path + f'/{fname}')]))
 
         for trial in trials:
             try:
@@ -470,16 +298,16 @@ class Sesion_class:
 
                 else:
                     # Match lengths of variables
-                    momentos_sujeto_1_trial, minimo_largo1 = Funciones.igualar_largos_dict2(Trial_sujeto_1, momentos_sujeto_1_trial)
-                    momentos_sujeto_2_trial, minimo_largo2 = Funciones.igualar_largos_dict2(Trial_sujeto_2, momentos_sujeto_2_trial)
+                    momentos_sujeto_1_trial, minimo_largo1 = Funciones.igualar_largos_dict(Trial_sujeto_1, momentos_sujeto_1_trial)
+                    momentos_sujeto_2_trial, minimo_largo2 = Funciones.igualar_largos_dict(Trial_sujeto_2, momentos_sujeto_2_trial)
 
                     samples_info['trial_lengths1'].append(minimo_largo1)
                     samples_info['trial_lengths2'].append(minimo_largo2)
 
                     # Preprocesamiento
-                    keep_indexes1_trial = Processing.preproc_dict2(momentos_escucha=momentos_sujeto_1_trial, delays=self.delays,
+                    keep_indexes1_trial = Processing.preproc_dict(momentos_escucha=momentos_sujeto_1_trial, delays=self.delays,
                                             situacion=self.situacion)
-                    keep_indexes2_trial = Processing.preproc_dict2(momentos_escucha=momentos_sujeto_2_trial, delays=self.delays,
+                    keep_indexes2_trial = Processing.preproc_dict(momentos_escucha=momentos_sujeto_2_trial, delays=self.delays,
                                             situacion=self.situacion)
 
                     # Add sum of all previous trials length
@@ -506,8 +334,6 @@ class Sesion_class:
                 # Empty trial
                 samples_info['trial_lengths1'].append(0)
                 samples_info['trial_lengths2'].append(0)
-                samples_info['keep_indexes1'].append([0])
-                samples_info['keep_indexes2'].append([0])
 
 
         info = Trial_channel_1['info']
@@ -520,14 +346,6 @@ class Sesion_class:
             f = open(self.samples_info_path + 'samples_info_{}.pkl'.format(self.sesion), 'wb')
             pickle.dump(samples_info, f)
             f.close()
-
-        # Dropeo columna de silencio de Phonemes
-        if 'Phonemes' in Sujeto_1.keys():
-            Sujeto_1['Phonemes'].drop(columns="", inplace=True)
-            Sujeto_2['Phonemes'].drop(columns="", inplace=True)
-        if 'Phonemes-manual' in Sujeto_1.keys():
-            Sujeto_1['Phonemes-manual'].drop(columns="", inplace=True)
-            Sujeto_2['Phonemes-manual'].drop(columns="", inplace=True)
 
         # Convierto a array
         Funciones.make_array_dict(Sujeto_1)
@@ -549,44 +367,11 @@ class Sesion_class:
                 spec_shift_2 = np.hstack((spec_shift_2, Processing.matriz_shifteada(Sujeto_2['Spectrogram'][i], self.delays)))
             Sujeto_2['Spectrogram'] = spec_shift_2
 
-        if 'Phonemes' in Sujeto_1.keys():
-            Sujeto_1['Phonemes'] = Sujeto_1['Phonemes'].transpose()
-            Sujeto_2['Phonemes'] = Sujeto_2['Phonemes'].transpose()
-
-            print('Computing shifted matrix for the Phonemes')
-            ph_shift_1 = Processing.matriz_shifteada(Sujeto_1['Phonemes'][0], self.delays)
-            for i in np.arange(1, len(Sujeto_1['Phonemes'])):
-                ph_shift_1 = np.hstack(
-                    (ph_shift_1, Processing.matriz_shifteada(Sujeto_1['Phonemes'][i], self.delays)))
-            Sujeto_1['Phonemes'] = ph_shift_1
-
-            ph_shift_2 = Processing.matriz_shifteada(Sujeto_2['Phonemes'][0], self.delays)
-            for i in np.arange(1, len(Sujeto_2['Phonemes'])):
-                ph_shift_2 = np.hstack(
-                    (ph_shift_2, Processing.matriz_shifteada(Sujeto_2['Phonemes'][i], self.delays)))
-            Sujeto_2['Phonemes'] = ph_shift_2
-
-        if 'Phonemes-manual' in Sujeto_1.keys():
-            Sujeto_1['Phonemes-manual'] = Sujeto_1['Phonemes-manual'].transpose()
-            Sujeto_2['Phonemes-manual'] = Sujeto_2['Phonemes-manual'].transpose()
-
-            print('Computing shifted matrix for the Phonemes')
-            ph_shift_1 = Processing.matriz_shifteada(Sujeto_1['Phonemes-manual'][0], self.delays)
-            for i in np.arange(1, len(Sujeto_1['Phonemes-manual'])):
-                ph_shift_1 = np.hstack(
-                    (ph_shift_1, Processing.matriz_shifteada(Sujeto_1['Phonemes-manual'][i], self.delays)))
-            Sujeto_1['Phonemes-manual'] = ph_shift_1
-
-            ph_shift_2 = Processing.matriz_shifteada(Sujeto_2['Phonemes-manual'][0], self.delays)
-            for i in np.arange(1, len(Sujeto_2['Phonemes-manual'])):
-                ph_shift_2 = np.hstack(
-                    (ph_shift_2, Processing.matriz_shifteada(Sujeto_2['Phonemes-manual'][i], self.delays)))
-            Sujeto_2['Phonemes-manual'] = ph_shift_2
 
         keys = list(Sujeto_1.keys())
         keys.remove('EEG')
         for key in keys:
-            if key != 'Spectrogram' and key != 'Phonemes' and key != 'Phonemes-manual':
+            if key != 'Spectrogram':
                 Sujeto_1[key] = Processing.matriz_shifteada(Sujeto_1[key], self.delays)
                 Sujeto_2[key] = Processing.matriz_shifteada(Sujeto_2[key], self.delays)
 
@@ -608,8 +393,6 @@ class Sesion_class:
                                                                                                 self.valores_faltantes)
 
         Paths['Spectrogram'] = self.procesed_data_path + 'Spectrogram/Sit_{}/'.format(self.situacion)
-        Paths['Phonemes'] = self.procesed_data_path + 'Phonemes/Sit_{}/'.format(self.situacion)
-        Paths['Phonemes-manual'] = self.procesed_data_path + 'Phonemes-manual/Sit_{}/'.format(self.situacion)
 
         for key in Sujeto_1.keys():
             # Save Preprocesed Data
@@ -676,8 +459,8 @@ class Sesion_class:
                     stimuli_para_sujeto_1[stimuli_para_sujeto_1 == 0], stimuli_para_sujeto_2[
                         stimuli_para_sujeto_2 == 0] = self.valores_faltantes, self.valores_faltantes  # cambio 0s
 
-            if stimuli == 'PitchMask':
-                f = open(self.procesed_data_path + 'Pitch_mask_threshold_{}/Sit_{}_Faltantes_{}/Sesion{}.pkl' \
+            if stimuli == 'Shimmer':
+                f = open(self.procesed_data_path + 'Shimmer/Sit_{}/Sesion{}.pkl' \
                          .format(self.SilenceThreshold, self.situacion, self.valores_faltantes, self.sesion), 'rb')
                 stimuli_para_sujeto_1, stimuli_para_sujeto_2 = pickle.load(f)
                 f.close()
@@ -689,19 +472,6 @@ class Sesion_class:
                 stimuli_para_sujeto_1, stimuli_para_sujeto_2 = pickle.load(f)
                 f.close()
 
-            if stimuli == 'Phonemes':
-                f = open(
-                    self.procesed_data_path + 'Phonemes/Sit_{}/Sesion{}.pkl'.format(self.situacion, self.sesion),
-                    'rb')
-                stimuli_para_sujeto_1, stimuli_para_sujeto_2 = pickle.load(f)
-                f.close()
-
-            if stimuli == 'Phonemes-manual':
-                f = open(
-                    self.procesed_data_path + 'Phonemes-manual/Sit_{}/Sesion{}.pkl'.format(self.situacion, self.sesion),
-                    'rb')
-                stimuli_para_sujeto_1, stimuli_para_sujeto_2 = pickle.load(f)
-                f.close()
 
             Sujeto_1[stimuli] = stimuli_para_sujeto_1
             Sujeto_2[stimuli] = stimuli_para_sujeto_2
@@ -713,7 +483,7 @@ class Sesion_class:
 
 def Load_Data(sesion, stim, Band, sr, tmin, tmax, procesed_data_path, situacion='Escucha', Causal_filter_EEG=True,
               Env_Filter=False, valores_faltantes=0, Calculate_pitch=False, SilenceThreshold=0.03):
-    possible_stims = ['Envelope', 'Pitch', 'PitchMask', 'Spectrogram', 'Phonemes', 'Phonemes-manual']
+    possible_stims = ['Envelope', 'Pitch', 'Spectrogram', 'Shimmer']
 
     if all(stimulus in possible_stims for stimulus in stim.split('_')):
 

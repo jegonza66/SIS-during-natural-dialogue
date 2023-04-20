@@ -4,7 +4,7 @@ import numpy as np
 from sklearn.model_selection import KFold
 from datetime import datetime
 
-import Load
+import New_load as Load
 import Models
 import Processing
 import Permutations

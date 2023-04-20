@@ -52,8 +52,6 @@ def make_array(*args):
 def make_df_dict(dict):
     keys = list(dict.keys())
     keys.remove('info')
-    if 'Phonemes' in keys:
-        keys.remove('Phonemes')
     for key in keys:
         dict[key] = pd.DataFrame(dict[key])
 
@@ -66,21 +64,6 @@ def make_df(*args):
 
 
 def igualar_largos_dict(dict, momentos):
-    keys = list(dict.keys())
-    keys.remove('info')
-
-    minimo_largo = min([dict[key].shape[0] for key in keys] + [len(momentos)])
-
-    for key in keys:
-            if dict[key].shape[0] > minimo_largo:
-                dict[key] = dict[key][:minimo_largo]
-    if len(momentos) > minimo_largo:
-        momentos = momentos[:minimo_largo]
-
-    return momentos
-
-
-def igualar_largos_dict2(dict, momentos):
     keys = list(dict.keys())
     keys.remove('info')
 
@@ -139,35 +122,6 @@ def decorrelation_time(Estimulos, sr, Autocorrelation_value = 0.1):
             decorrelation_times.append(decorr_time)
 
     return decorrelation_times
-
-def findFreeinterval(arr):
-    # If there are no set of interval
-    N = len(arr)
-    if N < 1:
-        return
-
-    # To store the set of free interval
-    P = []
-
-    # Sort the given interval according
-    # Starting time
-    arr.sort(key=lambda a: a[0])
-
-    # Iterate over all the interval
-    for i in range(1, N):
-
-        # Previous interval end
-        prevEnd = arr[i - 1][1]
-
-        # Current interval start
-        currStart = arr[i][0]
-
-        # If Previous Interval is less
-        # than current Interval then we
-        # store that answer
-        if prevEnd < currStart:
-            P.append([prevEnd, currStart])
-    return P
 
 
 def slope(x, y):

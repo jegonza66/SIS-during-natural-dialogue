@@ -10,3 +10,4 @@ opensmile==2.2.0
 seaborn
 statannot
 matplotlib-venn
+ipython
