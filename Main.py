@@ -19,13 +19,14 @@ Save_Ind_Figures = True
 Save_Total_Figures = True
 Save_Results = True
 # Random permutations
-Statistical_test = False
+Statistical_test = True
 # Dialogue situation
 situations = ['Escucha', 'Habla', 'Ambos', 'Ambos-Habla', 'Silencio']
+situations = ['Escucha']
 # Model
 model = 'Ridge'
 # Run times
-tmin, tmax = -0.6, 0
+tmin, tmax = -0.6, -0.003
 # preset alpha
 set_alpha = None
 
@@ -40,7 +41,7 @@ times = np.flip(-times)
 # Alpha
 default_alpha = 1000
 Alpha_Corr_limit = 0.01
-alphas_fname = 'saves/Alphas/Alphas_Corr{}_ph.pkl'.format(Alpha_Corr_limit)
+alphas_fname = 'Saves/Alphas/Alphas_Corr{}.pkl'.format(Alpha_Corr_limit)
 try:
     f = open(alphas_fname, 'rb')
     Alphas = pickle.load(f)
@@ -66,13 +67,13 @@ for situacion in situations:
             print('Status: ' + situacion)
             print('tmin: {} - tmax: {}'.format(tmin, tmax))
             # Paths
-            save_path = 'saves/{}/{}/Final_Correlation/tmin{}_tmax{}/'.format(model, situacion, tmin, tmax)
-            procesed_data_path = 'saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
-            Run_graficos_path = 'gráficos/{}/{}/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
+            save_path = 'Saves/{}/{}/Final_Correlation/tmin{}_tmax{}/'.format(model, situacion, tmin, tmax)
+            procesed_data_path = 'Saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
+            Run_graficos_path = 'Plots/{}/{}/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
                 model, situacion, Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
-            Path_original = 'saves/{}/{}/Original/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
+            Path_original = 'Saves/{}/{}/Original/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
                 model, situacion, Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
-            Path_it = 'saves/{}/{}/Fake_it/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
+            Path_it = 'Saves/{}/{}/Fake_it/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
                 model, situacion, Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
 
             # Start Run

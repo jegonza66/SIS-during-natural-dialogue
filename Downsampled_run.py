@@ -26,7 +26,7 @@ model = 'Ridge'
 
 set_alpha = None
 Alpha_Corr_limit = 0.01
-alphas_fname = 'saves/Alphas/Alphas_Corr{}.pkl'.format(Alpha_Corr_limit)
+alphas_fname = 'Saves/Alphas/Alphas_Corr{}.pkl'.format(Alpha_Corr_limit)
 try:
     f = open(alphas_fname, 'rb')
     Alphas = pickle.load(f)
@@ -53,7 +53,7 @@ Save_Total_Figures = True
 Save_Final_Correlation = True
 
 # Save mean correlations
-Mean_Correlations_fname = 'saves/25_folds/{}/{}/Final_Correlation/tmin{}_tmax{}/Mean_Correlations.pkl'.format(model, situacion, tmin, tmax)
+Mean_Correlations_fname = 'Saves/25_folds/{}/{}/Final_Correlation/tmin{}_tmax{}/Mean_Correlations.pkl'.format(model, situacion, tmin, tmax)
 try:
     f = open(Mean_Correlations_fname, 'rb')
     Mean_Correlations = pickle.load(f)
@@ -62,7 +62,7 @@ except:
     print('\n\nMean_Correlations file not found\n\n')
     Mean_Correlations = {}
 
-f = open('saves/Subjects_Pitch.pkl', 'rb')
+f = open('Saves/Subjects_Pitch.pkl', 'rb')
 subjects_pitch = pickle.load(f)
 f.close()
 
@@ -79,13 +79,13 @@ for Band in Bands:
         print('Status: ' + situacion)
         print('tmin: {} - tmax: {}'.format(tmin, tmax))
         # Paths
-        save_path = 'saves/25_folds/{}/{}/Final_Correlation/tmin{}_tmax{}/'.format(model, situacion, tmin, tmax)
-        procesed_data_path = 'saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
-        Run_graficos_path = 'gráficos/25_folds/{}/{}/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
+        save_path = 'Saves/25_folds/{}/{}/Final_Correlation/tmin{}_tmax{}/'.format(model, situacion, tmin, tmax)
+        procesed_data_path = 'Saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
+        Run_graficos_path = 'Plots/25_folds/{}/{}/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
             model, situacion, Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
-        Path_original = 'saves/25_folds/{}/{}/Original/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
+        Path_original = 'Saves/25_folds/{}/{}/Original/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
             model, situacion, Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
-        Path_it = 'saves/25_folds/{}/{}/Fake_it/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
+        Path_it = 'Saves/25_folds/{}/{}/Fake_it/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
             model, situacion, Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
 
         # Start Run

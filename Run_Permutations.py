@@ -27,7 +27,7 @@ if model == 'Ridge':
 
 elif model == 'Decoding':
     iteraciones = 200
-    Max_t_lags_fname = 'saves/Decoding_t_lag/{}/Final_Correlation/tmin{}_tmax{}/Max_t_lags.pkl'.format(situacion, tmin,
+    Max_t_lags_fname = 'Saves/Decoding_t_lag/{}/Final_Correlation/tmin{}_tmax{}/Max_t_lags.pkl'.format(situacion, tmin,
                                                                                                        tmax)
     try:
         f = open(Max_t_lags_fname, 'rb')
@@ -47,7 +47,7 @@ EEG_preprocess = 'Standarize'
 
 # Model
 Corr_limit = 0.01
-alphas_fname = 'saves/Alphas/Alphas_Corr{}.pkl'.format(Corr_limit)
+alphas_fname = 'Saves/Alphas/Alphas_Corr{}.pkl'.format(Corr_limit)
 try:
     f = open(alphas_fname, 'rb')
     Alphas = pickle.load(f)
@@ -63,8 +63,8 @@ for Band in Bands:
         print('Status: ' + situacion)
         print('tmin: {} - tmax: {}'.format(tmin, tmax))
         # Paths
-        procesed_data_path = 'saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
-        Path_it = 'saves/{}/{}/Fake_it/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
+        procesed_data_path = 'Saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
+        Path_it = 'Saves/{}/{}/Fake_it/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
             model, situacion, Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
 
         # Start Run

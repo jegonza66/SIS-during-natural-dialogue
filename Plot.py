@@ -170,7 +170,7 @@ def Plot_PSD(sesion, sujeto, Band, situacion, Display, Save, save_path, info, da
     ax.grid()
 
     if Save:
-        save_path_graficos = 'gráficos/PSD/Zoom/{}/{}/'.format(save_path, Band)
+        save_path_graficos = 'Plots/PSD/Zoom/{}/{}/'.format(save_path, Band)
         os.makedirs(save_path_graficos, exist_ok=True)
         plt.savefig(save_path_graficos + 'Sesion{} - Sujeto{}.png'.format(sesion, sujeto, Band))
         plt.savefig(save_path_graficos + 'Sesion{} - Sujeto{}.svg'.format(sesion, sujeto, Band))
@@ -615,6 +615,44 @@ def Matriz_corr_channel_wise(Pesos_totales_sujetos_todos_canales, stim, Len_Esti
             os.makedirs(save_path_graficos, exist_ok=True)
             fig.savefig(save_path_graficos + 'TRF_correlation_matrix_{}.png'.format(Stims_Order[k]))
             fig.savefig(save_path_graficos + 'TRF_correlation_matrix_{}.svg'.format(Stims_Order[k]))
+
+
+def Channel_wise_correlation_topomap(Pesos_totales_sujetos_todos_canales, info, Display, Save, Run_graficos_path):
+    Correlation_matrices = np.zeros((Pesos_totales_sujetos_todos_canales.shape[0],
+                                     Pesos_totales_sujetos_todos_canales.shape[2],
+                                     Pesos_totales_sujetos_todos_canales.shape[2]))
+    for channel in range(len(Pesos_totales_sujetos_todos_canales)):
+        Correlation_matrices[channel] = np.array(
+            pd.DataFrame(Pesos_totales_sujetos_todos_canales[channel]).corr(method='pearson'))
+
+    # Correlacion por canal
+    Correlation_abs_channel_wise = np.zeros(len(Correlation_matrices))
+    for channel in range(len(Correlation_matrices)):
+        channel_corr_values = Correlation_matrices[channel][
+            np.tril_indices(Correlation_matrices[channel].shape[0], k=-1)]
+        Correlation_abs_channel_wise[channel] = np.mean(np.abs(channel_corr_values))
+
+    if Display:
+        plt.ion()
+    else:
+        plt.ioff()
+
+    fig, ax = plt.subplots()
+    fig.suptitle('Channel-wise mTRFs similarity', fontsize=19)
+    im = mne.viz.plot_topomap(Correlation_abs_channel_wise, info, axes=ax, show=False, sphere=0.07,
+                              cmap='Greens', vmin=Correlation_abs_channel_wise.min(),
+                              vmax=Correlation_abs_channel_wise.max())
+    cbar = plt.colorbar(im[0], ax=ax, shrink=0.85)
+    cbar.ax.yaxis.set_tick_params(labelsize=17)
+    cbar.ax.set_ylabel(ylabel= 'Correlation', fontsize=17)
+
+    fig.tight_layout()
+
+    if Save:
+        save_path_graficos = Run_graficos_path
+        os.makedirs(save_path_graficos, exist_ok=True)
+        fig.savefig(save_path_graficos + 'Channel_correlation_topo.png')
+        fig.savefig(save_path_graficos + 'Channel_correlation_topo.svg')
 
 
 def ch_heatmap_topo(total_data, info, delays, times, Display, Save, graficos_save_path, title, total_subjects=18,

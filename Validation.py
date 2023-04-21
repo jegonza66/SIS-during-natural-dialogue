@@ -16,7 +16,7 @@ Bands = ['Theta']
 
 Corr_limit = 0.01
 
-alphas_fname = 'saves/Alphas/Alphas_Corr{}_ph.pkl'.format(Corr_limit)
+alphas_fname = 'Saves/Alphas/Alphas_Corr{}_ph.pkl'.format(Corr_limit)
 
 try:
     f = open(alphas_fname, 'rb')
@@ -54,8 +54,8 @@ for Band in Bands:
                             len(delays))
 
         # Paths
-        procesed_data_path = 'saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
-        Run_graficos_path = 'gráficos/Ridge_Trace_{}/Stims_{}_EEG_{}/tmin{}_tmax{}/'.format(Corr_limit, Stims_preprocess,
+        procesed_data_path = 'Saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
+        Run_graficos_path = 'Plots/Ridge_Trace_{}/Stims_{}_EEG_{}/tmin{}_tmax{}/'.format(Corr_limit, Stims_preprocess,
                                                                                             EEG_preprocess, tmin, tmax)
 
         min_busqueda, max_busqueda = -1, 6

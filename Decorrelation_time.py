@@ -28,11 +28,11 @@ times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.
 times = np.flip(-times)
 
 # Paths
-procesed_data_path = 'saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
-Run_graficos_path = 'gráficos/Decorrelation time/tmin{}_tmax{}/Stim_{}_EEG_Band_{}_Causal/'.format(tmin, tmax, stim, Band)
+procesed_data_path = 'Saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
+Run_graficos_path = 'Plots/Decorrelation time/tmin{}_tmax{}/Stim_{}_EEG_Band_{}_Causal/'.format(tmin, tmax, stim, Band)
 
 Alpha_Corr_limit = 0.01
-alphas_fname = 'saves/Alphas/Alphas_Corr{}.pkl'.format(Alpha_Corr_limit)
+alphas_fname = 'Saves/Alphas/Alphas_Corr{}.pkl'.format(Alpha_Corr_limit)
 try:
     f = open(alphas_fname, 'rb')
     Alphas = pickle.load(f)
@@ -118,12 +118,12 @@ for sesion in sesiones:
         sujeto_total += 1
 
 try:
-    f = open('saves/Decorrelation_times_Envelope_Causal_tmin{}_tmax{}.pkl'.format(tmin, tmax), 'rb')
+    f = open('Saves/Decorrelation_times_Envelope_Causal_tmin{}_tmax{}.pkl'.format(tmin, tmax), 'rb')
     decorrelation_times = pickle.load(f)
     f.close()
 except:
     decorrelation_times = Funciones.decorrelation_time(Estimulos, sr)
-    f = open('saves/Decorrelation_times_{}_Causal_tmin{}_tmax{}.pkl'.format(stim, tmin, tmax), 'wb')
+    f = open('Saves/Decorrelation_times_{}_Causal_tmin{}_tmax{}.pkl'.format(stim, tmin, tmax), 'wb')
     pickle.dump(decorrelation_times, f)
     f.close()
 

@@ -24,8 +24,8 @@ delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
 times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays))
 
 # Paths
-procesed_data_path = 'saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
-Run_saves_path = 'saves/'
+procesed_data_path = 'Saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
+Run_saves_path = 'Saves/'
 
 for Band in Bands:
     for stim in Stims:
@@ -36,7 +36,7 @@ for Band in Bands:
         # Save Variables
 
         try:
-           graficos_save_path = 'gráficos/PLV/{}/tmin{}_tmax{}/{}/'.format(situacion, tmin, tmax, Band)
+           graficos_save_path = 'Plots/PLV/{}/tmin{}_tmax{}/{}/'.format(situacion, tmin, tmax, Band)
            # Save Cortical entrainment
            save_path = Run_saves_path + '/PLV/{}/tmin{}_tmax{}/'.format(situacion, tmin, tmax)
 
@@ -45,7 +45,7 @@ for Band in Bands:
            f.close()
 
            # Get info
-           info_path = 'saves/Preprocesed_Data/tmin-0.6_tmax-0.003/EEG/info.pkl'
+           info_path = 'Saves/Preprocesed_Data/tmin-0.6_tmax-0.003/EEG/info.pkl'
            f = open(info_path, 'rb')
            info = pickle.load(f)
            f.close()
@@ -78,7 +78,7 @@ for Band in Bands:
                     # Separo los datos en 5 y tomo test set de 20% de datos con kfold (5 iteraciones)
                     n_splits = 5
 
-                    graficos_save_path = 'gráficos/PLV/{}/tmin{}_tmax{}/{}/'.format(situacion, tmin, tmax,
+                    graficos_save_path = 'Plots/PLV/{}/tmin{}_tmax{}/{}/'.format(situacion, tmin, tmax,
                                                                                           Band)
                     print('Runing Cortical entrainment...')
                     for t_lag in range(len(delays)):
@@ -152,11 +152,11 @@ delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
 times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays))
 
 # Paths
-procesed_data_path = 'saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
-Run_saves_path = 'saves/'
+procesed_data_path = 'Saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
+Run_saves_path = 'Saves/'
 
 # Get info
-info_path = 'saves/Preprocesed_Data/tmin-0.6_tmax-0.003/EEG/info.pkl'
+info_path = 'Saves/Preprocesed_Data/tmin-0.6_tmax-0.003/EEG/info.pkl'
 f = open(info_path, 'rb')
 info = pickle.load(f)
 f.close()
@@ -192,7 +192,7 @@ for situacion in situcaiones:
                                  graficos_save_path=graficos_save_path, title='GCMI', total_subjects=total_subjects)
 
         if PLV:
-            graficos_save_path = 'gráficos/PLV/{}/tmin{}_tmax{}/{}/'.format(situacion, tmin, tmax,Band)
+            graficos_save_path = 'Plots/PLV/{}/tmin{}_tmax{}/{}/'.format(situacion, tmin, tmax,Band)
             # Save Cortical entrainment
             save_path = Run_saves_path + '/PLV/{}/tmin{}_tmax{}/'.format(situacion, tmin, tmax)
 

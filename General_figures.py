@@ -10,12 +10,12 @@ tmin, tmax = -0.6, -0.003
 model = 'Ridge'
 situacion = 'Escucha'
 
-info_path = 'saves/Preprocesed_Data/tmin-0.6_tmax-0.003/EEG/info.pkl'
+info_path = 'Saves/Preprocesed_Data/tmin-0.6_tmax-0.003/EEG/info.pkl'
 f = open(info_path, 'rb')
 info = pickle.load(f)
 f.close()
 
-Run_graficos_path = 'gráficos/Model_Comparison/{}/{}/tmin{}_tmax{}/Violin Topo/'.format(model, situacion, tmin, tmax)
+Run_graficos_path = 'Plots/Model_Comparison/{}/{}/tmin{}_tmax{}/Violin Topo/'.format(model, situacion, tmin, tmax)
 Save_fig = True
 Correlaciones = {}
 
@@ -23,7 +23,7 @@ stim = 'Spectrogram'
 Bands = ['All', 'Delta', 'Theta', 'Alpha', 'Beta_1']
 
 for Band in Bands:
-    f = open('saves/{}/{}/Final_Correlation/tmin{}_tmax{}/{}_EEG_{}.pkl'.format(model, situacion, tmin, tmax, stim, Band), 'rb')
+    f = open('Saves/{}/{}/Final_Correlation/tmin{}_tmax{}/{}_EEG_{}.pkl'.format(model, situacion, tmin, tmax, stim, Band), 'rb')
     Corr, Pass = pickle.load(f)
     f.close()
 
@@ -73,7 +73,7 @@ import seaborn as sn
 import mne
 import numpy as np
 
-info_path = 'saves/Preprocesed_Data/tmin-0.6_tmax-0.003/EEG/info.pkl'
+info_path = 'Saves/Preprocesed_Data/tmin-0.6_tmax-0.003/EEG/info.pkl'
 f = open(info_path, 'rb')
 info = pickle.load(f)
 f.close()
@@ -86,7 +86,7 @@ times = np.flip(-times)
 model = 'Ridge'
 situacion = 'Escucha'
 
-Run_graficos_path = 'gráficos/Model_Comparison/{}/{}/tmin{}_tmax{}/Violin mTRF/'.format(model, situacion, tmin, tmax)
+Run_graficos_path = 'Plots/Model_Comparison/{}/{}/tmin{}_tmax{}/Violin mTRF/'.format(model, situacion, tmin, tmax)
 Save_fig = True
 Correlaciones = {}
 mTRFs = {}
@@ -95,12 +95,12 @@ stim = 'Spectrogram'
 Bands = ['All', 'Delta', 'Theta', 'Alpha', 'Beta_1']
 
 for Band in Bands:
-    f = open('saves/{}/{}/Final_Correlation/tmin{}_tmax{}/{}_EEG_{}.pkl'.format(model, situacion, tmin, tmax, stim, Band), 'rb')
+    f = open('Saves/{}/{}/Final_Correlation/tmin{}_tmax{}/{}_EEG_{}.pkl'.format(model, situacion, tmin, tmax, stim, Band), 'rb')
     Corr, Pass = pickle.load(f)
     f.close()
     Correlaciones[Band] = Corr.mean(0)
 
-f = open('saves/{}/{}/Original/Stims_Normalize_EEG_Standarize/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/Pesos_Totales_{}_{}.pkl'.format(model, situacion, tmin, tmax, stim, 'Theta', stim, 'Theta'), 'rb')
+f = open('Saves/{}/{}/Original/Stims_Normalize_EEG_Standarize/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/Pesos_Totales_{}_{}.pkl'.format(model, situacion, tmin, tmax, stim, 'Theta', stim, 'Theta'), 'rb')
 mTRFs_Theta = pickle.load(f)
 f.close()
 
@@ -152,15 +152,15 @@ import seaborn as sn
 Save_fig = True
 model = 'Ridge'
 situacion = 'Escucha'
-tmin, tmax = -0.6, 0
-Run_graficos_path = 'gráficos/Model_Comparison/{}/{}/tmin{}_tmax{}/Violin Plots/'.format(model, situacion, tmin, tmax)
+tmin, tmax = -0.6, -0.003
+Run_graficos_path = 'Plots/Model_Comparison/{}/{}/tmin{}_tmax{}/Violin Plots/'.format(model, situacion, tmin, tmax)
 
 Band = 'Theta'
 Stims = ['Spectrogram', 'Envelope', 'Pitch', 'Shimmer']
 
 Correlaciones = {}
 for stim in Stims:
-    f = open('saves/{}/{}/Final_Correlation/tmin{}_tmax{}/{}_EEG_{}.pkl'.format(model, situacion, tmin, tmax, stim, Band), 'rb')
+    f = open('Saves/{}/{}/Final_Correlation/tmin{}_tmax{}/{}_EEG_{}.pkl'.format(model, situacion, tmin, tmax, stim, Band), 'rb')
     Corr, Pass = pickle.load(f)
     f.close()
 
@@ -224,7 +224,7 @@ Band = 'Theta'
 stim = 'Spectrogram'
 situaciones = ['Escucha', 'Habla_Propia', 'Ambos', 'Ambos_Habla', 'Silencio']
 tmin, tmax = -0.6, -0.003
-Run_graficos_path = 'gráficos/SIS_statistics/{}/{}/tmin{}_tmax{}/log/'.format(Band, stim, tmin, tmax)
+Run_graficos_path = 'Plots/SIS_statistics/{}/{}/tmin{}_tmax{}/log/'.format(Band, stim, tmin, tmax)
 Save_fig = True
 Display_fig = False
 if Display_fig:
@@ -239,7 +239,7 @@ info = mne.create_info(ch_names=channel_names[:], sfreq=128, ch_types='eeg').set
 Correlaciones = {}
 
 for situacion in situaciones:
-    f = open('saves/{}/{}/Final_Correlation/tmin{}_tmax{}/{}_EEG_{}.pkl'.format(model, situacion, tmin, tmax, stim, Band), 'rb')
+    f = open('Saves/{}/{}/Final_Correlation/tmin{}_tmax{}/{}_EEG_{}.pkl'.format(model, situacion, tmin, tmax, stim, Band), 'rb')
     Corr, Pass = pickle.load(f)
     f.close()
 
@@ -345,14 +345,14 @@ Stims_preprocess = 'Normalize'
 EEG_preprocess = 'Standarize'
 Save_fig = True
 
-Listening_25_folds_path = 'saves/25_folds/{}/{}/Original/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/Pesos_Totales_{}_{}.pkl'.\
+Listening_25_folds_path = 'Saves/25_folds/{}/{}/Original/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/Pesos_Totales_{}_{}.pkl'.\
     format(model, 'Escucha', Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band, stim, Band)
-Listening_path = 'saves/{}/{}/Original/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/Pesos_Totales_{}_{}.pkl'.\
+Listening_path = 'Saves/{}/{}/Original/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/Pesos_Totales_{}_{}.pkl'.\
     format(model, 'Escucha', Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band, stim, Band)
-Ambos_path = 'saves/{}/{}/Original/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/Pesos_Totales_{}_{}.pkl'.\
+Ambos_path = 'Saves/{}/{}/Original/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/Pesos_Totales_{}_{}.pkl'.\
     format(model, 'Ambos', Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band, stim, Band)
 
-Run_graficos_path = 'gráficos/Amplitude_Comparison/{}/{}/tmin{}_tmax{}/'.format(Band, stim, tmin, tmax)
+Run_graficos_path = 'Plots/Amplitude_Comparison/{}/{}/tmin{}_tmax{}/'.format(Band, stim, tmin, tmax)
 
 # Load TRFs
 f = open(Listening_25_folds_path, 'rb')
@@ -430,7 +430,7 @@ import os
 model = 'Ridge'
 situacion = 'Escucha'
 tmin, tmax = -0.6, -0.003
-Run_graficos_path = 'gráficos/Model_Comparison/{}/{}/tmin{}_tmax{}/Heatmaps/'.format(model, situacion, tmin, tmax)
+Run_graficos_path = 'Plots/Model_Comparison/{}/{}/tmin{}_tmax{}/Heatmaps/'.format(model, situacion, tmin, tmax)
 Save_fig = True
 
 Bands = ['All', 'Delta', 'Theta', 'Alpha', 'Beta_1']
@@ -443,7 +443,7 @@ for i, stim in enumerate(Stims):
     Corr_stim = []
     Sig_stim = []
     for Band in Bands:
-        f = open('saves/{}/{}/Final_Correlation/tmin{}_tmax{}/{}_EEG_{}.pkl'.format(model, situacion, tmin, tmax, stim, Band), 'rb')
+        f = open('Saves/{}/{}/Final_Correlation/tmin{}_tmax{}/{}_EEG_{}.pkl'.format(model, situacion, tmin, tmax, stim, Band), 'rb')
         Corr_Band, Sig_Band = pickle.load(f)
         f.close()
         Corr_stim.append(Corr_Band.mean())

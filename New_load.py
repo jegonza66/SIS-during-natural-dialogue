@@ -199,7 +199,7 @@ class Sesion_class:
     def __init__(self, sesion=21, stim='Envelope', Band='All', sr=128, tmin=-0.6, tmax=-0.003,
                  valores_faltantes=0, Causal_filter_EEG=True, Env_Filter=False,
                  situacion='Escucha', Calculate_pitch=False, SilenceThreshold=0.03,
-                 procesed_data_path='saves/Preprocesed_Data/tmin{}_tmax{}/'.format(-0.6, -0.003)
+                 procesed_data_path='Saves/Preprocesed_Data/tmin{}_tmax{}/'.format(-0.6, -0.003)
                  ):
 
         self.sesion = sesion
