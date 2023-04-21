@@ -1,12 +1,8 @@
-.ipynb_checkpoints/
-.pylint.d/
 Plots/
 __pycache__/
 .idea/
 Data/
-**Saves/Preprocesed_Data
-**Saves/Downsampled
-**Saves/PLV
-**Saves/Ridge
+Saves/
+!Saves/Alphas/
 
 
