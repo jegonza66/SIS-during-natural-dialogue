@@ -1,8 +1,6 @@
-Plots/
 __pycache__/
 .idea/
+Plots/
 Data/
 Saves/
 !Saves/Alphas/
-
-

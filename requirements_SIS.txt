@@ -2,7 +2,7 @@ librosa==0.8.1
 mne==0.24.0
 pandas==1.4.4
 scikit-learn==1.2.1
-numpy
+numpy==1.23.5
 praatio==4.3.0
 praat-parselmouth
 praat-textgrids==1.4.0
