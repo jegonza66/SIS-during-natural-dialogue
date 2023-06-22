@@ -4,10 +4,10 @@ import numpy as np
 from sklearn.model_selection import KFold
 from datetime import datetime
 
-import New_load as Load
+import Load as Load
 import Models
 import Processing
-import Permutations
+import Statistics
 
 
 startTime = datetime.now()

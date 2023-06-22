@@ -3,7 +3,7 @@ import numpy as np
 import os
 import pickle
 from sklearn.model_selection import KFold
-import New_load as Load
+import Load as Load
 import Models
 import Processing
 

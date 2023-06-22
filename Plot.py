@@ -20,7 +20,13 @@ def highlight_cell(x, y, ax=None, **kwargs):
     return rect
 
 
-def lateralized_channels(info, channels_right=None, channels_left=None):
+def lateralized_channels(info, channels_right=None, channels_left=None, path=None, Display=False, Save=True):
+
+    if Display:
+        plt.ion()
+    else:
+        plt.ioff()
+
     # Lateralization comparison
     if channels_right == None:
         channels_right = ['B27', 'B28', 'B29', 'B30', 'C4', 'C5', 'C6', 'C7', 'C9', 'C10', 'B31', 'C3']
@@ -32,11 +38,15 @@ def lateralized_channels(info, channels_right=None, channels_left=None):
     plt.ion()
     fig = plt.figure()
     plt.title('Masked channels for lateralization comparisson', fontsize=19)
-    im = mne.viz.plot_topomap(np.zeros(info['nchan']), info, show=False, sphere=0.07,
-                               mask=np.array(mask), mask_params=dict(marker='o', markerfacecolor='g',
-                                                                     markeredgecolor='k', linewidth=0,
-                                                                     markersize=4))
+    mne.viz.plot_topomap(np.zeros(info['nchan']), info, show=Display, sphere=0.07, mask=np.array(mask),
+                         mask_params=dict(marker='o', markerfacecolor='k', markeredgecolor='k', linewidth=0, markersize=12))
     fig.tight_layout()
+
+    if Save:
+        path += 'Lateralization/'
+        os.makedirs(path, exist_ok=True)
+        fig.savefig(path + f'left_vs_right_chs_{len(channels_right)}.png')
+        fig.savefig(path + f'left_vs_right_chs_{len(channels_right)}.svg')
 
 
 def plot_cabezas_canales(channel_names, info, sesion, sujeto, Valores_promedio, Display,
@@ -176,7 +186,7 @@ def Plot_PSD(sesion, sujeto, Band, situacion, Display, Save, save_path, info, da
         plt.savefig(save_path_graficos + 'Sesion{} - Sujeto{}.svg'.format(sesion, sujeto, Band))
 
 
-def Cabezas_corr_promedio(Correlaciones_totales_sujetos, info, Display, Save, Run_graficos_path, title):
+def Cabezas_corr_promedio(Correlaciones_totales_sujetos, info, Display, Save, Run_graficos_path, title, lat_max_chs=8):
 
     Correlaciones_promedio = Correlaciones_totales_sujetos.mean(0)
 
@@ -202,33 +212,60 @@ def Cabezas_corr_promedio(Correlaciones_totales_sujetos, info, Display, Save, Ru
         fig.savefig(save_path_graficos + '{}_promedio.svg'.format(title))
         fig.savefig(save_path_graficos + '{}_promedio.png'.format(title))
 
-    # Lateralization comparison
-    good_channels_right = ['B27', 'B28', 'B29', 'B30', 'C4', 'C5', 'C6', 'C7', 'C9', 'C10', 'B31', 'C3']
-    good_channels_left = ['D8', 'D9', 'D10', 'D11', 'D7', 'D6', 'D5', 'D4', 'C31', 'C32', 'D12', 'D3']
-    mask_right = [i in good_channels_right for i in info['ch_names']]
-    mask_left = [i in good_channels_left for i in info['ch_names']]
-    corr_right = Correlaciones_promedio[mask_right]
-    corr_left = Correlaciones_promedio[mask_left]
+    if title == 'Correlation':
+        # Lateralization comparison
+        # good_channels_right = ['B27', 'B28', 'B29', 'B30', 'C4', 'C5', 'C6', 'C7', 'C9', 'C10', 'B31', 'C3']
+        # good_channels_left = ['D8', 'D9', 'D10', 'D11', 'D7', 'D6', 'D5', 'D4', 'C31', 'C32', 'D12', 'D3']
+        all_channels_right = ['B27', 'B28', 'B29', 'B30', 'B31', 'B32', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8',
+                               'C9', 'C10', 'C11', 'C12', 'C13', 'C14', 'C15', 'C16']
+        all_channels_left = ['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10', 'D11', 'D12', 'D13',
+                              'C24', 'C25', 'C26', 'C27', 'C28', 'C29', 'C30', 'C31', 'C32']
 
-    fontsize = 18
-    fig = plt.figure(figsize=(6.5, 4))
-    data = pd.DataFrame({'Left': corr_left, 'Right': corr_right})
-    ax = sn.boxplot(data=data, width=0.35)
-    for patch in ax.artists:
-        r, g, b, a = patch.get_facecolor()
-        patch.set_facecolor((r, g, b, .8))
-    sn.swarmplot(data=data, color=".25")
-    plt.tick_params(labelsize=fontsize)
+        ordered_chs_right = [i for i in info['ch_names'] if i in all_channels_right]
+        ordered_chs_left = [i for i in info['ch_names'] if i in all_channels_left]
 
-    add_stat_annotation(ax, data=data, box_pairs=[('Left', 'Right')],
-                        test='Wilcoxon', text_format='full', loc='outside', )
-    test_results = wilcoxon(data['Left'], data['Right'])
+        mask_right = [i in all_channels_right for i in info['ch_names']]
+        mask_left = [i in all_channels_left for i in info['ch_names']]
+        corr_right = np.sort(Correlaciones_promedio[mask_right])
+        corr_left = np.sort(Correlaciones_promedio[mask_left])
 
-    if Save:
-        save_path_graficos = Run_graficos_path
-        os.makedirs(save_path_graficos, exist_ok=True)
-        fig.savefig(save_path_graficos + 'left_vs_right_{}.svg'.format(title))
-        fig.savefig(save_path_graficos + 'left_vs_right_{}.png'.format(title))
+        sorted_chs_right = [x for _, x in sorted(zip(Correlaciones_promedio[mask_right], ordered_chs_right))]
+        sorted_chs_left = [x for _, x in sorted(zip(Correlaciones_promedio[mask_left], ordered_chs_left))]
+
+        if lat_max_chs:
+            corr_right = np.sort(corr_right)[-lat_max_chs:]
+            corr_left = np.sort(corr_left)[-lat_max_chs:]
+
+            sorted_chs_right = sorted_chs_right[-lat_max_chs:]
+            sorted_chs_left = sorted_chs_left[-lat_max_chs:]
+
+        fontsize = 18
+        fig = plt.figure(figsize=(6.5, 4))
+        data = pd.DataFrame({'Left': corr_left, 'Right': corr_right})
+        ax = sn.boxplot(data=data, width=0.35)
+        for patch in ax.artists:
+            r, g, b, a = patch.get_facecolor()
+            patch.set_facecolor((r, g, b, .8))
+        sn.swarmplot(data=data, color=".25")
+        plt.tick_params(labelsize=fontsize)
+        ax.set_ylabel('Correlation', fontsize=fontsize)
+
+        add_stat_annotation(ax, data=data, box_pairs=[('Left', 'Right')],
+                            test='Wilcoxon', text_format='full', loc='outside', fontsize='xx-large')
+        test_results = wilcoxon(data['Left'], data['Right'])
+
+        fig.tight_layout()
+
+        if Save:
+            save_path_graficos = Run_graficos_path + 'Lateralization/'
+            os.makedirs(save_path_graficos, exist_ok=True)
+            fig.savefig(save_path_graficos + f'left_vs_right_{title}_{len(sorted_chs_right)}.svg')
+            fig.savefig(save_path_graficos + f'left_vs_right_{title}_{len(sorted_chs_right)}.png')
+
+        lateralized_channels(info, channels_right=sorted_chs_right, channels_left=sorted_chs_left, path=Run_graficos_path,
+                             Display=Display, Save=Save)
+    else:
+        test_results = None
 
     return (Correlaciones_promedio.mean(), Correlaciones_promedio.std()), test_results
 
@@ -286,7 +323,7 @@ def topo_pval(topo_pval, info, Display, Save, Run_graficos_path, title):
 
 
 def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display, Save, Run_graficos_path,
-                       Len_Estimulos, stim, ERP=True, title=None, decorrelation_times=None):
+                       Len_Estimulos, stim, fontsize=16, ERP=True, title=None, decorrelation_times=None):
     # Armo pesos promedio por canal de todos los sujetos que por lo menos tuvieron un buen canal
     Pesos_totales_sujetos_todos_canales_copy = Pesos_totales_sujetos_todos_canales.mean(2)
 
@@ -300,8 +337,8 @@ def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display
     Cant_Estimulos = len(Len_Estimulos)
 
     for i in range(Cant_Estimulos):
-        fig, ax = plt.subplots(figsize=(15, 5))
-        fig.suptitle('{}'.format(Stims_Order[i]), fontsize=23)
+        fig, ax = plt.subplots(figsize=(9, 3))
+        fig.suptitle('{}'.format(Stims_Order[i]), fontsize=fontsize)
 
         if Stims_Order[i] == 'Spectrogram':
 
@@ -328,19 +365,20 @@ def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display
 
         evoked.times = times
         evoked.plot(scalings=dict(eeg=1, grad=1, mag=1), zorder='std', time_unit='ms', titles=dict(eeg=''),
-                    show=False, spatial_colors=True, unit=False, units='w', axes=ax)
+                    show=False, spatial_colors=True, unit=True, units='mTRF (a.u.)', axes=ax, gfp=False)
         ax.plot(times * 1000, evoked._data.mean(0), "k--", label="Mean", zorder=130, linewidth=2)
         if times[0] < 0:
             ax.axvspan(ax.get_xlim()[0], 0, alpha=0.4, color='grey', label='Pre-Stimuli')
         if decorrelation_times and times[0] < 0:
             ax.axvspan(-np.mean(decorrelation_times), 0, alpha=0.4, color='red', label=' Mean decorrelation time')
 
-        ax.xaxis.label.set_size(14)
-        ax.yaxis.label.set_size(14)
-        # ax.set_ylim([-0.016, 0.015])
-        ax.tick_params(axis='both', labelsize=14)
+        ax.xaxis.label.set_size(fontsize)
+        ax.yaxis.label.set_size(fontsize)
+        if Stims_Order[i] == 'Spectrogram':
+            ax.set_ylim([-0.016, 0.013])
+        ax.tick_params(axis='both', labelsize=fontsize)
         ax.grid()
-        ax.legend(fontsize=12)
+        ax.legend(fontsize=fontsize)
         fig.tight_layout()
 
         if Save:
@@ -655,6 +693,80 @@ def Channel_wise_correlation_topomap(Pesos_totales_sujetos_todos_canales, info, 
         fig.savefig(save_path_graficos + 'Channel_correlation_topo.svg')
 
 
+
+def plot_trf_tfce(Pesos_totales_sujetos_todos_canales, p, times, title, mcc, shape, graficos_save_path, Band, stim, n_permutations,  pval_trhesh=None, axes=None, fontsize=15,
+                Display=False, Save=True):
+    if Display:
+        plt.ion()
+    else:
+        plt.ioff()
+
+    if axes is None:
+        fig, axs = plt.subplots(1, 2, sharey=True, figsize=(12, 5))
+
+    Pesos_totales_sujetos_todos_canales_copy = Pesos_totales_sujetos_todos_canales.mean(2)
+
+    fig.suptitle('{} - {}'.format(stim, Band), fontsize=18)
+
+
+    spectrogram_weights_bands = Pesos_totales_sujetos_todos_canales_copy.mean(0)
+    spectrogram_weights_bands = spectrogram_weights_bands.reshape(16, len(times))
+    # Adapt for ERP time
+    spectrogram_weights_bands = np.flip(spectrogram_weights_bands, axis=1)
+
+    im = axs[0].pcolormesh(times * 1000, np.arange(16), spectrogram_weights_bands, cmap='jet',
+                           vmin=-spectrogram_weights_bands.max(), vmax=spectrogram_weights_bands.max(),
+                           shading='auto')
+    axs[0].set(xlabel='Time (ms)', ylabel='Frequency (Hz)')
+
+    Bands_center = librosa.mel_frequencies(n_mels=18, fmin=62, fmax=8000)[1:-1]
+    yticks_positions = np.arange(0, 16, 2)
+    xticks_positions = [-100, 0, 100, 200, 300, 400, 500, 600]
+    ticks_labels = [int(Bands_center[i]) for i in np.arange(0, len(Bands_center), 2)]
+    axs[0].set_yticks(yticks_positions)
+    axs[0].set_xticks(xticks_positions)
+    axs[0].set_yticklabels(ticks_labels)
+    axs[0].xaxis.label.set_size(fontsize)
+    axs[0].yaxis.label.set_size(fontsize)
+    axs[0].tick_params(axis='both', labelsize=fontsize)
+
+    cbar = fig.colorbar(im, ax=axs[0], orientation='horizontal', shrink=0.7)
+    cbar.set_label('mTRF amplitude (a.u.)', fontsize=fontsize)
+    cbar.ax.tick_params(labelsize=fontsize)
+
+
+    if pval_trhesh:
+        # Mask p-values over threshold
+        p[p > pval_trhesh] = 1
+    # p plot
+    use_p = -np.log10(np.reshape(np.maximum(p, 1e-5), (shape[1], shape[2])))
+
+    img = axs[1].pcolormesh(times * 1000, np.arange(shape[1]), np.flip(use_p, axis=0), cmap="inferno", shading='auto',
+                        vmin=0, vmax=2.5)
+
+    axs[1].set(xlabel='Time (ms)')
+    axs[1].xaxis.label.set_size(fontsize)
+    plt.xticks(fontsize=fontsize)
+
+    cbar = fig.colorbar(ax=axs[1], orientation="horizontal", mappable=img, shrink=0.7)
+    cbar.set_label(r"$-\log_{10}(p)$", fontsize=fontsize)
+    cbar.ax.tick_params(labelsize=fontsize)
+    if Display:
+        text = fig.suptitle(title)
+        if mcc:
+            text.set_weight("bold")
+        plt.subplots_adjust(0, 0.05, 1, 0.9, wspace=0, hspace=0)
+        mne.viz.utils.plt_show()
+
+    fig.tight_layout()
+
+    if Save:
+        graficos_save_path += 'TFCE/'
+        os.makedirs(graficos_save_path, exist_ok=True)
+        plt.savefig(graficos_save_path + f'trf_tfce_{pval_trhesh}_{n_permutations}.png')
+        plt.savefig(graficos_save_path + f'trf_tfce_{pval_trhesh}_{n_permutations}.svg')
+
+
 def ch_heatmap_topo(total_data, info, delays, times, Display, Save, graficos_save_path, title, total_subjects=18,
                     sesion=None, sujeto=None, fontsize=14):
 
@@ -710,6 +822,88 @@ def ch_heatmap_topo(total_data, info, delays, times, Display, Save, graficos_sav
     axs[1, 0].plot(times_plot * 1000, phase_sync)
     axs[1, 0].fill_between(times_plot * 1000, phase_sync - phase_sync_std / 2, phase_sync + phase_sync_std / 2, alpha=.5)
     axs[1, 0].set_ylim([0, 0.08])
+    axs[1, 0].vlines(times_plot[max_t_lag] * 1000, axs[1, 0].get_ylim()[0], axs[1, 0].get_ylim()[1], linestyle='dashed', color='k',
+                label='Max: {}ms'.format(int(times_plot[max_t_lag] * 1000)))
+    axs[1, 0].set_xlabel('Time lag [ms]')
+    axs[1, 0].set_ylabel('Mean {}'.format(title))
+    # axs2.tick_params(axis='both', labelsize=12)
+    axs[1, 0].set_xlim([times_plot[0] * 1000, times_plot[-1] * 1000])
+    axs[1, 0].grid()
+    axs[1, 0].legend()
+
+    fig.tight_layout()
+
+    # Change axis 0 to match axis 1 width after adding colorbar
+    ax0_box = axs[0, 0].get_position().bounds
+    ax1_box = axs[1, 0].get_position().bounds
+    ax1_new_box = (ax1_box[0], ax1_box[1], ax0_box[2], ax1_box[3])
+    axs[1, 0].set_position(ax1_new_box)
+
+    if Save:
+        os.makedirs(graficos_save_path, exist_ok=True)
+        if total_data.shape == (info['nchan'], len(delays)):
+            plt.savefig(graficos_save_path + 't_lags_{}_Sesion{}_Sujeto{}.png'.format(title, sesion, sujeto))
+            plt.savefig(graficos_save_path + 't_lags_{}_Sesion{}_Sujeto{}.svg'.format(title, sesion, sujeto))
+        elif total_data.shape == (total_subjects, info['nchan'], len(delays)):
+            plt.savefig(graficos_save_path + 't_lags_{}.png'.format(title))
+            plt.savefig(graficos_save_path + 't_lags_{}.svg'.format(title))
+
+
+def ch_heatmap_topo(total_data, info, delays, times, Display, Save, graficos_save_path, title, total_subjects=18,
+                    sesion=None, sujeto=None, fontsize=14):
+
+    if total_data.shape == (info['nchan'], len(delays)):
+        phase_sync_ch = total_data
+    elif total_data.shape == (total_subjects, info['nchan'], len(delays)):
+        phase_sync_ch = total_data.mean(0)
+
+    if Display:
+        plt.ion()
+    else:
+        plt.ioff()
+
+    plt.rcParams.update({'font.size': fontsize})
+    fig, axs = plt.subplots(figsize=(9, 5), nrows=2, ncols=2, gridspec_kw={'width_ratios': [2, 1]})
+
+    # Remove axes of column 2
+    for ax_col in axs[:, 1]:
+        ax_col.remove()
+
+    # Add one axis in column
+    ax = fig.add_subplot(1, 3, (3, 3))
+
+    # Plot topo
+    phase_sync = phase_sync_ch.mean(0)
+    max_t_lag = np.argmax(phase_sync)
+    max_pahse_sync = phase_sync_ch[:, max_t_lag]
+
+    # ax.set_title('Mean = {:.3f} +/- {:.3f}'.format(max_pahse_sync.mean(), max_pahse_sync.std()))
+    im = mne.viz.plot_topomap(max_pahse_sync, info, cmap='Reds',
+                              vmin=max_pahse_sync.min(),
+                              vmax=max_pahse_sync.max(),
+                              show=False, sphere=0.07, axes=ax)
+    cb = plt.colorbar(im[0], shrink=1, orientation='horizontal')
+    cb.set_label('r')
+
+
+    # Invert times for PLV plot
+    phase_sync_ch = np.flip(phase_sync_ch)
+    phase_sync_std = phase_sync_ch.std(0)
+    phase_sync = phase_sync_ch.mean(0)
+    max_t_lag = np.argmax(phase_sync)
+
+    times_plot = np.flip(-times)
+
+    im = axs[0, 0].pcolormesh(times_plot * 1000, np.arange(info['nchan']), phase_sync_ch, shading='auto')
+    axs[0, 0].set_ylabel('Channels')
+    axs[0, 0].set_xticks([])
+
+    cbar = plt.colorbar(im, orientation='vertical', ax=axs[0, 0])
+    cbar.set_label('PLV')
+
+    axs[1, 0].plot(times_plot * 1000, phase_sync)
+    axs[1, 0].fill_between(times_plot * 1000, phase_sync - phase_sync_std / 2, phase_sync + phase_sync_std / 2, alpha=.5)
+    # axs[1, 0].set_ylim([0, 0.2])
     axs[1, 0].vlines(times_plot[max_t_lag] * 1000, axs[1, 0].get_ylim()[0], axs[1, 0].get_ylim()[1], linestyle='dashed', color='k',
                 label='Max: {}ms'.format(int(times_plot[max_t_lag] * 1000)))
     axs[1, 0].set_xlabel('Time lag [ms]')

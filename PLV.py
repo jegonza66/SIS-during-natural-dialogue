@@ -3,7 +3,7 @@ import pickle
 import numpy as np
 from scipy import signal as sgn
 import Plot
-import New_load as Load
+import Load as Load
 
 # Figures
 Display = False
@@ -84,7 +84,9 @@ for Band in Bands:
                     for t_lag in range(len(delays)):
                         # env phase
                         analytic_envelope_signal = sgn.hilbert(dstims[0][:, t_lag], axis=0)
-                        env_phase = np.angle(analytic_envelope_signal).transpose()
+                        b, a = sgn.butter(3, (4 / (128 / 2), 8 / (128 / 2)), 'band')
+                        analytic_envelope_signal_filt = sgn.filtfilt(b, a, analytic_envelope_signal)
+                        env_phase = np.angle(analytic_envelope_signal_filt).transpose()
 
                         # eeg phase
                         analytic_signal = sgn.hilbert(eeg, axis=0)
@@ -100,7 +102,7 @@ for Band in Bands:
                     # Graficos save path
                     graficos_save_path_subj = graficos_save_path + 'Subjects/'
 
-                    Plot.ch_heatmap_topo(total_data=total_phase_consistency[sujeto_total], Band=Band, info=info,
+                    Plot.ch_heatmap_topo(total_data=total_phase_consistency[sujeto_total], info=info,
                                          delays=delays, times=times, Display=Display, Save=Save,
                                          graficos_save_path=graficos_save_path_subj,  title='Phase Sync',
                                          total_subjects=total_subjects, sesion=sesion, sujeto=sujeto)
@@ -115,7 +117,7 @@ for Band in Bands:
             pickle.dump(total_phase_consistency, f)
             f.close()
 
-            Plot.ch_heatmap_topo(total_data=total_phase_consistency, Band=Band, info=info,
+            Plot.ch_heatmap_topo(total_data=total_phase_consistency, info=info,
                                  delays=delays, times=times, Display=Display, Save=Save,
                                  graficos_save_path=graficos_save_path, title='PLV',
                                  total_subjects=total_subjects)
@@ -178,18 +180,6 @@ for situacion in situcaiones:
             if Intra_Brain:
                 Intra_Brain_phase_sync = np.zeros((total_subjects, 128, 128))
 
-        if GCMI:
-            # Variables save path
-            save_path = Run_saves_path + '/GCMI/{}/tmin{}_tmax{}/'.format(situacion, tmin, tmax)
-            os.makedirs(save_path, exist_ok=True)
-
-            f = open(save_path + '{}.pkl'.format(Band), 'rb')
-            total_gcmi = pickle.load(f)
-            f.close()
-
-            Plot.ch_heatmap_topo(total_data=total_gcmi, info=info,
-                                 delays=delays, times=times, Display=Display, Save=Save,
-                                 graficos_save_path=graficos_save_path, title='GCMI', total_subjects=total_subjects)
 
         if PLV:
             graficos_save_path = 'Plots/PLV/{}/tmin{}_tmax{}/{}/'.format(situacion, tmin, tmax,Band)
@@ -204,12 +194,3 @@ for situacion in situcaiones:
                                  delays=delays, times=times, Display=Display, Save=Save,
                                  graficos_save_path=graficos_save_path, title='PLV',
                                  total_subjects=total_subjects, fontsize=18)
-        #
-        # if Intra_Brain:
-        #     Plot.Brain_Brain_sync(data=Intra_Brain_phase_sync, Band=Band, info=info, Display=Display, Save=Save,
-        #                           graficos_save_path=graficos_save_path, total_subjects=total_subjects)
-        #
-        # if Brain_Brain_sync:
-        #     # Plot
-        #     Plot.Brain_sync(data=Brain_Brain_phase_sync, Band=Band, info=info, Display=Display, Save=Save,
-        #                     graficos_save_path=graficos_save_path, total_subjects=total_subjects)

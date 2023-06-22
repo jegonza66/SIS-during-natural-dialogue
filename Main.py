@@ -4,10 +4,11 @@ import numpy as np
 from sklearn.model_selection import KFold
 from datetime import datetime
 
-import New_load as Load
+import Load as Load
 import Models
 import Plot
 import Processing
+import Statistics
 
 
 startTime = datetime.now()
@@ -19,14 +20,13 @@ Save_Ind_Figures = True
 Save_Total_Figures = True
 Save_Results = True
 # Random permutations
-Statistical_test = True
+Permutations_test = True
 # Dialogue situation
-situations = ['Escucha', 'Habla', 'Ambos', 'Ambos-Habla', 'Silencio']
 situations = ['Escucha']
 # Model
 model = 'Ridge'
 # Run times
-tmin, tmax = -0.6, -0.003
+tmin, tmax = -0.6, 0.2
 # preset alpha
 set_alpha = None
 
@@ -108,7 +108,7 @@ for situacion in situations:
                     Corr_buenas_ronda_canal = np.zeros((n_folds, info['nchan']))
                     Rmse_buenos_ronda_canal = np.zeros((n_folds, info['nchan']))
 
-                    if Statistical_test:
+                    if Permutations_test:
                         Pesos_fake = np.zeros((n_folds, iteraciones, info['nchan'], sum(Len_Estimulos)), dtype=np.float16)
                         Correlaciones_fake = np.zeros((n_folds, iteraciones, info['nchan']))
                         Errores_fake = np.zeros((n_folds, iteraciones, info['nchan']))
@@ -134,6 +134,7 @@ for situacion in situations:
                             print('Alpha missing. Ussing default value: {}'.format(alpha))
                     else:
                         alpha = set_alpha
+                        print('Ussing pre-set alpha value: {}'.format(alpha))
 
                     # Empiezo el KFold de test
                     kf_test = KFold(n_folds, shuffle=False)
@@ -173,7 +174,7 @@ for situacion in situations:
                         Rmse = np.array(np.sqrt(np.power((predicted - eeg_test), 2).mean(0)))
                         Rmse_buenos_ronda_canal[fold] = Rmse
 
-                        if Statistical_test:
+                        if Permutations_test:
                             try:
                                 f = open(
                                     Path_it + 'Corr_Rmse_fake_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto),
@@ -181,7 +182,7 @@ for situacion in situations:
                                 Correlaciones_fake, Errores_fake = pickle.load(f)
                                 f.close()
                             except:
-                                Statistical_test = False
+                                Permutations_test = False
 
                             # TEST ESTADISTICO
                             Rcorr_fake = Correlaciones_fake[fold]
@@ -198,15 +199,16 @@ for situacion in situations:
                             topo_pvalues_corr[fold] = p_corr
                             topo_pvalues_rmse[fold] = p_rmse
 
-                    # Save Model Weights and Correlations
-                    os.makedirs(Path_original, exist_ok=True)
-                    f = open(Path_original + 'Corr_Rmse_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto), 'wb')
-                    pickle.dump([Corr_buenas_ronda_canal, Rmse_buenos_ronda_canal], f)
-                    f.close()
+                    if Save_Results:
+                        # Save Model Weights and Correlations
+                        os.makedirs(Path_original, exist_ok=True)
+                        f = open(Path_original + 'Corr_Rmse_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto), 'wb')
+                        pickle.dump([Corr_buenas_ronda_canal, Rmse_buenos_ronda_canal], f)
+                        f.close()
 
-                    f = open(Path_original + 'Pesos_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto), 'wb')
-                    pickle.dump(Pesos_ronda_canales.mean(0), f)
-                    f.close()
+                        f = open(Path_original + 'Pesos_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto), 'wb')
+                        pickle.dump(Pesos_ronda_canales.mean(0), f)
+                        f.close()
 
                     # Tomo promedio de pesos Corr y Rmse entre los folds para todos los canales
                     Pesos_promedio = Pesos_ronda_canales.mean(0)
@@ -215,7 +217,7 @@ for situacion in situations:
 
                     Canales_sobrevivientes_corr = []
                     Canales_sobrevivientes_rmse = []
-                    if Statistical_test:
+                    if Permutations_test:
                         # Armo lista con canales que pasan el test
                         Canales_sobrevivientes_corr, = np.where(np.all((Prob_Corr_ronda_canales < 1), axis=0))
                         Canales_sobrevivientes_rmse, = np.where(np.all((Prob_Rmse_ronda_canales < 1), axis=0))
@@ -287,7 +289,7 @@ for situacion in situations:
                                                                                              title='Rmse')
 
             # Armo cabecita con canales repetidos
-            if Statistical_test:
+            if Permutations_test:
                 Plot.topo_pval(pvalues_corr_subjects.mean(0), info, Display_Total_Figures,
                                          Save_Total_Figures, Run_graficos_path, title='Correlation')
                 Plot.topo_pval(pvalues_rmse_subjects.mean(0), info, Display_Total_Figures,
@@ -304,6 +306,18 @@ for situacion in situations:
 
             Plot.regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, Display_Total_Figures,
                                            Save_Total_Figures, Run_graficos_path, Len_Estimulos, stim, Band, ERP=True)
+
+            # TFCE across subjects
+            t_tfce, clusters, p_tfce, H0, trf_subjects, n_permutations = Statistics.tfce(
+                Pesos_totales_sujetos_todos_canales, times, Len_Estimulos, n_permutations=4096)
+
+            if stim == 'Spectrogram':
+                Plot.plot_trf_tfce(Pesos_totales_sujetos_todos_canales=Pesos_totales_sujetos_todos_canales, p=p_tfce,
+                                   times=times, title='', mcc=True, shape=trf_subjects.shape,
+                                   n_permutations=n_permutations,
+                                   graficos_save_path=Run_graficos_path, Band=Band, stim=stim,
+                                   pval_trhesh=0.05, fontsize=17, Display=Display_Total_Figures,
+                                   Save=Save_Total_Figures)
 
             # Matriz de Correlacion
             Plot.Matriz_corr_channel_wise(Pesos_totales_sujetos_todos_canales, stim, Len_Estimulos, info, times, sesiones, Display_Total_Figures, Save_Total_Figures,

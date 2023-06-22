@@ -122,10 +122,12 @@ class Trial_channel:
         pitch_and_intensity.extractPI(os.path.abspath(self.wav_fname), os.path.abspath(output_path), praatEXE, minPitch,
                                       maxPitch, self.sampleStep, self.SilenceThreshold)
 
-    def load_pitch(self):
+    def load_pitch(self, envelope):
         read_file = pd.read_csv(self.pitch_fname)
 
+        # time = np.array(read_file['time'])
         pitch = np.array(read_file['pitch'])
+        # intensity = np.array(read_file['intensity'])
 
         pitch[pitch == '--undefined--'] = np.nan
         pitch = np.array(pitch, dtype=np.float32)
@@ -139,10 +141,12 @@ class Trial_channel:
 
         pitch = np.array(np.repeat(pitch, self.audio_sr * self.sampleStep), dtype=np.float32)
         pitch = Processing.subsamplear(pitch, 125)
+        # pitch = Processing.matriz_shifteada(pitch, self.delays)
+        pitch = pitch[:min(len(pitch), len(envelope))]
 
         return np.array(pitch)
 
-    def f_jitter_shimmer(self):
+    def f_jitter_shimmer(self, envelope):
         smile = opensmile.Smile(
             feature_set=opensmile.FeatureSet.eGeMAPSv02,
             feature_level=opensmile.FeatureLevel.LowLevelDescriptors)
@@ -154,17 +158,20 @@ class Trial_channel:
         jitter = y['jitterLocal_sma3nz']
         shimmer = y['shimmerLocaldB_sma3nz']
 
-        mcm = Funciones.minimo_comun_multiplo(len(jitter), len(self.envelope))
+        mcm = Funciones.minimo_comun_multiplo(len(jitter), len(envelope))
         jitter = np.repeat(jitter, mcm / len(jitter))
-        jitter = Processing.subsamplear(jitter, mcm / len(self.envelope))
+        jitter = Processing.subsamplear(jitter, mcm / len(envelope))
+        # jitter = Processing.matriz_shifteada(jitter, self.delays)
+        jitter = jitter[:min(len(jitter), len(envelope))]
 
-        mcm = Funciones.minimo_comun_multiplo(len(shimmer), len(self.envelope))
+        mcm = Funciones.minimo_comun_multiplo(len(shimmer), len(envelope))
         shimmer = np.repeat(shimmer, mcm / len(shimmer))
-        shimmer = Processing.subsamplear(shimmer, mcm / len(self.envelope))
+        shimmer = Processing.subsamplear(shimmer, mcm / len(envelope))
+        shimmer = shimmer[:min(len(shimmer), len(envelope))]
 
         return jitter, shimmer
 
-    def f_spectrogram(self):
+    def f_spectrogram(self, envelope):
         wav = wavfile.read(self.wav_fname)[1]
         wav = wav.astype("float")
 
@@ -176,6 +183,9 @@ class Trial_channel:
         S_DB = librosa.power_to_db(S, ref=np.max)
         S_DB = S_DB.transpose()
 
+        # Match to Envelope size if shorter to standarized across features
+        S_DB = S_DB[:min(len(S_DB), len(envelope)), :]
+
         return np.array(S_DB)
 
     def load_trial(self, stims):
@@ -186,9 +196,11 @@ class Trial_channel:
         if 'Envelope' in stims:
             channel['Envelope'] = self.f_envelope()
         if 'Pitch' in stims:
-            channel['Pitch'] = self.load_pitch()
+            channel['Envelope'] = self.f_envelope()
+            channel['Pitch'] = self.load_pitch(envelope=self.envelope)
         if 'Spectrogram' in stims:
-            channel['Spectrogram'] = self.f_spectrogram()
+            channel['Envelope'] = self.f_envelope()
+            channel['Spectrogram'] = self.f_spectrogram(envelope=self.envelope)
         if 'Shimmer' in stims:
            _, channel['shimmer'] = self.f_jitter_shimmer()
 

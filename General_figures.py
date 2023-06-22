@@ -208,23 +208,32 @@ if Save_fig:
     plt.savefig(Run_graficos_path + '{}.png'.format(Band))
     plt.savefig(Run_graficos_path + '{}.svg'.format(Band))
 
-## Violin Plot Situation
+## SIS statistics - Wilcoxon
+
 import pandas as pd
 import numpy as np
 import pickle
-import matplotlib
 import matplotlib.pyplot as plt
 import os
 import seaborn as sn
 from scipy.stats import wilcoxon
 import mne
+from statsmodels.stats.multitest import fdrcorrection
+from Statistics import cohen_d
 
 model = 'Ridge'
 Band = 'Theta'
 stim = 'Spectrogram'
 situaciones = ['Escucha', 'Habla_Propia', 'Ambos', 'Ambos_Habla', 'Silencio']
 tmin, tmax = -0.6, -0.003
-Run_graficos_path = 'Plots/SIS_statistics/{}/{}/tmin{}_tmax{}/log/'.format(Band, stim, tmin, tmax)
+stat_test = 'log'  # fdr/log/cohen
+mask = False
+Run_graficos_path = 'Plots/SIS_statistics/{}/{}/tmin{}_tmax{}/{}'.format(Band, stim, tmin, tmax, stat_test)
+if mask and stat_test != 'cohen':
+    Run_graficos_path += '_mask/'
+else:
+    Run_graficos_path += '/'
+
 Save_fig = True
 Display_fig = False
 if Display_fig:
@@ -249,8 +258,9 @@ for situacion in situaciones:
 stats = {}
 pvals = {}
 
-for sit1, sit2 in zip(('Escucha', 'Escucha', 'Escucha', 'Habla_Propia', 'Habla_Propia', 'Ambos', 'Ambos', 'Ambos_Habla'),
-                      ('Habla_Propia', 'Ambos', 'Silencio', 'Silencio', 'Ambos_Habla', 'Ambos_Habla', 'Silencio', 'Silencio')):
+for sit1, sit2 in zip(('Escucha', 'Escucha', 'Escucha', 'Escucha', 'Habla_Propia', 'Habla_Propia', 'Ambos', 'Ambos', 'Ambos', 'Ambos_Habla'),
+                      ('Habla_Propia', 'Ambos', 'Silencio', 'Ambos_Habla', 'Silencio', 'Ambos_Habla', 'Ambos_Habla', 'Silencio', 'Habla_Propia', 'Silencio')):
+    print(sit1, sit2)
 
     dist1 = Correlaciones[sit1]
     dist2 = Correlaciones[sit2]
@@ -265,44 +275,96 @@ for sit1, sit2 in zip(('Escucha', 'Escucha', 'Escucha', 'Habla_Propia', 'Habla_P
     stats[f'{sit1}-{sit2}'] = stat
     pvals[f'{sit1}-{sit2}'] = pval
 
-    log_pval = np.log10(pval)
+    if stat_test == 'fdr':
+        passed, corrected_pval = fdrcorrection(pvals=pval, alpha=0.05, method='p')
 
-    # Plot pvalue
-    fig, ax = plt.subplots()
-    fig.suptitle(f'p-value: {sit1}-{sit2}\n'
-                 f'mean: {round(np.mean(pvals[f"{sit1}-{sit2}"]), 6)} - '
-                 f'min: {round(np.min(pvals[f"{sit1}-{sit2}"]), 6)} - '
-                 f'max: {round(np.max(pvals[f"{sit1}-{sit2}"]), 6)}\n'
-                 f'passed: {sum(np.array(pval)< 0.05/128)}', fontsize=17)
-    im = mne.viz.plot_topomap(log_pval, vmin=-6, vmax=np.log10(0.0004), pos=info, axes=ax, show=False, sphere=0.07, cmap='Reds_r')
-    cbar = plt.colorbar(im[0], ax=ax, shrink=0.85, ticks=[-6, -5, -4])
-    cbar.ax.yaxis.set_tick_params(labelsize=17)
-    cbar.ax.set_yticklabels(['<10-6', '10-5', '>10-4'])
-    cbar.ax.set_ylabel(ylabel='p-value', fontsize=17)
+        if mask:
+            corrected_pval[~passed] = 1
+
+        # Plot pvalue
+        fig, ax = plt.subplots()
+        fig.suptitle(f'FDR p-value: {sit1}-{sit2}\n'
+                     f'mean: {round(np.mean(corrected_pval), 6)} - '
+                     f'min: {round(np.min(corrected_pval), 6)} - '
+                     f'max: {round(np.max(corrected_pval), 6)}\n'
+                     f'passed: {sum(passed)}', fontsize=17)
+        im = mne.viz.plot_topomap(corrected_pval, vmin=0, vmax=1, pos=info, axes=ax, show=Display_fig, sphere=0.07,
+                                  cmap='Reds_r')
+        cbar = plt.colorbar(im[0], ax=ax, shrink=0.85)
+        cbar.ax.yaxis.set_tick_params(labelsize=17)
+        cbar.ax.set_ylabel(ylabel='FDR corrected p-value', fontsize=17)
+
+        fig.tight_layout()
+
+        if Save_fig:
+            os.makedirs(Run_graficos_path, exist_ok=True)
+            plt.savefig(Run_graficos_path + f'pval_{sit1}-{sit2}.png'.format(Band))
+            plt.savefig(Run_graficos_path + f'pval_{sit1}-{sit2}.svg'.format(Band))
+
+    elif stat_test == 'log':
+        log_pval = np.log10(pval)
+        if mask:
+            log_pval[np.array(pval) > 0.05/128] = 0
+
+        # Plot pvalue
+        fig, ax = plt.subplots()
+        fig.suptitle(f'p-value: {sit1}-{sit2}\n'
+                     f'mean: {round(np.mean(pvals[f"{sit1}-{sit2}"]), 6)} - '
+                     f'min: {round(np.min(pvals[f"{sit1}-{sit2}"]), 6)} - '
+                     f'max: {round(np.max(pvals[f"{sit1}-{sit2}"]), 6)}\n'
+                     f'passed: {sum(np.array(pval)< 0.05/128)}', fontsize=17)
+        im = mne.viz.plot_topomap(log_pval, vmin=-6, vmax=0, pos=info, axes=ax, show=Display_fig, sphere=0.07, cmap='Reds_r')
+        cbar = plt.colorbar(im[0], ax=ax, shrink=0.85, ticks=[-6, -5, -4, -3, -2, -1, 0])
+        cbar.ax.yaxis.set_tick_params(labelsize=17)
+        cbar.ax.set_yticklabels(['<10-6', '10-5', '10-4', '10-3', '10-2', '10-1', '1'])
+        cbar.ax.set_ylabel(ylabel='p-value', fontsize=17)
 
 
-    fig.tight_layout()
+        fig.tight_layout()
 
-    if Save_fig:
-        os.makedirs(Run_graficos_path, exist_ok=True)
-        plt.savefig(Run_graficos_path + f'pval_{sit1}-{sit2}.png'.format(Band))
-        plt.savefig(Run_graficos_path + f'pval_{sit1}-{sit2}.svg'.format(Band))
+        if Save_fig:
+            os.makedirs(Run_graficos_path, exist_ok=True)
+            plt.savefig(Run_graficos_path + f'pval_{sit1}-{sit2}.png'.format(Band))
+            plt.savefig(Run_graficos_path + f'pval_{sit1}-{sit2}.svg'.format(Band))
 
-    # Plot statistic
-    fig, ax = plt.subplots()
-    fig.suptitle(f'stat: {sit1}-{sit2}\n'
-                 f'Mean: {round(np.mean(stats[f"{sit1}-{sit2}"]), 3)}', fontsize=19)
-    im = mne.viz.plot_topomap(stats[f'{sit1}-{sit2}'], info, axes=ax, show=False, sphere=0.07, cmap='Reds')
-    cbar = plt.colorbar(im[0], ax=ax, shrink=0.85)
-    cbar.ax.yaxis.set_tick_params(labelsize=17)
-    cbar.ax.set_ylabel(ylabel='p-value', fontsize=17)
-    fig.tight_layout()
+        # Plot statistic
+        fig, ax = plt.subplots()
+        fig.suptitle(f'stat: {sit1}-{sit2}\n'
+                     f'Mean: {round(np.mean(stats[f"{sit1}-{sit2}"]), 3)}', fontsize=19)
+        im = mne.viz.plot_topomap(stats[f'{sit1}-{sit2}'], info, axes=ax, show=Display_fig, sphere=0.07, cmap='Reds')
+        cbar = plt.colorbar(im[0], ax=ax, shrink=0.85)
+        cbar.ax.yaxis.set_tick_params(labelsize=17)
+        cbar.ax.set_ylabel(ylabel='p-value', fontsize=17)
+        fig.tight_layout()
 
-    if Save_fig:
-        os.makedirs(Run_graficos_path, exist_ok=True)
-        plt.savefig(Run_graficos_path + f'stat_{sit1}-{sit2}.png'.format(Band))
-        plt.savefig(Run_graficos_path + f'stat_{sit1}-{sit2}.svg'.format(Band))
+        if Save_fig:
+            os.makedirs(Run_graficos_path, exist_ok=True)
+            plt.savefig(Run_graficos_path + f'stat_{sit1}-{sit2}.png'.format(Band))
+            plt.savefig(Run_graficos_path + f'stat_{sit1}-{sit2}.svg'.format(Band))
 
+    elif stat_test == 'cohen':
+        cohen_ds = []
+        for i in range(len(dist1)):
+            cohen_ds.append(cohen_d(dist1[i], dist2[i]))
+
+        # Plot pvalue
+        fig, ax = plt.subplots()
+        fig.suptitle(f'Cohen d: {sit1}-{sit2}\n'
+                     f'mean: {round(np.mean(cohen_ds), 2)} +- {round(np.std(cohen_ds), 2)} -\n'
+                     f'min: {round(np.min(cohen_ds), 2)} - '
+                     f'max: {round(np.max(cohen_ds), 2)}', fontsize=17)
+        im = mne.viz.plot_topomap(cohen_ds, vmin=0, vmax=4, pos=info, axes=ax, show=Display_fig, sphere=0.07,
+                                  cmap='Reds')
+        cbar = plt.colorbar(im[0], ax=ax, shrink=0.85)
+        cbar.ax.yaxis.set_tick_params(labelsize=17)
+        cbar.ax.set_ylabel(ylabel='Cohens d', fontsize=17)
+
+        fig.tight_layout()
+
+        if Save_fig:
+            os.makedirs(Run_graficos_path, exist_ok=True)
+            plt.savefig(Run_graficos_path + f'cohen_{sit1}-{sit2}.png'.format(Band))
+            plt.savefig(Run_graficos_path + f'cohen_{sit1}-{sit2}.svg'.format(Band))
 
 
 for situacion in situaciones:
