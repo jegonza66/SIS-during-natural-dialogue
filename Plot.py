@@ -366,19 +366,17 @@ def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display
         evoked.times = times
         evoked.plot(scalings=dict(eeg=1, grad=1, mag=1), zorder='std', time_unit='ms', titles=dict(eeg=''),
                     show=False, spatial_colors=True, unit=True, units='mTRF (a.u.)', axes=ax, gfp=False)
-        ax.plot(times * 1000, evoked._data.mean(0), "k--", label="Mean", zorder=130, linewidth=2)
         if times[0] < 0:
-            ax.axvspan(ax.get_xlim()[0], 0, alpha=0.4, color='grey', label='Pre-Stimuli')
+            ax.axvline(x=0, ymin=0, ymax=1, color='grey')
         if decorrelation_times and times[0] < 0:
             ax.axvspan(-np.mean(decorrelation_times), 0, alpha=0.4, color='red', label=' Mean decorrelation time')
+            ax.legend(fontsize=fontsize)
 
         ax.xaxis.label.set_size(fontsize)
         ax.yaxis.label.set_size(fontsize)
         if Stims_Order[i] == 'Spectrogram':
             ax.set_ylim([-0.016, 0.013])
         ax.tick_params(axis='both', labelsize=fontsize)
-        ax.grid()
-        ax.legend(fontsize=fontsize)
         fig.tight_layout()
 
         if Save:
@@ -435,11 +433,9 @@ def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, 
             evoked.times = times
             evoked.plot(scalings=dict(eeg=1, grad=1, mag=1), zorder='std', time_unit='ms', titles=dict(eeg=''),
                         show=False, spatial_colors=True, unit=False, units='w', axes=axs[0])
-            axs[0].plot(times * 1000, evoked._data.mean(0), "k--", label="Mean", zorder=130, linewidth=2)
-            # if times[0] < 0:
-            #     axs[0].axvspan(axs[0].get_xlim()[0], 0, alpha=0.4, color='grey', label='Pre-Stimuli')
+            if times[0] < 0:
+                axs[0].axvline(x=0, ymin=0, ymax=1, color='grey')
             axs[0].axis('off')
-            axs[0].legend(fontsize=10)
 
             im = axs[1].pcolormesh(times * 1000, np.arange(16), spectrogram_weights_bands, cmap='jet',
                                vmin=-spectrogram_weights_bands.max(), vmax=spectrogram_weights_bands.max(), shading='auto')
@@ -481,9 +477,7 @@ def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, 
             evoked.times = times
             evoked.plot(scalings=dict(eeg=1, grad=1, mag=1), zorder='std', time_unit='ms', titles=dict(eeg=''),
                         show=False, spatial_colors=True, unit=False, units='w', axes=axs[0])
-            axs[0].plot(times * 1000, evoked._data.mean(0), "k--", label="Mean", zorder=130, linewidth=2)
             axs[0].axis('off')
-            axs[0].legend(fontsize=12)
 
             im = axs[1].pcolormesh(times * 1000, np.arange(info['nchan']), mean_coefs, cmap='jet',
                                    vmin=-(mean_coefs).max(), vmax=(mean_coefs).max(), shading='auto')
@@ -692,6 +686,7 @@ def Channel_wise_correlation_topomap(Pesos_totales_sujetos_todos_canales, info, 
         fig.savefig(save_path_graficos + 'Channel_correlation_topo.png')
         fig.savefig(save_path_graficos + 'Channel_correlation_topo.svg')
 
+
 def plot_trf_tfce(Pesos_totales_sujetos_todos_canales, p, times, title, mcc, shape, graficos_save_path, Band, stim, n_permutations,  pval_trhesh=None, axes=None, fontsize=15,
                 Display=False, Save=True):
     if Display:
@@ -882,7 +877,6 @@ def ch_heatmap_topo(total_data, info, delays, times, Display, Save, graficos_sav
                               show=False, sphere=0.07, axes=ax)
     cb = plt.colorbar(im[0], shrink=1, orientation='horizontal')
     cb.set_label('r')
-
 
     # Invert times for PLV plot
     phase_sync_ch = np.flip(phase_sync_ch)
