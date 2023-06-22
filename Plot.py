@@ -186,7 +186,7 @@ def Plot_PSD(sesion, sujeto, Band, situacion, Display, Save, save_path, info, da
         plt.savefig(save_path_graficos + 'Sesion{} - Sujeto{}.svg'.format(sesion, sujeto, Band))
 
 
-def Cabezas_corr_promedio(Correlaciones_totales_sujetos, info, Display, Save, Run_graficos_path, title, lat_max_chs=8):
+def Cabezas_corr_promedio(Correlaciones_totales_sujetos, info, Display, Save, Run_graficos_path, title, lat_max_chs=12):
 
     Correlaciones_promedio = Correlaciones_totales_sujetos.mean(0)
 
@@ -691,8 +691,6 @@ def Channel_wise_correlation_topomap(Pesos_totales_sujetos_todos_canales, info, 
         os.makedirs(save_path_graficos, exist_ok=True)
         fig.savefig(save_path_graficos + 'Channel_correlation_topo.png')
         fig.savefig(save_path_graficos + 'Channel_correlation_topo.svg')
-
-
 
 def plot_trf_tfce(Pesos_totales_sujetos_todos_canales, p, times, title, mcc, shape, graficos_save_path, Band, stim, n_permutations,  pval_trhesh=None, axes=None, fontsize=15,
                 Display=False, Save=True):

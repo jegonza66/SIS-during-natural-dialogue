@@ -18,9 +18,9 @@ Display_Ind_Figures = False
 Display_Total_Figures = False
 Save_Ind_Figures = True
 Save_Total_Figures = True
-Save_Results = True
+Save_Results = False
 # Random permutations
-Permutations_test = True
+Permutations_test = False
 # Dialogue situation
 situations = ['Escucha']
 # Model
@@ -29,6 +29,10 @@ model = 'Ridge'
 tmin, tmax = -0.6, 0.2
 # preset alpha
 set_alpha = None
+
+# Stimuli and EEG
+Stims = ['Spectrogram']
+Bands = ['Theta']
 
 # Run setup
 sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
@@ -48,11 +52,6 @@ try:
     f.close()
 except:
     print('\n\nAlphas file not found.\n\n')
-
-# Stimuli and EEG
-Stims = ['Spectrogram']
-
-Bands = ['Theta']
 
 # Standarization
 Stims_preprocess = 'Normalize'
@@ -276,17 +275,13 @@ for situacion in situations:
                     dstims_para_sujeto_2, Sujeto_1, Sujeto_2, eeg_sujeto_1, eeg_sujeto_2
 
             # Armo cabecita con correlaciones promedio entre sujetos
-            _, lat_test_results_corr = Plot.Cabezas_corr_promedio(Correlaciones_totales_sujetos,
-                                                                                             info, Display_Total_Figures,
-                                                                                             Save_Total_Figures,
-                                                                                             Run_graficos_path,
-                                                                                             title='Correlation')
+            _, lat_test_results_corr = Plot.Cabezas_corr_promedio(Correlaciones_totales_sujetos, info,
+                                                                  Display_Total_Figures, Save_Total_Figures,
+                                                                  Run_graficos_path, title='Correlation')
 
             _, lat_test_results_rmse = Plot.Cabezas_corr_promedio(Rmse_totales_sujetos, info,
-                                                                                             Display_Total_Figures,
-                                                                                             Save_Total_Figures,
-                                                                                             Run_graficos_path,
-                                                                                             title='Rmse')
+                                                                  Display_Total_Figures, Save_Total_Figures,
+                                                                  Run_graficos_path, title='Rmse')
 
             # Armo cabecita con canales repetidos
             if Permutations_test:
@@ -320,11 +315,11 @@ for situacion in situations:
                                    Save=Save_Total_Figures)
 
             # Matriz de Correlacion
-            Plot.Matriz_corr_channel_wise(Pesos_totales_sujetos_todos_canales, stim, Len_Estimulos, info, times, sesiones, Display_Total_Figures, Save_Total_Figures,
-                                          Run_graficos_path)
+            Plot.Matriz_corr_channel_wise(Pesos_totales_sujetos_todos_canales, stim, Len_Estimulos, info, times, sesiones,
+                                          Display_Total_Figures, Save_Total_Figures, Run_graficos_path)
             try:
-                _ = Plot.Plot_cabezas_instantes(Pesos_totales_sujetos_todos_canales, info, Band, stim, times, sr, Display_Total_Figures,
-                                                Save_Total_Figures, Run_graficos_path, Len_Estimulos)
+                _ = Plot.Plot_cabezas_instantes(Pesos_totales_sujetos_todos_canales, info, Band, stim, times, sr,
+                                                Display_Total_Figures, Save_Total_Figures, Run_graficos_path, Len_Estimulos)
             except:
                 pass
             # Cabezas de correlacion de pesos por canal
