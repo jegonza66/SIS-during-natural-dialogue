@@ -18,7 +18,7 @@ Display_Ind_Figures = False
 Display_Total_Figures = False
 Save_Ind_Figures = True
 Save_Total_Figures = True
-Save_Results = False
+Save_Results = True
 # Random permutations
 Permutations_test = False
 # Dialogue situation
@@ -62,7 +62,7 @@ for situacion in situations:
     for Band in Bands:
         for stim in Stims:
             print('\nModel: ' + model)
-            print('Band: ' + Band)
+            print('Band: ' + str(Band))
             print('Stimulus: ' + stim)
             print('Status: ' + situacion)
             print('tmin: {} - tmax: {}'.format(tmin, tmax))
