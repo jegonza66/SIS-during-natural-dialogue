@@ -332,7 +332,7 @@ for situacion in situations:
                                             info=info, times=times, Display=Display_Total_Figures,
                                             Save=Save_Total_Figures, Run_graficos_path=Run_graficos_path,
                                             Len_Estimulos=Len_Estimulos, stim=stim,
-                                            fontsize=18, plot_times=[26 / 1000, 104 / 1000, 184 / 1000])
+                                            fontsize=18)
 
                 _ = Plot.Plot_cabezas_instantes(Pesos_totales_sujetos_todos_canales, info, Band, stim, times, sr,
                                                 Display_Total_Figures, Save_Total_Figures, Run_graficos_path, Len_Estimulos)

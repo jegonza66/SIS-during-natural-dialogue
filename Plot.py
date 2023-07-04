@@ -925,7 +925,7 @@ def ch_heatmap_topo(total_data, info, delays, times, Display, Save, graficos_sav
 
 
 def Plot_instantes_interes(Pesos_totales_sujetos_todos_canales, info, times, Display,
-                           Save, Run_graficos_path, Len_Estimulos, stim, plot_times,
+                           Save, Run_graficos_path, Len_Estimulos, stim, plot_times=None, sr=128,
                            fontsize=16):
 
     # Armo pesos promedio por canal de todos los sujetos que por lo menos tuvieron un buen canal
@@ -953,9 +953,9 @@ def Plot_instantes_interes(Pesos_totales_sujetos_todos_canales, info, times, Dis
                 reshape(info['nchan'], 16, len(times)).mean(1)
 
             # Adapt for ERP
-            spectrogram_weights_chanels = np.flip(spectrogram_weights_chanels, axis=1)
+            mean_coefs = np.flip(spectrogram_weights_chanels, axis=1)
 
-            evoked = mne.EvokedArray(spectrogram_weights_chanels, info)
+            evoked = mne.EvokedArray(mean_coefs, info)
 
         else:
             mean_coefs = Pesos_totales_sujetos_todos_canales_copy[:,
@@ -966,14 +966,19 @@ def Plot_instantes_interes(Pesos_totales_sujetos_todos_canales, info, times, Dis
 
             evoked = mne.EvokedArray(mean_coefs, info)
 
-        evoked.times = times
+        if plot_times == None:
+            # If not plot_times provided
+            instantes_index = sgn.find_peaks(np.abs(mean_coefs.mean(0)), height=np.abs(mean_coefs.mean(0)).max() * 0.3)[0]
 
+            plot_times = [i / sr + times[0] for i in instantes_index if i / sr + times[0] >= 0]
+
+        evoked.times = times
         fig = evoked.plot_joint(times=plot_times, show=Display,
                                 ts_args=dict(units=dict(eeg='$mTRF (a.u.)$', grad='fT/cm', mag='fT'),
                                              scalings=dict(eeg=1, grad=1, mag=1), zorder='std', time_unit='ms'),
                                 topomap_args=dict(vmin=-0.016, vmax=0.016, time_unit='ms', scalings=dict(eeg=1, grad=1, mag=1)))
 
-        fig.set_size_inches(13,6)
+        fig.set_size_inches(13, 6)
         fig.suptitle('{}'.format(Stims_Order[i] if Cant_Estimulos > 1 else stim))
         axs = fig.axes
         if times[-1] > 0:
