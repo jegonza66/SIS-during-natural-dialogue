@@ -18,9 +18,8 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 class Trial_channel:
 
     def __init__(
-            self, s=21, trial=1, channel=1, Band='All',
-            sr=128, tmin=-0.6, tmax=-0.003, valores_faltantes=0,
-            Causal_filter_EEG=True, Env_Filter=False, SilenceThreshold=0.03
+            self, s=21, trial=1, channel=1, Band='All', sr=128, tmin=-0.6, tmax=-0.003, valores_faltantes=0,
+            Causal_filter_EEG=True, Env_Filter=False, SilenceThreshold=0.03, avg_ref=False
     ):
 
         sex_list = ['M', 'M', 'M', 'F', 'F', 'F', 'F', 'M', 'M', 'M', 'F', 'F', 'F', 'F', 'M', 'M', 'M', 'F', 'F', 'M']
@@ -37,6 +36,7 @@ class Trial_channel:
         self.sex = sex_list[(s - 21) * 2 + channel - 1]
         self.Causal_filter_EEG = Causal_filter_EEG
         self.Env_Filter = Env_Filter
+        self.avg_ref = avg_ref
 
         self.eeg_fname = "Data/EEG/S" + str(s) + "/s" + str(s) + "-" + str(channel) + "-Trial" + str(
             trial) + "-Deci-Filter-Trim-ICA-Pruned.set"
@@ -53,7 +53,8 @@ class Trial_channel:
         eeg = mne.io.read_raw_eeglab(self.eeg_fname)
         eeg_freq = eeg.info.get("sfreq")
         eeg.load_data()
-        # eeg = eeg.set_eeg_reference(ref_channels='average', projection=False)
+        if self.avg_ref:
+            eeg = eeg.set_eeg_reference(ref_channels='average', projection=False)
 
         # Hago un lowpass
         if self.Band:
@@ -211,7 +212,7 @@ class Trial_channel:
 class Sesion_class:
     def __init__(self, sesion=21, stim='Envelope', Band='All', sr=128, tmin=-0.6, tmax=-0.003,
                  valores_faltantes=0, Causal_filter_EEG=True, Env_Filter=False,
-                 situacion='Escucha', Calculate_pitch=False, SilenceThreshold=0.03,
+                 situacion='Escucha', Calculate_pitch=False, SilenceThreshold=0.03, avg_ref=False,
                  procesed_data_path='Saves/Preprocesed_Data/tmin{}_tmax{}/'.format(-0.6, -0.003)
                  ):
 
@@ -226,6 +227,7 @@ class Sesion_class:
         self.valores_faltantes = valores_faltantes
         self.Causal_filter_EEG = Causal_filter_EEG
         self.Env_Filter = Env_Filter
+        self.avg_ref = avg_ref
         self.situacion = situacion
         self.Calculate_pitch = Calculate_pitch
         self.SilenceThreshold = SilenceThreshold
@@ -263,27 +265,31 @@ class Sesion_class:
                                   valores_faltantes=self.valores_faltantes,
                                   Causal_filter_EEG=self.Causal_filter_EEG,
                                   Env_Filter=self.Env_Filter,
-                                  SilenceThreshold=self.SilenceThreshold).f_calculate_pitch()
+                                  SilenceThreshold=self.SilenceThreshold,
+                                  avg_ref=self.avg_ref).f_calculate_pitch()
                     Trial_channel(s=self.sesion, trial=trial, channel=2,
                                   Band=self.Band, sr=self.sr, tmin=self.tmin, tmax=self.tmax,
                                   valores_faltantes=self.valores_faltantes,
                                   Causal_filter_EEG=self.Causal_filter_EEG,
                                   Env_Filter=self.Env_Filter,
-                                  SilenceThreshold=self.SilenceThreshold).f_calculate_pitch()
+                                  SilenceThreshold=self.SilenceThreshold,
+                                  avg_ref=self.avg_ref).f_calculate_pitch()
 
                 Trial_channel_1 = Trial_channel(s=self.sesion, trial=trial, channel=1,
                                                 Band=self.Band, sr=self.sr, tmin=self.tmin, tmax=self.tmax,
                                                 valores_faltantes=self.valores_faltantes,
                                                 Causal_filter_EEG=self.Causal_filter_EEG,
                                                 Env_Filter=self.Env_Filter,
-                                                SilenceThreshold=self.SilenceThreshold).load_trial(self.stim.split('_'))
+                                                SilenceThreshold=self.SilenceThreshold,
+                                                avg_ref=self.avg_ref).load_trial(self.stim.split('_'))
 
                 Trial_channel_2 = Trial_channel(s=self.sesion, trial=trial, channel=2,
                                                 Band=self.Band, sr=self.sr, tmin=self.tmin, tmax=self.tmax,
                                                 valores_faltantes=self.valores_faltantes,
                                                 Causal_filter_EEG=self.Causal_filter_EEG,
                                                 Env_Filter=self.Env_Filter,
-                                                SilenceThreshold=self.SilenceThreshold).load_trial(self.stim.split('_'))
+                                                SilenceThreshold=self.SilenceThreshold,
+                                                avg_ref=self.avg_ref).load_trial(self.stim.split('_'))
 
                 if self.situacion == 'Habla_Propia' or self.situacion == 'Ambos_Habla':
                     # Load data to dictionary taking stimuli and eeg from speaker
@@ -494,7 +500,7 @@ class Sesion_class:
 
 
 def Load_Data(sesion, stim, Band, sr, tmin, tmax, procesed_data_path, situacion='Escucha', Causal_filter_EEG=True,
-              Env_Filter=False, valores_faltantes=0, Calculate_pitch=False, SilenceThreshold=0.03):
+              Env_Filter=False, valores_faltantes=0, Calculate_pitch=False, SilenceThreshold=0.03, avg_ref=False):
     possible_stims = ['Envelope', 'Pitch', 'Spectrogram', 'Shimmer']
 
     if all(stimulus in possible_stims for stimulus in stim.split('_')):
@@ -502,7 +508,7 @@ def Load_Data(sesion, stim, Band, sr, tmin, tmax, procesed_data_path, situacion=
         Sesion_obj = Sesion_class(sesion=sesion, stim=stim, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
                                   valores_faltantes=valores_faltantes, Causal_filter_EEG=Causal_filter_EEG,
                                   Env_Filter=Env_Filter, situacion=situacion, Calculate_pitch=Calculate_pitch,
-                                  SilenceThreshold=SilenceThreshold, procesed_data_path=procesed_data_path)
+                                  SilenceThreshold=SilenceThreshold, procesed_data_path=procesed_data_path, avg_ref=avg_ref)
 
         # Intento cargar de preprocesados si existen
         try:

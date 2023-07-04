@@ -29,6 +29,7 @@ model = 'Ridge'
 tmin, tmax = -0.6, 0.2
 # preset alpha
 set_alpha = None
+avg_ref = False
 
 # Stimuli and EEG
 Stims = ['Spectrogram']
@@ -75,6 +76,14 @@ for situacion in situations:
             Path_it = 'Saves/{}/{}/Fake_it/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
                 model, situacion, Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
 
+            # Modify paths to use average reference
+            if avg_ref:
+                save_path += 'avg_ref/'
+                procesed_data_path += 'avg_ref/'
+                Run_graficos_path += 'avg_ref/'
+                Path_original += 'avg_ref/'
+                Path_it += 'avg_ref/'
+
             # Start Run
             sujeto_total = 0
             for sesion in sesiones:
@@ -83,7 +92,7 @@ for situacion in situations:
                 # LOAD DATA BY SUBJECT
                 Sujeto_1, Sujeto_2 = Load.Load_Data(sesion=sesion, stim=stim, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
                                                     procesed_data_path=procesed_data_path, situacion=situacion,
-                                                    SilenceThreshold=0.03)
+                                                    SilenceThreshold=0.03, avg_ref=avg_ref)
 
 
                 # LOAD EEG BY SUBJECT
@@ -318,10 +327,18 @@ for situacion in situations:
             Plot.Matriz_corr_channel_wise(Pesos_totales_sujetos_todos_canales, stim, Len_Estimulos, info, times, sesiones,
                                           Display_Total_Figures, Save_Total_Figures, Run_graficos_path)
             try:
+
+                Plot.Plot_instantes_interes(Pesos_totales_sujetos_todos_canales=Pesos_totales_sujetos_todos_canales,
+                                            info=info, times=times, Display=Display_Total_Figures,
+                                            Save=Save_Total_Figures, Run_graficos_path=Run_graficos_path,
+                                            Len_Estimulos=Len_Estimulos, stim=stim,
+                                            fontsize=18, plot_times=[26 / 1000, 104 / 1000, 184 / 1000])
+
                 _ = Plot.Plot_cabezas_instantes(Pesos_totales_sujetos_todos_canales, info, Band, stim, times, sr,
                                                 Display_Total_Figures, Save_Total_Figures, Run_graficos_path, Len_Estimulos)
             except:
                 pass
+
             # Cabezas de correlacion de pesos por canal
             Plot.Channel_wise_correlation_topomap(Pesos_totales_sujetos_todos_canales, info, Display_Total_Figures,
                                                   Save_Total_Figures, Run_graficos_path)

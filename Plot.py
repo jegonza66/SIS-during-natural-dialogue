@@ -921,3 +921,69 @@ def ch_heatmap_topo(total_data, info, delays, times, Display, Save, graficos_sav
         elif total_data.shape == (total_subjects, info['nchan'], len(delays)):
             plt.savefig(graficos_save_path + 't_lags_{}.png'.format(title))
             plt.savefig(graficos_save_path + 't_lags_{}.svg'.format(title))
+
+
+
+def Plot_instantes_interes(Pesos_totales_sujetos_todos_canales, info, times, Display,
+                           Save, Run_graficos_path, Len_Estimulos, stim, plot_times,
+                           fontsize=16):
+
+    # Armo pesos promedio por canal de todos los sujetos que por lo menos tuvieron un buen canal
+    Pesos_totales_sujetos_todos_canales_copy = Pesos_totales_sujetos_todos_canales.swapaxes(0, 2)
+    Pesos_totales_sujetos_todos_canales_copy = Pesos_totales_sujetos_todos_canales_copy.mean(0).transpose()
+
+    # Ploteo pesos y cabezas
+    if Display:
+        plt.ion()
+    else:
+        plt.ioff()
+
+    plt.rcParams.update({'font.size': fontsize})
+
+    Stims_Order = stim.split('_')
+    Cant_Estimulos = len(Len_Estimulos)
+
+    for i in range(Cant_Estimulos):
+
+        if Stims_Order[i] == 'Spectrogram':
+
+            spectrogram_weights_chanels = Pesos_totales_sujetos_todos_canales_copy[:,
+                                          sum(Len_Estimulos[j] for j in range(i)):sum(
+                                              Len_Estimulos[j] for j in range(i + 1))]. \
+                reshape(info['nchan'], 16, len(times)).mean(1)
+
+            # Adapt for ERP
+            spectrogram_weights_chanels = np.flip(spectrogram_weights_chanels, axis=1)
+
+            evoked = mne.EvokedArray(spectrogram_weights_chanels, info)
+
+        else:
+            mean_coefs = Pesos_totales_sujetos_todos_canales_copy[:,
+                                     sum(Len_Estimulos[j] for j in range(i)):sum(
+                                         Len_Estimulos[j] for j in range(i + 1))]
+            # Adapt for ERP
+            mean_coefs = np.flip(mean_coefs, axis=1)
+
+            evoked = mne.EvokedArray(mean_coefs, info)
+
+        evoked.times = times
+
+        fig = evoked.plot_joint(times=plot_times, show=Display,
+                                ts_args=dict(units=dict(eeg='$mTRF (a.u.)$', grad='fT/cm', mag='fT'),
+                                             scalings=dict(eeg=1, grad=1, mag=1), zorder='std', time_unit='ms'),
+                                topomap_args=dict(vmin=-0.016, vmax=0.016, time_unit='ms', scalings=dict(eeg=1, grad=1, mag=1)))
+
+        fig.set_size_inches(13,6)
+        fig.suptitle('{}'.format(Stims_Order[i] if Cant_Estimulos > 1 else stim))
+        axs = fig.axes
+        if times[-1] > 0:
+            axs[0].vlines(0, axs[0].get_ylim()[0], axs[0].get_ylim()[1], color='gray')
+
+        if Save:
+            save_path_graficos = Run_graficos_path
+            os.makedirs(save_path_graficos, exist_ok=True)
+
+            fig.savefig(
+                save_path_graficos + 'Instantes_interes_{}.png'.format(Stims_Order[i] if Cant_Estimulos > 1 else stim))
+            fig.savefig(
+                save_path_graficos + 'Instantes_interes_{}.svg'.format(Stims_Order[i] if Cant_Estimulos > 1 else stim))
