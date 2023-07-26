@@ -494,8 +494,10 @@ situacion = 'Escucha'
 tmin, tmax = -0.6, -0.003
 Run_graficos_path = 'Plots/Model_Comparison/{}/{}/tmin{}_tmax{}/Heatmaps/'.format(model, situacion, tmin, tmax)
 Save_fig = True
+fontsize=16
 
 Bands = ['All', 'Delta', 'Theta', 'Alpha', 'Beta_1']
+Bands_names = ['Broad Band', 'Delta', 'Theta', 'Alpha', 'Low Beta']
 Stims = ['Spectrogram', 'Envelope', 'Pitch', 'Shimmer']
 
 Corrs_map = np.zeros((len(Stims), len(Bands)))
@@ -513,33 +515,34 @@ for i, stim in enumerate(Stims):
     Corrs_map[i] = Corr_stim
     Sig_map[i] = Sig_stim
 
-fig, ax = plt.subplots()
+fig, ax = plt.subplots(figsize=(8, 5))
 plt.imshow(Corrs_map)
-plt.title('Correlation', fontsize=15)
+plt.title('Correlation', fontsize=fontsize)
 ax.set_yticks(np.arange(len(Stims)))
-ax.set_yticklabels(Stims, fontsize=13)
+ax.set_yticklabels(Stims, fontsize=fontsize)
 ax.set_xticks(np.arange(len(Bands)))
-ax.set_xticklabels(Bands, fontsize=13)
+ax.set_xticklabels(Bands_names, fontsize=fontsize)
 # ax.xaxis.tick_top()
-cbar = plt.colorbar(shrink=0.7, aspect=15)
-cbar.ax.tick_params(labelsize=13)
+cbar = plt.colorbar(shrink=0.9, aspect=15)
+cbar.ax.tick_params(labelsize=fontsize)
 fig.tight_layout()
+fig.show()
 
 if Save_fig:
     os.makedirs(Run_graficos_path, exist_ok=True)
     plt.savefig(Run_graficos_path + 'Corr.png'.format(Band))
     plt.savefig(Run_graficos_path + 'Corr.svg'.format(Band))
 
-fig, ax = plt.subplots()
+fig, ax = plt.subplots(figsize=(8, 5))
 plt.imshow(Sig_map)
-plt.title('Significance', fontsize=15)
+plt.title('Significance', fontsize=fontsize)
 ax.set_yticks(np.arange(len(Stims)))
-ax.set_yticklabels(Stims, fontsize=13)
+ax.set_yticklabels(Stims, fontsize=fontsize)
 ax.set_xticks(np.arange(len(Bands)))
-ax.set_xticklabels(Bands, fontsize=13)
+ax.set_xticklabels(Bands_names, fontsize=fontsize)
 # ax.xaxis.tick_top()
-cbar = plt.colorbar(shrink=0.7, aspect=15)
-cbar.ax.tick_params(labelsize=13)
+cbar = plt.colorbar(shrink=0.9, aspect=15)
+cbar.ax.tick_params(labelsize=fontsize)
 fig.tight_layout()
 
 if Save_fig:

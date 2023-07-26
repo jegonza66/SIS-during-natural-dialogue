@@ -311,17 +311,17 @@ for situacion in situations:
             Plot.regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, Display_Total_Figures,
                                            Save_Total_Figures, Run_graficos_path, Len_Estimulos, stim, Band, ERP=True)
 
-            # TFCE across subjects
-            t_tfce, clusters, p_tfce, H0, trf_subjects, n_permutations = Statistics.tfce(
-                Pesos_totales_sujetos_todos_canales, times, Len_Estimulos, n_permutations=4096)
-
-            if stim == 'Spectrogram':
-                Plot.plot_trf_tfce(Pesos_totales_sujetos_todos_canales=Pesos_totales_sujetos_todos_canales, p=p_tfce,
-                                   times=times, title='', mcc=True, shape=trf_subjects.shape,
-                                   n_permutations=n_permutations,
-                                   graficos_save_path=Run_graficos_path, Band=Band, stim=stim,
-                                   pval_trhesh=0.05, fontsize=17, Display=Display_Total_Figures,
-                                   Save=Save_Total_Figures)
+            # # TFCE across subjects
+            # t_tfce, clusters, p_tfce, H0, trf_subjects, n_permutations = Statistics.tfce(
+            #     Pesos_totales_sujetos_todos_canales, times, Len_Estimulos, n_permutations=4096)
+            #
+            # if stim == 'Spectrogram':
+            #     Plot.plot_trf_tfce(Pesos_totales_sujetos_todos_canales=Pesos_totales_sujetos_todos_canales, p=p_tfce,
+            #                        times=times, title='', mcc=True, shape=trf_subjects.shape,
+            #                        n_permutations=n_permutations,
+            #                        graficos_save_path=Run_graficos_path, Band=Band, stim=stim,
+            #                        pval_trhesh=0.05, fontsize=17, Display=Display_Total_Figures,
+            #                        Save=Save_Total_Figures)
 
             # Matriz de Correlacion
             Plot.Matriz_corr_channel_wise(Pesos_totales_sujetos_todos_canales, stim, Len_Estimulos, info, times, sesiones,
