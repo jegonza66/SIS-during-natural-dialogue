@@ -16,22 +16,22 @@ startTime = datetime.now()
 #----- Define Parameters -----#
 # Save / Display Figures
 Display_Ind_Figures = False
-Display_Total_Figures = True
-Save_Ind_Figures = False
-Save_Total_Figures = False
-Save_Results = False
+Display_Total_Figures = False
+Save_Ind_Figures = True
+Save_Total_Figures = True
+Save_Results = True
 # Random permutations
 Permutations_test = False
 # Dialogue situation
-situations = ['Escucha']
+situations = ['Escucha+Ambos+Silencio']
 # Model
 model = 'Ridge'
 
 # Run times
 tmins = [-3.9, -3.3, -2.7, -2.1, -1.5, -0.9, -0.3, 0.3, 0.9, 1.5, 2.1, 2.7, 3.3]
 tmaxs = [-3.3, -2.7, -2.1, -1.5, -0.9, -0.3, 0.3, 0.9, 1.5, 2.1, 2.7, 3.3, 3.9]
-tmins = [-0.6]
-tmaxs = [0.2]
+tmins = [-0.5]
+tmaxs = [0.1]
 
 total_correlations = []
 total_stds = []
@@ -45,7 +45,7 @@ Causal_filter_EEG = True  # Causal True es el nuestro
 
 # Stimuli and EEG
 Stims = ['Spectrogram']
-Bands = ['Theta']
+Bands = [(1, 8)]
 
 # Run setup
 sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
