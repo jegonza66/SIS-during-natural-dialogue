@@ -699,7 +699,7 @@ def plot_trf_tfce(Pesos_totales_sujetos_todos_canales, p, times, title, mcc, sha
 
     Pesos_totales_sujetos_todos_canales_copy = Pesos_totales_sujetos_todos_canales.mean(2)
 
-    fig.suptitle('{} - {}'.format(stim, Band), fontsize=18)
+    fig.suptitle('{} - {}'.format(stim, Band), fontsize=fontsize+1)
 
 
     spectrogram_weights_bands = Pesos_totales_sujetos_todos_canales_copy.mean(0)
@@ -727,14 +727,13 @@ def plot_trf_tfce(Pesos_totales_sujetos_todos_canales, p, times, title, mcc, sha
     cbar.set_label('mTRF amplitude (a.u.)', fontsize=fontsize)
     cbar.ax.tick_params(labelsize=fontsize)
 
-
     if pval_trhesh:
         # Mask p-values over threshold
         p[p > pval_trhesh] = 1
     # p plot
     use_p = -np.log10(np.reshape(np.maximum(p, 1e-5), (shape[1], shape[2])))
-
-    img = axs[1].pcolormesh(times * 1000, np.arange(shape[1]), np.flip(use_p, axis=0), cmap="inferno", shading='auto',
+    plot_p = np.flip(use_p, axis=0)
+    img = axs[1].pcolormesh(times * 1000, np.arange(shape[1]), plot_p, cmap="inferno", shading='auto',
                         vmin=0, vmax=2.5)
 
     axs[1].set(xlabel='Time (ms)')
@@ -744,6 +743,10 @@ def plot_trf_tfce(Pesos_totales_sujetos_todos_canales, p, times, title, mcc, sha
     cbar = fig.colorbar(ax=axs[1], orientation="horizontal", mappable=img, shrink=0.7)
     cbar.set_label(r"$-\log_{10}(p)$", fontsize=fontsize)
     cbar.ax.tick_params(labelsize=fontsize)
+
+    # Plot contour on figure 1
+    axs[0].contour(times * 1000, np.arange(16), plot_p, levels=[0.05], colors='k', linestyles='-')
+
     if Display:
         text = fig.suptitle(title)
         if mcc:

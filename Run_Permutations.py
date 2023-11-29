@@ -13,33 +13,20 @@ import Statistics
 startTime = datetime.now()
 
 # Define Parameters
-tmin, tmax = -0.4, 0.2
+tmin, tmax = -0.3, 0.3
 sr = 128
 n_folds = 5
 delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
 times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays))
-situacion = 'Escucha'
+situacion = 'Ambos'
 # Model parameters
-model = 'Decoding'
-
-if model == 'Ridge':
-    iteraciones = 3000
-
-elif model == 'Decoding':
-    iteraciones = 200
-    Max_t_lags_fname = 'Saves/Decoding_t_lag/{}/Final_Correlation/tmin{}_tmax{}/Max_t_lags.pkl'.format(situacion, tmin,
-                                                                                                       tmax)
-    try:
-        f = open(Max_t_lags_fname, 'rb')
-        Max_t_lags = pickle.load(f)
-        f.close()
-    except:
-        print('\n\nMean_Correlations file not found\n\n')
-        Max_t_lags = {}
+model = 'Ridge'
+Causal_filter_EEG = False
+iteraciones = 3000
 
 # Stimuli and EEG
-Stims = ['Envelope']
-Bands = ['Alpha', 'Beta_1', 'All']
+Stims = ['Spectrogram']
+Bands = [(1, 8)]
 
 # Standarization
 Stims_preprocess = 'Normalize'
@@ -74,7 +61,7 @@ for Band in Bands:
             print('\nSesion {}'.format(sesion))
             # LOAD DATA BY SUBJECT
             Sujeto_1, Sujeto_2 = Load.Load_Data(sesion=sesion, stim=stim, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
-                                                    procesed_data_path=procesed_data_path, situacion=situacion)
+                                                    procesed_data_path=procesed_data_path, situacion=situacion, Causal_filter_EEG=Causal_filter_EEG)
             # LOAD EEG BY SUBJECT
             eeg_sujeto_1, eeg_sujeto_2, info = Sujeto_1['EEG'], Sujeto_2['EEG'], Sujeto_1['info']
 
@@ -134,17 +121,9 @@ for Band in Bands:
                     if model == 'Ridge':
                         Fake_Model = Models.Ridge(alpha)
                         Pesos_fake, Correlaciones_fake, Errores_fake = \
-                            Permutations.simular_iteraciones_Ridge(Fake_Model, iteraciones, sesion, sujeto, fold,
+                            Statistics.simular_iteraciones_Ridge(Fake_Model, iteraciones, sesion, sujeto, fold,
                                                                    dstims_train_val, eeg_train_val, dstims_test,
                                                                    eeg_test, Pesos_fake, Correlaciones_fake,
-                                                                   Errores_fake)
-                    elif model == 'Decoding':
-                        t_lag = np.where(times == Max_t_lags[Band])[0][0]
-                        Fake_Model = Models.mne_mtrf_decoding(tmin, tmax, sr, info, alpha, t_lag)
-                        Pesos_fake, Patterns_fake, Correlaciones_fake, Errores_fake = \
-                            Permutations.simular_iteraciones_decoding(Fake_Model, iteraciones, sesion, sujeto, fold,
-                                                                   dstims_train_val, eeg_train_val, dstims_test,
-                                                                   eeg_test, Pesos_fake, Patterns_fake, Correlaciones_fake,
                                                                    Errores_fake)
 
                 # Save permutations

@@ -226,13 +226,15 @@ Band = 'Theta'
 stim = 'Spectrogram'
 situaciones = ['Escucha', 'Habla_Propia', 'Ambos', 'Ambos_Habla', 'Silencio']
 tmin, tmax = -0.6, -0.003
-stat_test = 'log'  # fdr/log/cohen
+stat_test = 'bayes'  # fdr/uncorrected/cohen/bayes
 mask = False
+log_scale = True
 Run_graficos_path = 'Plots/SIS_statistics/{}/{}/tmin{}_tmax{}/{}'.format(Band, stim, tmin, tmax, stat_test)
+if (log_scale and stat_test != 'cohen') or stat_test == 'uncorrected':
+    Run_graficos_path += '_log'
 if mask and stat_test != 'cohen':
-    Run_graficos_path += '_mask/'
-else:
-    Run_graficos_path += '/'
+    Run_graficos_path += '_mask'
+Run_graficos_path += '/'
 
 Save_fig = True
 Display_fig = False
@@ -247,146 +249,218 @@ info = mne.create_info(ch_names=channel_names[:], sfreq=128, ch_types='eeg').set
 
 Correlaciones = {}
 
-for situacion in situaciones:
-    f = open('Saves/{}/{}/Final_Correlation/tmin{}_tmax{}/{}_EEG_{}.pkl'.format(model, situacion, tmin, tmax, stim, Band), 'rb')
-    Corr, Pass = pickle.load(f)
-    f.close()
+if stat_test != 'bayes':
+    for situacion in situaciones:
+        f = open('Saves/{}/{}/Final_Correlation/tmin{}_tmax{}/{}_EEG_{}.pkl'.format(model, situacion, tmin, tmax, stim, Band), 'rb')
+        Corr, Pass = pickle.load(f)
+        f.close()
 
-    Correlaciones[situacion] = Corr.transpose()
+        Correlaciones[situacion] = Corr.transpose()
 
-# Calculate wilcoxon test over rows of the dictionary
-stats = {}
-pvals = {}
+    # Calculate wilcoxon test over rows of the dictionary
+    stats = {}
+    pvals = {}
 
-for sit1, sit2 in zip(('Escucha', 'Escucha', 'Escucha', 'Escucha', 'Habla_Propia', 'Habla_Propia', 'Ambos', 'Ambos', 'Ambos', 'Ambos_Habla'),
-                      ('Habla_Propia', 'Ambos', 'Silencio', 'Ambos_Habla', 'Silencio', 'Ambos_Habla', 'Ambos_Habla', 'Silencio', 'Habla_Propia', 'Silencio')):
-    print(sit1, sit2)
+    for sit1, sit2 in zip(('Escucha', 'Escucha', 'Escucha', 'Escucha', 'Habla_Propia', 'Habla_Propia', 'Ambos', 'Ambos', 'Ambos', 'Ambos_Habla'),
+                          ('Habla_Propia', 'Ambos', 'Silencio', 'Ambos_Habla', 'Silencio', 'Ambos_Habla', 'Ambos_Habla', 'Silencio', 'Habla_Propia', 'Silencio')):
+        print(sit1, sit2)
 
-    dist1 = Correlaciones[sit1]
-    dist2 = Correlaciones[sit2]
+        dist1 = Correlaciones[sit1]
+        dist2 = Correlaciones[sit2]
 
-    stat = []
-    pval = []
-    for i in range(len(dist1)):
-        res = wilcoxon(dist1[i], dist2[i])
-        stat.append(res[0])
-        pval.append(res[1])
-
-    stats[f'{sit1}-{sit2}'] = stat
-    pvals[f'{sit1}-{sit2}'] = pval
-
-    if stat_test == 'fdr':
-        passed, corrected_pval = fdrcorrection(pvals=pval, alpha=0.05, method='p')
-
-        if mask:
-            corrected_pval[~passed] = 1
-
-        # Plot pvalue
-        fig, ax = plt.subplots()
-        fig.suptitle(f'FDR p-value: {sit1}-{sit2}\n'
-                     f'mean: {round(np.mean(corrected_pval), 6)} - '
-                     f'min: {round(np.min(corrected_pval), 6)} - '
-                     f'max: {round(np.max(corrected_pval), 6)}\n'
-                     f'passed: {sum(passed)}', fontsize=17)
-        im = mne.viz.plot_topomap(corrected_pval, vmin=0, vmax=1, pos=info, axes=ax, show=Display_fig, sphere=0.07,
-                                  cmap='Reds_r')
-        cbar = plt.colorbar(im[0], ax=ax, shrink=0.85)
-        cbar.ax.yaxis.set_tick_params(labelsize=17)
-        cbar.ax.set_ylabel(ylabel='FDR corrected p-value', fontsize=17)
-
-        fig.tight_layout()
-
-        if Save_fig:
-            os.makedirs(Run_graficos_path, exist_ok=True)
-            plt.savefig(Run_graficos_path + f'pval_{sit1}-{sit2}.png'.format(Band))
-            plt.savefig(Run_graficos_path + f'pval_{sit1}-{sit2}.svg'.format(Band))
-
-    elif stat_test == 'log':
-        log_pval = np.log10(pval)
-        if mask:
-            log_pval[np.array(pval) > 0.05/128] = 0
-
-        # Plot pvalue
-        fig, ax = plt.subplots()
-        fig.suptitle(f'p-value: {sit1}-{sit2}\n'
-                     f'mean: {round(np.mean(pvals[f"{sit1}-{sit2}"]), 6)} - '
-                     f'min: {round(np.min(pvals[f"{sit1}-{sit2}"]), 6)} - '
-                     f'max: {round(np.max(pvals[f"{sit1}-{sit2}"]), 6)}\n'
-                     f'passed: {sum(np.array(pval)< 0.05/128)}', fontsize=17)
-        im = mne.viz.plot_topomap(log_pval, vmin=-6, vmax=0, pos=info, axes=ax, show=Display_fig, sphere=0.07, cmap='Reds_r')
-        cbar = plt.colorbar(im[0], ax=ax, shrink=0.85, ticks=[-6, -5, -4, -3, -2, -1, 0])
-        cbar.ax.yaxis.set_tick_params(labelsize=17)
-        cbar.ax.set_yticklabels(['<10-6', '10-5', '10-4', '10-3', '10-2', '10-1', '1'])
-        cbar.ax.set_ylabel(ylabel='p-value', fontsize=17)
-
-
-        fig.tight_layout()
-
-        if Save_fig:
-            os.makedirs(Run_graficos_path, exist_ok=True)
-            plt.savefig(Run_graficos_path + f'pval_{sit1}-{sit2}.png'.format(Band))
-            plt.savefig(Run_graficos_path + f'pval_{sit1}-{sit2}.svg'.format(Band))
-
-        # Plot statistic
-        fig, ax = plt.subplots()
-        fig.suptitle(f'stat: {sit1}-{sit2}\n'
-                     f'Mean: {round(np.mean(stats[f"{sit1}-{sit2}"]), 3)}', fontsize=19)
-        im = mne.viz.plot_topomap(stats[f'{sit1}-{sit2}'], info, axes=ax, show=Display_fig, sphere=0.07, cmap='Reds')
-        cbar = plt.colorbar(im[0], ax=ax, shrink=0.85)
-        cbar.ax.yaxis.set_tick_params(labelsize=17)
-        cbar.ax.set_ylabel(ylabel='p-value', fontsize=17)
-        fig.tight_layout()
-
-        if Save_fig:
-            os.makedirs(Run_graficos_path, exist_ok=True)
-            plt.savefig(Run_graficos_path + f'stat_{sit1}-{sit2}.png'.format(Band))
-            plt.savefig(Run_graficos_path + f'stat_{sit1}-{sit2}.svg'.format(Band))
-
-    elif stat_test == 'cohen':
-        cohen_ds = []
+        stat = []
+        pval = []
         for i in range(len(dist1)):
-            cohen_ds.append(cohen_d(dist1[i], dist2[i]))
+            res = wilcoxon(dist1[i], dist2[i])
+            stat.append(res[0])
+            pval.append(res[1])
 
-        # Plot pvalue
+        stats[f'{sit1}-{sit2}'] = stat
+        pvals[f'{sit1}-{sit2}'] = pval
+
+        if stat_test == 'fdr':
+            passed, corrected_pval = fdrcorrection(pvals=pval, alpha=0.05, method='p')
+
+            if mask:
+                corrected_pval[~passed] = 1
+            if log_scale:
+                log_pval = np.log10(corrected_pval)
+
+                # Plot pvalue
+                fig, ax = plt.subplots()
+                fig.suptitle(f'FDR p-value: {sit1}-{sit2}\n'
+                             f'mean: {round(np.mean(corrected_pval), 6)} - '
+                             f'min: {round(np.min(corrected_pval), 6)} - '
+                             f'max: {round(np.max(corrected_pval), 6)}\n'
+                             f'passed: {sum(passed)}', fontsize=17)
+
+                im = mne.viz.plot_topomap(log_pval, vmin=-6, vmax=0, pos=info, axes=ax, show=Display_fig, sphere=0.07,
+                                          cmap='Reds_r')
+                cbar = plt.colorbar(im[0], ax=ax, shrink=0.85, ticks=[-6, -5, -4, -3, -2, -1, 0])
+                cbar.ax.yaxis.set_tick_params(labelsize=17)
+                cbar.ax.set_yticklabels(['<10-6', '10-5', '10-4', '10-3', '10-2', '10-1', '1'])
+                cbar.ax.set_ylabel(ylabel='FDR corrected p-value', fontsize=17)
+
+                fig.tight_layout()
+
+            else:
+                # Plot pvalue
+                fig, ax = plt.subplots()
+                fig.suptitle(f'FDR p-value: {sit1}-{sit2}\n'
+                             f'mean: {round(np.mean(corrected_pval), 6)} - '
+                             f'min: {round(np.min(corrected_pval), 6)} - '
+                             f'max: {round(np.max(corrected_pval), 6)}\n'
+                             f'passed: {sum(passed)}', fontsize=17)
+                im = mne.viz.plot_topomap(corrected_pval, vmin=0, vmax=1, pos=info, axes=ax, show=Display_fig, sphere=0.07,
+                                          cmap='Reds_r')
+                cbar = plt.colorbar(im[0], ax=ax, shrink=0.85)
+                cbar.ax.yaxis.set_tick_params(labelsize=17)
+                cbar.ax.set_ylabel(ylabel='FDR corrected p-value', fontsize=17)
+
+                fig.tight_layout()
+
+            if Save_fig:
+                os.makedirs(Run_graficos_path, exist_ok=True)
+                plt.savefig(Run_graficos_path + f'pval_{sit1}-{sit2}.png')
+                plt.savefig(Run_graficos_path + f'pval_{sit1}-{sit2}.svg')
+
+        elif stat_test == 'uncorrected':
+            log_pval = np.log10(pval)
+            if mask:
+                log_pval[np.array(pval) > 0.05/128] = 0
+
+            # Plot pvalue
+            fig, ax = plt.subplots()
+            fig.suptitle(f'p-value: {sit1}-{sit2}\n'
+                         f'mean: {round(np.mean(pvals[f"{sit1}-{sit2}"]), 6)} - '
+                         f'min: {round(np.min(pvals[f"{sit1}-{sit2}"]), 6)} - '
+                         f'max: {round(np.max(pvals[f"{sit1}-{sit2}"]), 6)}\n'
+                         f'passed: {sum(np.array(pval)< 0.05/128)}', fontsize=17)
+            im = mne.viz.plot_topomap(log_pval, vmin=-6, vmax=0, pos=info, axes=ax, show=Display_fig, sphere=0.07, cmap='Reds_r')
+            cbar = plt.colorbar(im[0], ax=ax, shrink=0.85, ticks=[-6, -5, -4, -3, -2, -1, 0])
+            cbar.ax.yaxis.set_tick_params(labelsize=17)
+            cbar.ax.set_yticklabels(['<10-6', '10-5', '10-4', '10-3', '10-2', '10-1', '1'])
+            cbar.ax.set_ylabel(ylabel='p-value', fontsize=17)
+
+
+            fig.tight_layout()
+
+            if Save_fig:
+                os.makedirs(Run_graficos_path, exist_ok=True)
+                plt.savefig(Run_graficos_path + f'pval_{sit1}-{sit2}.png')
+                plt.savefig(Run_graficos_path + f'pval_{sit1}-{sit2}.svg')
+
+            # Plot statistic
+            fig, ax = plt.subplots()
+            fig.suptitle(f'stat: {sit1}-{sit2}\n'
+                         f'Mean: {round(np.mean(stats[f"{sit1}-{sit2}"]), 3)}', fontsize=19)
+            im = mne.viz.plot_topomap(stats[f'{sit1}-{sit2}'], info, axes=ax, show=Display_fig, sphere=0.07, cmap='Reds')
+            cbar = plt.colorbar(im[0], ax=ax, shrink=0.85)
+            cbar.ax.yaxis.set_tick_params(labelsize=17)
+            cbar.ax.set_ylabel(ylabel='p-value', fontsize=17)
+            fig.tight_layout()
+
+            if Save_fig:
+                os.makedirs(Run_graficos_path, exist_ok=True)
+                plt.savefig(Run_graficos_path + f'stat_{sit1}-{sit2}.png')
+                plt.savefig(Run_graficos_path + f'stat_{sit1}-{sit2}.svg')
+
+        elif stat_test == 'cohen':
+            cohen_ds = []
+            for i in range(len(dist1)):
+                cohen_ds.append(cohen_d(dist1[i], dist2[i]))
+
+            # Plot pvalue
+            fig, ax = plt.subplots()
+            fig.suptitle(f'Cohen d: {sit1}-{sit2}\n'
+                         f'mean: {round(np.mean(cohen_ds), 2)} +- {round(np.std(cohen_ds), 2)} -\n'
+                         f'min: {round(np.min(cohen_ds), 2)} - '
+                         f'max: {round(np.max(cohen_ds), 2)}', fontsize=17)
+            im = mne.viz.plot_topomap(cohen_ds, vmin=0, vmax=4, pos=info, axes=ax, show=Display_fig, sphere=0.07,
+                                      cmap='Reds')
+            cbar = plt.colorbar(im[0], ax=ax, shrink=0.85)
+            cbar.ax.yaxis.set_tick_params(labelsize=17)
+            cbar.ax.set_ylabel(ylabel='Cohens d', fontsize=17)
+
+            fig.tight_layout()
+
+            if Save_fig:
+                os.makedirs(Run_graficos_path, exist_ok=True)
+                plt.savefig(Run_graficos_path + f'cohen_{sit1}-{sit2}.png')
+                plt.savefig(Run_graficos_path + f'cohen_{sit1}-{sit2}.svg')
+
+    # Violin plot
+    for situacion in situaciones:
+        Correlaciones[situacion] = Correlaciones[situacion].ravel()
+
+    my_pal = {'Escucha': 'darkgrey', 'Habla_Propia': 'darkgrey', 'Ambos': 'darkgrey', 'Ambos_Habla': 'darkgrey',
+              'Silencio': 'darkgrey'}
+
+    plt.figure(figsize=(19, 5))
+    sn.violinplot(data=pd.DataFrame(Correlaciones), palette=my_pal)
+    plt.ylabel('Correlation', fontsize=24)
+    plt.yticks(fontsize=20)
+    plt.xticks(fontsize=24)
+    plt.grid()
+    ax = plt.gca()
+    ax.set_xticklabels(['Listening', 'Speech\nproduction', 'Listening \n (speaking)', 'Speaking \n (listening)',
+                        'Silence'], fontsize=24)
+    plt.tight_layout()
+
+    if Save_fig:
+        os.makedirs(Run_graficos_path, exist_ok=True)
+        plt.savefig(Run_graficos_path + 'Violin_plot.png'.format(Band))
+        plt.savefig(Run_graficos_path + 'Violin_plot.svg'.format(Band))
+
+# Bayes Factors
+else:
+    BF_path = 'Saves/Bayes_Factors/'
+    files = os.listdir(BF_path)
+    for file in files:
+        file_name = file.split('BF10_')[-1][:-4]
+        df = pd.read_csv(f'{BF_path}{file}', names=np.arange(128))
+        bf10 = df.values[0]
+        bf01 = 1/bf10
+        if log_scale:
+            bf10 = np.log10(bf10)
+            bf01 = np.log10(bf01)
+
+        # Plot BF10
         fig, ax = plt.subplots()
-        fig.suptitle(f'Cohen d: {sit1}-{sit2}\n'
-                     f'mean: {round(np.mean(cohen_ds), 2)} +- {round(np.std(cohen_ds), 2)} -\n'
-                     f'min: {round(np.min(cohen_ds), 2)} - '
-                     f'max: {round(np.max(cohen_ds), 2)}', fontsize=17)
-        im = mne.viz.plot_topomap(cohen_ds, vmin=0, vmax=4, pos=info, axes=ax, show=Display_fig, sphere=0.07,
+        fig.suptitle(f'Bayes Factors 10: {file_name.split(")_")[0]})-{file_name.split(")_")[1]}\n'
+                     f'mean: {round(np.mean(bf10), 2)} +- {round(np.std(bf10), 2)} -\n'
+                     f'min: {round(np.min(bf10), 2)} - '
+                     f'max: {round(np.max(bf10), 2)}', fontsize=17)
+        im = mne.viz.plot_topomap(bf10, vmin=0.5, vmax=2, pos=info, axes=ax, show=Display_fig, sphere=0.07, cmap='Reds')
+        cbar = plt.colorbar(im[0], ax=ax, shrink=0.85)
+        cbar.ax.yaxis.set_tick_params(labelsize=17)
+        cbar.ax.set_ylabel(ylabel='Bayes factors', fontsize=17)
+
+        fig.tight_layout()
+
+        if Save_fig:
+            os.makedirs(Run_graficos_path, exist_ok=True)
+            plt.savefig(Run_graficos_path + f'bf10_ {file_name.split(")_")[0]})-{file_name.split(")_")[1]}.png')
+            plt.savefig(Run_graficos_path + f'bf10_ {file_name.split(")_")[0]})-{file_name.split(")_")[1]}.svg')
+
+        # Plot BF01
+        fig, ax = plt.subplots()
+        fig.suptitle(f'Bayes Factors 01: {file_name.split(")_")[0]})-{file_name.split(")_")[1]}\n'
+                     f'mean: {round(np.mean(bf01), 2)} +- {round(np.std(bf01), 2)} -\n'
+                     f'min: {round(np.min(bf01), 2)} - '
+                     f'max: {round(np.max(bf01), 2)}', fontsize=17)
+        im = mne.viz.plot_topomap(bf01, vmin=0.5, vmax=2, pos=info, axes=ax, show=Display_fig, sphere=0.07,
                                   cmap='Reds')
         cbar = plt.colorbar(im[0], ax=ax, shrink=0.85)
         cbar.ax.yaxis.set_tick_params(labelsize=17)
-        cbar.ax.set_ylabel(ylabel='Cohens d', fontsize=17)
+        cbar.ax.set_ylabel(ylabel='Bayes factors', fontsize=17)
 
         fig.tight_layout()
 
         if Save_fig:
             os.makedirs(Run_graficos_path, exist_ok=True)
-            plt.savefig(Run_graficos_path + f'cohen_{sit1}-{sit2}.png'.format(Band))
-            plt.savefig(Run_graficos_path + f'cohen_{sit1}-{sit2}.svg'.format(Band))
-
-
-for situacion in situaciones:
-    Correlaciones[situacion] = Correlaciones[situacion].ravel()
-
-my_pal = {'Escucha': 'darkgrey', 'Habla_Propia': 'darkgrey', 'Ambos': 'darkgrey', 'Ambos_Habla': 'darkgrey', 'Silencio': 'darkgrey'}
-
-plt.figure(figsize=(19, 5))
-sn.violinplot(data=pd.DataFrame(Correlaciones), palette=my_pal)
-plt.ylabel('Correlation', fontsize=24)
-plt.yticks(fontsize=20)
-plt.xticks(fontsize=24)
-plt.grid()
-ax = plt.gca()
-ax.set_xticklabels(['Listening', 'Speech\nproduction', 'Listening \n (speaking)', 'Speaking \n (listening)',
-                    'Silence'], fontsize=24)
-plt.tight_layout()
-
-if Save_fig:
-    os.makedirs(Run_graficos_path, exist_ok=True)
-    plt.savefig(Run_graficos_path + 'Violin_plot.png'.format(Band))
-    plt.savefig(Run_graficos_path + 'Violin_plot.svg'.format(Band))
+            plt.savefig(Run_graficos_path + f'bf01_ {file_name.split(")_")[0]})-{file_name.split(")_")[1]}.png')
+            plt.savefig(Run_graficos_path + f'bf01_ {file_name.split(")_")[0]})-{file_name.split(")_")[1]}.svg')
 
 ## TRF amplitude
 

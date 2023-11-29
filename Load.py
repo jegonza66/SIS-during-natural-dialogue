@@ -59,9 +59,10 @@ class Trial_channel:
         # Hago un lowpass
         if self.Band:
             if self.Causal_filter_EEG:
-                eeg = eeg.filter(l_freq=self.l_freq_eeg, h_freq=self.h_freq_eeg, phase='minimum')
+                eeg = eeg.filter(l_freq=self.l_freq_eeg, h_freq=self.h_freq_eeg, phase='minimum')#, filter_length=200)
+                # eeg = eeg.filter(l_freq=self.l_freq_eeg, h_freq=self.h_freq_eeg, phase='minimum', filter_length=200)
             else:
-                eeg = eeg.filter(l_freq=self.l_freq_eeg, h_freq=self.h_freq_eeg)
+                eeg = eeg.filter(l_freq=self.l_freq_eeg, h_freq=self.h_freq_eeg, method='iir')
 
         # Paso a array
         eeg = eeg.to_data_frame()
@@ -291,7 +292,7 @@ class Sesion_class:
                                                 SilenceThreshold=self.SilenceThreshold,
                                                 avg_ref=self.avg_ref).load_trial(self.stim.split('_'))
 
-                if self.situacion == 'Habla_Propia' or self.situacion == 'Ambos_Habla':
+                if 'Habla_Propia' in self.situacion or 'Ambos_Habla' in self.situacion:
                     # Load data to dictionary taking stimuli and eeg from speaker
                     Trial_sujeto_1 = {key: Trial_channel_1[key] for key in Trial_channel_1.keys()}
                     Trial_sujeto_2 = {key: Trial_channel_2[key] for key in Trial_channel_2.keys()}
@@ -349,10 +350,12 @@ class Sesion_class:
                         Sujeto_2[key] = Sujeto_2[key].append(Trial_sujeto_2[key])
 
             except:
+
+                print(1)
+
                 # Empty trial
                 samples_info['trial_lengths1'].append(0)
                 samples_info['trial_lengths2'].append(0)
-
 
         info = Trial_channel_1['info']
 
