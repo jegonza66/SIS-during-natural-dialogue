@@ -16,22 +16,22 @@ startTime = datetime.now()
 #----- Define Parameters -----#
 # Save / Display Figures
 Display_Ind_Figures = False
-Display_Total_Figures = False
+Display_Total_Figures = True
 Save_Ind_Figures = True
 Save_Total_Figures = True
 Save_Results = True
 # Random permutations
 Permutations_test = False
 # Dialogue situation
-situations = ['Escucha+Ambos+Silencio']
+situations = ['Escucha']
 # Model
 model = 'Ridge'
 
 # Run times
 tmins = [-3.9, -3.3, -2.7, -2.1, -1.5, -0.9, -0.3, 0.3, 0.9, 1.5, 2.1, 2.7, 3.3]
 tmaxs = [-3.3, -2.7, -2.1, -1.5, -0.9, -0.3, 0.3, 0.9, 1.5, 2.1, 2.7, 3.3, 3.9]
-tmins = [-0.5]
-tmaxs = [0.1]
+tmins = [-0.6]
+tmaxs = [0.2]
 
 total_correlations = []
 total_stds = []
@@ -45,7 +45,7 @@ Causal_filter_EEG = True  # Causal True es el nuestro
 
 # Stimuli and EEG
 Stims = ['Spectrogram']
-Bands = [(1, 8)]
+Bands = ['Theta']
 
 # Run setup
 sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
@@ -317,24 +317,24 @@ for tmin, tmax in zip(tmins, tmaxs):
                     Plot.Cabezas_canales_rep(Canales_repetidos_corr_sujetos.sum(0), info, Display_Total_Figures,
                                              Save_Total_Figures, Run_graficos_path, title='Rmse')
 
-                # Grafico Pesos
-                Pesos_totales = Plot.regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display_Total_Figures,
-                                                        Save_Total_Figures, Run_graficos_path, Len_Estimulos, stim, ERP=True)
-
-                Plot.regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, Display_Total_Figures,
-                                               Save_Total_Figures, Run_graficos_path, Len_Estimulos, stim, Band, ERP=True)
-
                 # TFCE across subjects
                 t_tfce, clusters, p_tfce, H0, trf_subjects, n_permutations = Statistics.tfce(
-                    Pesos_totales_sujetos_todos_canales, times, Len_Estimulos, n_permutations=1024)
+                    Pesos_totales_sujetos_todos_canales, times, Len_Estimulos, n_permutations=4096)
 
                 if stim == 'Spectrogram':
-                    Plot.plot_trf_tfce(Pesos_totales_sujetos_todos_canales=Pesos_totales_sujetos_todos_canales, p=p_tfce,
+                    clusters = Plot.plot_trf_tfce(Pesos_totales_sujetos_todos_canales=Pesos_totales_sujetos_todos_canales, p=p_tfce,
                                        times=times, title='', mcc=True, shape=trf_subjects.shape,
                                        n_permutations=n_permutations,
                                        graficos_save_path=Run_graficos_path, Band=Band, stim=stim,
                                        pval_trhesh=0.05, fontsize=17, Display=Display_Total_Figures,
                                        Save=Save_Total_Figures)
+
+                # Grafico Pesos
+                Pesos_totales = Plot.regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display_Total_Figures,
+                                                        Save_Total_Figures, Run_graficos_path, Len_Estimulos, stim, ERP=True)
+
+                Plot.regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, Display_Total_Figures,
+                                               Save_Total_Figures, Run_graficos_path, Len_Estimulos, stim, Band, clusters, ERP=True)
 
                 # Matriz de Correlacion
                 Plot.Matriz_corr_channel_wise(Pesos_totales_sujetos_todos_canales, stim, Len_Estimulos, info, times, sesiones,
@@ -368,8 +368,8 @@ for tmin, tmax in zip(tmins, tmaxs):
                     f.close()
 
                 del Pesos_totales
-                # del Pesos_ronda_canales, topo_pvalues_corr, topo_pvalues_rmse
-                # del Prob_Corr_ronda_canales, Prob_Rmse_ronda_canales, Canales_repetidos_corr_sujeto, Canales_repetidos_rmse_sujeto
+                del Pesos_ronda_canales, topo_pvalues_corr, topo_pvalues_rmse
+                del Prob_Corr_ronda_canales, Prob_Rmse_ronda_canales, Canales_repetidos_corr_sujeto, Canales_repetidos_rmse_sujeto
                 plt.close('all')
 
                 total_correlations.append(corr_total)

@@ -393,7 +393,7 @@ def regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display
 
 
 def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, Display,
-                              Save, Run_graficos_path, Len_Estimulos, stim, Band, ERP=True, title=None):
+                              Save, Run_graficos_path, Len_Estimulos, stim, Band, clusters=np.array([False]), ERP=True, title=None, fontsize=18):
     # Armo pesos promedio por canal de todos los sujetos que por lo menos tuvieron un buen canal
     Pesos_totales_sujetos_todos_canales_copy = Pesos_totales_sujetos_todos_canales.mean(2)
 
@@ -409,8 +409,8 @@ def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, 
     for i in range(Cant_Estimulos):
 
         if Stims_Order[i] == 'Spectrogram':
-            fig, axs = plt.subplots(2, 1, sharex=True, figsize=(6, 8), gridspec_kw={'height_ratios': [1, 4]})
-            fig.suptitle('{} - {}'.format(Stims_Order[i], Band), fontsize=18)
+            fig, axs = plt.subplots(2, 1, sharex=True, figsize=(10, 6), gridspec_kw={'height_ratios': [1, 2]})
+            fig.suptitle('{} - {}'.format(Stims_Order[i], Band), fontsize=fontsize)
 
             spectrogram_weights_chanels = Pesos_totales_sujetos_todos_canales_copy[:,
                                           sum(Len_Estimulos[j] for j in range(i)):sum(
@@ -432,10 +432,10 @@ def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, 
             evoked = mne.EvokedArray(spectrogram_weights_chanels, info)
             evoked.times = times
             evoked.plot(scalings=dict(eeg=1, grad=1, mag=1), zorder='std', time_unit='ms', titles=dict(eeg=''),
-                        show=False, spatial_colors=True, unit=False, units='w', axes=axs[0])
+                        show=False, spatial_colors=True, unit=True, units='mTRF (a.u.)', axes=axs[0])
             if times[0] < 0:
                 axs[0].axvline(x=0, ymin=0, ymax=1, color='grey')
-            axs[0].axis('off')
+            # axs[0].axis('off')
 
             im = axs[1].pcolormesh(times * 1000, np.arange(16), spectrogram_weights_bands, cmap='jet',
                                vmin=-spectrogram_weights_bands.max(), vmax=spectrogram_weights_bands.max(), shading='auto')
@@ -446,13 +446,16 @@ def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, 
             ticks_labels = [int(Bands_center[i]) for i in np.arange(0, len(Bands_center), 2)]
             axs[1].set_yticks(ticks_positions)
             axs[1].set_yticklabels(ticks_labels)
-            axs[1].xaxis.label.set_size(14)
-            axs[1].yaxis.label.set_size(14)
-            axs[1].tick_params(axis='both', labelsize=14)
+            axs[1].xaxis.label.set_size(fontsize)
+            axs[1].yaxis.label.set_size(fontsize)
+            axs[1].tick_params(axis='both', labelsize=fontsize)
+
+            if clusters.any():
+                axs[1].contour(times * 1000, np.arange(16), clusters, colors='k', linestyles='-')
 
             cbar = fig.colorbar(im, ax=axs[1], orientation='vertical')
-            cbar.set_label('Amplitude (a.u.)', fontsize=14)
-            cbar.ax.tick_params(labelsize=14)
+            cbar.set_label('mTRF amplitude (a.u.)', fontsize=fontsize)
+            cbar.ax.tick_params(labelsize=fontsize)
 
             # Change axis 0 to match axis 1 width after adding colorbar
             ax1_box = axs[1].get_position().bounds
@@ -465,7 +468,7 @@ def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, 
                          sum(Len_Estimulos[j] for j in range(i)):sum(Len_Estimulos[j] for j in range(i + 1))]
 
             fig, axs = plt.subplots(2, 1, sharex=True, figsize=(6, 8), gridspec_kw={'height_ratios': [1, 3]})
-            fig.suptitle('{} - {}'.format(Stims_Order[i], Band), fontsize=18)
+            fig.suptitle('{} - {}'.format(Stims_Order[i], Band), fontsize=fontsize)
 
             if ERP:
                 # Adapt for ERP
@@ -484,10 +487,10 @@ def regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, 
             axs[1].set(xlabel='Time (ms)', ylabel='Channel')
             axs[1].xaxis.label.set_size(14)
             axs[1].yaxis.label.set_size(14)
-            axs[1].tick_params(axis='both', labelsize=14)
+            axs[1].tick_params(axis='both', labelsize=fontsize)
             cbar = fig.colorbar(im, ax=axs[1], orientation='vertical')
-            cbar.set_label('Amplitude (a.u.)', fontsize=14)
-            cbar.ax.tick_params(labelsize=14)
+            cbar.set_label('Amplitude (a.u.)', fontsize=fontsize)
+            cbar.ax.tick_params(labelsize=fontsize)
 
             # Change axis 0 to match axis 1 width after adding colorbar
             ax1_box = axs[1].get_position().bounds
@@ -745,7 +748,8 @@ def plot_trf_tfce(Pesos_totales_sujetos_todos_canales, p, times, title, mcc, sha
     cbar.ax.tick_params(labelsize=fontsize)
 
     # Plot contour on figure 1
-    axs[0].contour(times * 1000, np.arange(16), plot_p, levels=[0.05], colors='k', linestyles='-')
+    clusters = plot_p < pval_trhesh
+    axs[0].contour(times * 1000, np.arange(16), clusters, colors='k', linestyles='-')
 
     if Display:
         text = fig.suptitle(title)
@@ -761,6 +765,8 @@ def plot_trf_tfce(Pesos_totales_sujetos_todos_canales, p, times, title, mcc, sha
         os.makedirs(graficos_save_path, exist_ok=True)
         plt.savefig(graficos_save_path + f'trf_tfce_{pval_trhesh}_{n_permutations}.png')
         plt.savefig(graficos_save_path + f'trf_tfce_{pval_trhesh}_{n_permutations}.svg')
+
+    return clusters
 
 
 def ch_heatmap_topo(total_data, info, delays, times, Display, Save, graficos_save_path, title, total_subjects=18,
