@@ -6,18 +6,18 @@ import Plot
 import Load as Load
 
 # Figures
-Display = False
+Display = True
 Save = True
 
 # Define Parameters
 # Stimuli and EEG
-Stims = ['Envelope']
-Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'All', (1, 12)]
+stim = 'Envelope'
 Bands = ['Theta']
 sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
 total_subjects = len(sesiones)*2
 
-situacion = 'Silencio'
+situcaiones = ['Escucha', 'Ambos', 'Ambos_Habla', 'Habla_Propia', 'Silencio']
+# situcaiones = ['Ambos']
 tmin, tmax = -0.4, 0.2
 sr = 128
 delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
@@ -26,9 +26,9 @@ times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.
 # Paths
 procesed_data_path = 'Saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
 Run_saves_path = 'Saves/'
+for situacion in situcaiones:
+    for Band in Bands:
 
-for Band in Bands:
-    for stim in Stims:
         print('\nBand: ' + Band)
         print('Stimulus: ' + stim)
         print('Status: ' + situacion)
@@ -99,13 +99,13 @@ for Band in Bands:
 
                         print("\rProgress: {}%".format(int((t_lag + 1) * 100 / len(delays))), end='')
                     print()
-                    # Graficos save path
-                    graficos_save_path_subj = graficos_save_path + 'Subjects/'
-
-                    Plot.ch_heatmap_topo(total_data=total_phase_consistency[sujeto_total], info=info,
-                                         delays=delays, times=times, Display=Display, Save=Save,
-                                         graficos_save_path=graficos_save_path_subj,  title='Phase Sync',
-                                         total_subjects=total_subjects, sesion=sesion, sujeto=sujeto)
+                    # # Graficos save path
+                    # graficos_save_path_subj = graficos_save_path + 'Subjects/'
+                    #
+                    # Plot.ch_heatmap_topo(total_data=total_phase_consistency[sujeto_total], info=info,
+                    #                      delays=delays, times=times, Display=Display, Save=Save,
+                    #                      graficos_save_path=graficos_save_path_subj,  title='Phase Sync',
+                    #                      total_subjects=total_subjects, sesion=sesion, sujeto=sujeto)
 
                     sujeto_total += 1
 
@@ -115,79 +115,6 @@ for Band in Bands:
 
             f = open(save_path + '{}.pkl'.format(Band), 'wb')
             pickle.dump(total_phase_consistency, f)
-            f.close()
-
-            Plot.ch_heatmap_topo(total_data=total_phase_consistency, info=info,
-                                 delays=delays, times=times, Display=Display, Save=Save,
-                                 graficos_save_path=graficos_save_path, title='PLV',
-                                 total_subjects=total_subjects)
-
-
-##
-import numpy as np
-import Plot
-import pickle
-
-# WHAT TO DO
-PLV = True
-GCMI = False
-Intra_Brain = False
-Brain_Brain_sync = False
-
-# Figures
-Display = False
-Save = True
-
-# Define Parameters
-# Stimuli and EEG
-Stims = ['Spectrogram']
-Bands = ['Delta', 'Theta', 'Alpha', 'Beta_1', 'All']
-Bands = ['Theta']
-sesiones = [21, 22, 23, 24, 25, 26, 27, 29, 30]
-total_subjects = len(sesiones)*2
-
-situacion = 'Escucha'
-situcaiones = ['Escucha', 'Ambos', 'Ambos_Habla', 'Habla_Propia', 'Silencio']
-tmin, tmax = -0.4, 0.2
-sr = 128
-delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
-times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays))
-
-# Paths
-procesed_data_path = 'Saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
-Run_saves_path = 'Saves/'
-
-# Get info
-info_path = 'Saves/Preprocesed_Data/tmin-0.6_tmax-0.003/EEG/info.pkl'
-f = open(info_path, 'rb')
-info = pickle.load(f)
-f.close()
-
-for situacion in situcaiones:
-    for Band in Bands:
-        for stim in Stims:
-            print('\nBand: ' + Band)
-            print('Stimulus: ' + stim)
-            print('Status: ' + situacion)
-            print('tmin: {} - tmax: {}'.format(tmin, tmax))
-            # Save Variables
-            if PLV:
-                total_phase_consistency = np.zeros((total_subjects, 128, len(delays)))
-            if GCMI:
-                total_gcmi = np.zeros((total_subjects, 128, len(delays)))
-            if Brain_Brain_sync:
-                Brain_Brain_phase_sync = np.zeros((total_subjects, 128, 128))
-            if Intra_Brain:
-                Intra_Brain_phase_sync = np.zeros((total_subjects, 128, 128))
-
-
-        if PLV:
-            graficos_save_path = 'Plots/PLV/{}/tmin{}_tmax{}/{}/'.format(situacion, tmin, tmax,Band)
-            # Save Cortical entrainment
-            save_path = Run_saves_path + '/PLV/{}/tmin{}_tmax{}/'.format(situacion, tmin, tmax)
-
-            f = open(save_path + '{}.pkl'.format(Band), 'rb')
-            total_phase_consistency = pickle.load(f)
             f.close()
 
             Plot.ch_heatmap_topo(total_data=total_phase_consistency, info=info,

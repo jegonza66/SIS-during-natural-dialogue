@@ -31,7 +31,7 @@ for Band in Bands:
 
 my_pal = {'All': 'darkgrey', 'Delta': 'darkgrey', 'Theta': 'C1', 'Alpha': 'darkgrey', 'Beta_1': 'darkgrey'}
 
-fontsize = 15
+fontsize = 19
 plt.rcParams.update({'font.size': fontsize})
 # fig, axs = plt.subplots(figsize=(10, 4), ncols=5, nrows=2, gridspec_kw={'wspace': 0.25})
 fig, axs = plt.subplots(figsize=(14, 5), ncols=5, nrows=2)
@@ -41,8 +41,8 @@ for i, Band in enumerate(Bands):
     fig.tight_layout()
     im = mne.viz.plot_topomap(Correlaciones[Band].ravel(), info, axes=ax, show=False, sphere=0.07, cmap='Reds',
                               vmin=Correlaciones[Band].min(), vmax=Correlaciones[Band].max())
-    # cbar = plt.colorbar(im[0], ax=ax, orientation='vertical', shrink=0.5)
-    # cbar.ax.tick_params(labelsize=fontsize)
+    cbar = plt.colorbar(im[0], ax=ax, orientation='vertical', shrink=0.5)
+    cbar.ax.tick_params(labelsize=fontsize)
 
 for ax_row in axs[1:]:
     for ax in ax_row:
@@ -53,10 +53,9 @@ ax = fig.add_subplot(2, 1, (2, 3))
 plt.suptitle(situacion)
 sn.violinplot(data=pd.DataFrame(Correlaciones), palette=my_pal, ax=ax)
 ax.set_ylabel('Correlation')
-ax.set_ylim([-0.1, 0.5])
+ax.set_ylim([0, 0.5])
 ax.grid()
-ax.set_xticklabels(['Broad band\n(0.1 - 40 Hz)', 'Delta\n(1 - 4 Hz)', 'Theta\n(4 - 8 Hz)', 'Alpha\n(8 - 13 Hz)',
-                    'Low Beta\n(13 - 19 Hz)'])
+ax.set_xticklabels(['Broad band', 'Delta', 'Theta', 'Alpha', 'Low Beta'])
 fig.tight_layout()
 
 if Save_fig:
@@ -78,9 +77,10 @@ f = open(info_path, 'rb')
 info = pickle.load(f)
 f.close()
 
-tmin, tmax = -0.6, -0.003
-delays = - np.arange(np.floor(tmin * info['sfreq']), np.ceil(tmax * info['sfreq']), dtype=int)
-times = np.linspace(delays[0] * np.sign(tmin) * 1 / info['sfreq'], np.abs(delays[-1]) * np.sign(tmax) * 1 / info['sfreq'], len(delays))
+tmin_corr, tmax_corr = -0.6, -0.003
+tmin_w, tmax_w = -0.6, 0.2
+delays = - np.arange(np.floor(tmin_w * info['sfreq']), np.ceil(tmax_w * info['sfreq']), dtype=int)
+times = np.linspace(delays[0] * np.sign(tmin_w) * 1 / info['sfreq'], np.abs(delays[-1]) * np.sign(tmax_w) * 1 / info['sfreq'], len(delays))
 times = np.flip(-times)
 
 model = 'Ridge'
@@ -106,9 +106,9 @@ f.close()
 
 my_pal = {'All': 'darkgrey', 'Delta': 'darkgrey', 'Theta': 'C1', 'Alpha': 'darkgrey', 'Beta_1': 'darkgrey'}
 
-fontsize = 12
+fontsize = 17
 plt.rcParams.update({'font.size': fontsize})
-fig, axs = plt.subplots(figsize=(6, 4), nrows=2, gridspec_kw={'height_ratios': [1, 1]})
+fig, axs = plt.subplots(figsize=(8, 5), nrows=2, gridspec_kw={'height_ratios': [1, 1]})
 
 plt.suptitle(situacion)
 sn.violinplot(data=pd.DataFrame(Correlaciones), palette=my_pal, ax=axs[0])
@@ -126,13 +126,11 @@ spectrogram_weights_chanels = np.flip(spectrogram_weights_chanels, axis=1)
 evoked = mne.EvokedArray(spectrogram_weights_chanels, info)
 evoked.times = times
 evoked.plot(scalings=dict(eeg=1, grad=1, mag=1), zorder='std', time_unit='ms', titles=dict(eeg=''),
-            show=False, spatial_colors=True, unit=False, units='w', axes=axs[1])
-axs[1].plot(times * 1000, evoked._data.mean(0), "k--", label="Mean", zorder=130, linewidth=2)
+            show=False, spatial_colors=True, unit=True, units='mTRF (a.u.)', axes=axs[1])
+axs[1].set_ylim([-0.016, 0.013])
 if times[0] < 0:
-    ax.axvspan(ax.get_xlim()[0], 0, alpha=0.4, color='grey', label='Pre-Stimuli')
-
-axs[1].set_ylim([-0.016, 0.015])
-axs[1].grid()
+    # ax.axvspan(ax.get_xlim()[0], 0, alpha=0.4, color='grey', label='Pre-Stimuli')
+    axs[1].axvline(x=0, ymin=0, ymax=1, color='grey')
 
 fig.tight_layout()
 plt.show()
@@ -537,13 +535,12 @@ for i, plot_data, title in zip(range(3), [TRF_escucha, TRF_25, TRF_ambos], ['L|O
     evoked.times = times
     evoked.plot(scalings=dict(eeg=1, grad=1, mag=1), zorder='std', time_unit='ms', titles=dict(eeg=''),
                 show=False, spatial_colors=True, unit=True, units='TRF (a.u.)', axes=axs[i])
-    axs[i].plot(times * 1000, evoked._data.mean(0), "k--", label="Mean", zorder=130, linewidth=2)
     axs[i].xaxis.label.set_size(14)
     axs[i].yaxis.label.set_size(14)
     axs[i].set_ylim([-0.016, 0.015])
     axs[i].tick_params(axis='both', labelsize=14)
     axs[i].grid()
-    axs[i].legend(fontsize=12)
+    # axs[i].legend(fontsize=12)
     axs[i].set_title(f'{title}', fontsize=15)
     if i != 2:
         axs[i].set_xlabel('', fontsize=14)
@@ -596,7 +593,6 @@ ax.set_yticks(np.arange(len(Stims)))
 ax.set_yticklabels(Stims, fontsize=fontsize)
 ax.set_xticks(np.arange(len(Bands)))
 ax.set_xticklabels(Bands_names, fontsize=fontsize)
-# ax.xaxis.tick_top()
 cbar = plt.colorbar(shrink=0.9, aspect=15)
 cbar.ax.tick_params(labelsize=fontsize)
 fig.tight_layout()
@@ -614,10 +610,10 @@ ax.set_yticks(np.arange(len(Stims)))
 ax.set_yticklabels(Stims, fontsize=fontsize)
 ax.set_xticks(np.arange(len(Bands)))
 ax.set_xticklabels(Bands_names, fontsize=fontsize)
-# ax.xaxis.tick_top()
 cbar = plt.colorbar(shrink=0.9, aspect=15)
 cbar.ax.tick_params(labelsize=fontsize)
 fig.tight_layout()
+fig.show()
 
 if Save_fig:
     os.makedirs(Run_graficos_path, exist_ok=True)

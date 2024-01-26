@@ -904,12 +904,11 @@ def ch_heatmap_topo(total_data, info, delays, times, Display, Save, graficos_sav
 
     axs[1, 0].plot(times_plot * 1000, phase_sync)
     axs[1, 0].fill_between(times_plot * 1000, phase_sync - phase_sync_std / 2, phase_sync + phase_sync_std / 2, alpha=.5)
-    # axs[1, 0].set_ylim([0, 0.2])
+    axs[1, 0].set_ylim([0, 0.2])
     axs[1, 0].vlines(times_plot[max_t_lag] * 1000, axs[1, 0].get_ylim()[0], axs[1, 0].get_ylim()[1], linestyle='dashed', color='k',
                 label='Max: {}ms'.format(int(times_plot[max_t_lag] * 1000)))
     axs[1, 0].set_xlabel('Time lag [ms]')
     axs[1, 0].set_ylabel('Mean {}'.format(title))
-    # axs2.tick_params(axis='both', labelsize=12)
     axs[1, 0].set_xlim([times_plot[0] * 1000, times_plot[-1] * 1000])
     axs[1, 0].grid()
     axs[1, 0].legend()

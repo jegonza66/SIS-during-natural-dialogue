@@ -16,25 +16,16 @@ startTime = datetime.now()
 #----- Define Parameters -----#
 # Save / Display Figures
 Display_Ind_Figures = False
-Display_Total_Figures = True
+Display_Total_Figures = False
 Save_Ind_Figures = True
 Save_Total_Figures = True
 Save_Results = True
 # Random permutations
-Permutations_test = False
+Permutations_test = True
 # Dialogue situation
 situations = ['Escucha']
 # Model
 model = 'Ridge'
-
-# Run times
-tmins = [-3.9, -3.3, -2.7, -2.1, -1.5, -0.9, -0.3, 0.3, 0.9, 1.5, 2.1, 2.7, 3.3]
-tmaxs = [-3.3, -2.7, -2.1, -1.5, -0.9, -0.3, 0.3, 0.9, 1.5, 2.1, 2.7, 3.3, 3.9]
-tmins = [-0.6]
-tmaxs = [0.2]
-
-total_correlations = []
-total_stds = []
 
 # preset alpha
 set_alpha = None
@@ -67,319 +58,312 @@ except:
 Stims_preprocess = 'Normalize'
 EEG_preprocess = 'Standarize'
 
-for tmin, tmax in zip(tmins, tmaxs):
-    delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
-    times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays))
-    times = np.flip(-times)
-    for situacion in situations:
-        for Band in Bands:
-            for stim in Stims:
-                print('\nModel: ' + model)
-                print('Band: ' + str(Band))
-                print('Stimulus: ' + stim)
-                print('Status: ' + situacion)
-                print('tmin: {} - tmax: {}'.format(tmin, tmax))
-                # Paths
-                save_path = 'Saves/{}/{}/Final_Correlation/tmin{}_tmax{}/'.format(model, situacion, tmin, tmax)
-                procesed_data_path = 'Saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
-                Run_graficos_path = f'Plots/{model}/{situacion}/Stims_{Stims_preprocess}_EEG_{EEG_preprocess}_' \
-                                    f'Causal_{Causal_filter_EEG}/tmin{tmin}_tmax{tmax}/Stim_{stim}_EEG_Band_{Band}/'
-                Path_original = 'Saves/{}/{}/Original/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
-                    model, situacion, Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
-                Path_it = 'Saves/{}/{}/Fake_it/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
-                    model, situacion, Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
+# Run times
+tmin = -0.6
+tmax = 0.2
+delays = - np.arange(np.floor(tmin * sr), np.ceil(tmax * sr), dtype=int)
+times = np.linspace(delays[0] * np.sign(tmin) * 1 / sr, np.abs(delays[-1]) * np.sign(tmax) * 1 / sr, len(delays))
+times = np.flip(-times)
 
-                # Modify paths to use average reference
-                if avg_ref:
-                    save_path += 'avg_ref/'
-                    procesed_data_path += 'avg_ref/'
-                    Run_graficos_path += 'avg_ref/'
-                    Path_original += 'avg_ref/'
-                    Path_it += 'avg_ref/'
+for situacion in situations:
+    for Band in Bands:
+        for stim in Stims:
+            print('\nModel: ' + model)
+            print('Band: ' + str(Band))
+            print('Stimulus: ' + stim)
+            print('Status: ' + situacion)
+            print('tmin: {} - tmax: {}'.format(tmin, tmax))
+            # Paths
+            save_path = 'Saves/{}/{}/Final_Correlation/tmin{}_tmax{}/'.format(model, situacion, tmin, tmax)
+            procesed_data_path = 'Saves/Preprocesed_Data/tmin{}_tmax{}/'.format(tmin, tmax)
+            Run_graficos_path = f'Plots/{model}/{situacion}/Stims_{Stims_preprocess}_EEG_{EEG_preprocess}_' \
+                                f'Causal_{Causal_filter_EEG}/tmin{tmin}_tmax{tmax}/Stim_{stim}_EEG_Band_{Band}/'
+            Path_original = 'Saves/{}/{}/Original/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
+                model, situacion, Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
+            Path_it = 'Saves/{}/{}/Fake_it/Stims_{}_EEG_{}/tmin{}_tmax{}/Stim_{}_EEG_Band_{}/'.format(
+                model, situacion, Stims_preprocess, EEG_preprocess, tmin, tmax, stim, Band)
 
-                # Start Run
-                sujeto_total = 0
-                for sesion in sesiones:
-                    print('\nSession {}'.format(sesion))
+            # Modify paths to use average reference
+            if avg_ref:
+                save_path += 'avg_ref/'
+                procesed_data_path += 'avg_ref/'
+                Run_graficos_path += 'avg_ref/'
+                Path_original += 'avg_ref/'
+                Path_it += 'avg_ref/'
 
-                    # LOAD DATA BY SUBJECT
-                    Sujeto_1, Sujeto_2 = Load.Load_Data(sesion=sesion, stim=stim, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
-                                                        procesed_data_path=procesed_data_path, situacion=situacion,
-                                                        SilenceThreshold=0.03, avg_ref=avg_ref, Causal_filter_EEG=Causal_filter_EEG)
+            # Start Run
+            sujeto_total = 0
+            for sesion in sesiones:
+                print('\nSession {}'.format(sesion))
+
+                # LOAD DATA BY SUBJECT
+                Sujeto_1, Sujeto_2 = Load.Load_Data(sesion=sesion, stim=stim, Band=Band, sr=sr, tmin=tmin, tmax=tmax,
+                                                    procesed_data_path=procesed_data_path, situacion=situacion,
+                                                    SilenceThreshold=0.03, avg_ref=avg_ref, Causal_filter_EEG=Causal_filter_EEG)
 
 
-                    # LOAD EEG BY SUBJECT
-                    eeg_sujeto_1, eeg_sujeto_2, info = Sujeto_1['EEG'], Sujeto_2['EEG'], Sujeto_1['info']
+                # LOAD EEG BY SUBJECT
+                eeg_sujeto_1, eeg_sujeto_2, info = Sujeto_1['EEG'], Sujeto_2['EEG'], Sujeto_1['info']
 
-                    # LOAD STIMULUS BY SUBJECT
-                    dstims_para_sujeto_1, dstims_para_sujeto_2 = Load.Estimulos(stim=stim, Sujeto_1=Sujeto_1, Sujeto_2=Sujeto_2)
-                    Len_Estimulos = [len(dstims_para_sujeto_1[i][0]) for i in range(len(dstims_para_sujeto_1))]
+                # LOAD STIMULUS BY SUBJECT
+                dstims_para_sujeto_1, dstims_para_sujeto_2 = Load.Estimulos(stim=stim, Sujeto_1=Sujeto_1, Sujeto_2=Sujeto_2)
+                Len_Estimulos = [len(dstims_para_sujeto_1[i][0]) for i in range(len(dstims_para_sujeto_1))]
 
-                    for sujeto, eeg, dstims in zip((1, 2), (eeg_sujeto_1, eeg_sujeto_2),
-                                                   (dstims_para_sujeto_1, dstims_para_sujeto_2)):
-                        # for sujeto, eeg, dstims in zip([2], [eeg_sujeto_2], [dstims_para_sujeto_2]):
-                        print('Subject {}'.format(sujeto))
-                        # Separo los datos en 5 y tomo test set de 20% de datos con kfold (5 iteraciones)
-                        Predicciones = {}
-                        n_folds = 5
-                        iteraciones = 3000
+                for sujeto, eeg, dstims in zip((1, 2), (eeg_sujeto_1, eeg_sujeto_2),
+                                               (dstims_para_sujeto_1, dstims_para_sujeto_2)):
+                    # for sujeto, eeg, dstims in zip([2], [eeg_sujeto_2], [dstims_para_sujeto_2]):
+                    print('Subject {}'.format(sujeto))
+                    # Separo los datos en 5 y tomo test set de 20% de datos con kfold (5 iteraciones)
+                    Predicciones = {}
+                    n_folds = 5
+                    iteraciones = 3000
 
-                        # Defino variables donde voy a guardar mil cosas
-                        Pesos_ronda_canales = np.zeros((n_folds, info['nchan'], sum(Len_Estimulos)), dtype=np.float16)
-                        Corr_buenas_ronda_canal = np.zeros((n_folds, info['nchan']))
-                        Rmse_buenos_ronda_canal = np.zeros((n_folds, info['nchan']))
+                    # Defino variables donde voy a guardar mil cosas
+                    Pesos_ronda_canales = np.zeros((n_folds, info['nchan'], sum(Len_Estimulos)), dtype=np.float16)
+                    Corr_buenas_ronda_canal = np.zeros((n_folds, info['nchan']))
+                    Rmse_buenos_ronda_canal = np.zeros((n_folds, info['nchan']))
+
+                    if Permutations_test:
+                        Pesos_fake = np.zeros((n_folds, iteraciones, info['nchan'], sum(Len_Estimulos)), dtype=np.float16)
+                        Correlaciones_fake = np.zeros((n_folds, iteraciones, info['nchan']))
+                        Errores_fake = np.zeros((n_folds, iteraciones, info['nchan']))
+
+                    # Variable to store all channel's p-value
+                    topo_pvalues_corr = np.zeros((n_folds, info['nchan']))
+                    topo_pvalues_rmse = np.zeros((n_folds, info['nchan']))
+
+                    # Variable to store p-value of significant channels
+                    Prob_Corr_ronda_canales = np.ones((n_folds, info['nchan']))
+                    Prob_Rmse_ronda_canales = np.ones((n_folds, info['nchan']))
+
+                    # Variable to store significant channels
+                    Canales_repetidos_corr_sujeto = np.zeros(info['nchan'])
+                    Canales_repetidos_rmse_sujeto = np.zeros(info['nchan'])
+
+                    # Set alpha for subject
+                    if set_alpha == None:
+                        try:
+                            alpha = Alphas[Band][stim][sesion][sujeto]
+                        except:
+                            alpha = 1000
+                            print('Alpha missing. Ussing default value: {}'.format(alpha))
+                    else:
+                        alpha = set_alpha
+                        print('Ussing pre-set alpha value: {}'.format(alpha))
+
+                    # Empiezo el KFold de test
+                    kf_test = KFold(n_folds, shuffle=False)
+                    for fold, (train_val_index, test_index) in enumerate(kf_test.split(eeg)):
+                        eeg_train_val, eeg_test = eeg[train_val_index], eeg[test_index]
+
+                        dstims_train_val = list()
+                        dstims_test = list()
+
+                        for stimulus in list(dstims):
+                            dstims_train_val.append(stimulus[train_val_index])
+                            dstims_test.append(stimulus[test_index])
+
+                        axis = 0
+                        porcent = 5
+                        eeg_train_val, eeg_test, dstims_train_val, dstims_test = \
+                            Processing.standarize_normalize(eeg_train_val, eeg_test, dstims_train_val, dstims_test,
+                                                            Stims_preprocess, EEG_preprocess, axis, porcent)
+
+                        # Ajusto el modelo y guardo
+                        if model == 'Ridge':
+                            Model = Models.Ridge(alpha)
+                            Model.fit(dstims_train_val, eeg_train_val)
+                            Pesos_ronda_canales[fold] = Model.coefs
+
+                            # Predigo en test set y guardo
+                            predicted = Model.predict(dstims_test)
+                            Predicciones[fold] = predicted
+
+                        # Calculo Correlacion y guardo
+                        Rcorr = np.array(
+                            [np.corrcoef(eeg_test[:, ii].ravel(), np.array(predicted[:, ii]).ravel())[0, 1] for ii in
+                             range(eeg_test.shape[1])])
+                        Corr_buenas_ronda_canal[fold] = Rcorr
+
+                        # Calculo Error y guardo
+                        Rmse = np.array(np.sqrt(np.power((predicted - eeg_test), 2).mean(0)))
+                        Rmse_buenos_ronda_canal[fold] = Rmse
 
                         if Permutations_test:
-                            Pesos_fake = np.zeros((n_folds, iteraciones, info['nchan'], sum(Len_Estimulos)), dtype=np.float16)
-                            Correlaciones_fake = np.zeros((n_folds, iteraciones, info['nchan']))
-                            Errores_fake = np.zeros((n_folds, iteraciones, info['nchan']))
-
-                        # Variable to store all channel's p-value
-                        topo_pvalues_corr = np.zeros((n_folds, info['nchan']))
-                        topo_pvalues_rmse = np.zeros((n_folds, info['nchan']))
-
-                        # Variable to store p-value of significant channels
-                        Prob_Corr_ronda_canales = np.ones((n_folds, info['nchan']))
-                        Prob_Rmse_ronda_canales = np.ones((n_folds, info['nchan']))
-
-                        # Variable to store significant channels
-                        Canales_repetidos_corr_sujeto = np.zeros(info['nchan'])
-                        Canales_repetidos_rmse_sujeto = np.zeros(info['nchan'])
-
-                        # Set alpha for subject
-                        if set_alpha == None:
                             try:
-                                alpha = Alphas[Band][stim][sesion][sujeto]
+                                f = open(
+                                    Path_it + 'Corr_Rmse_fake_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto),
+                                    'rb')
+                                Correlaciones_fake, Errores_fake = pickle.load(f)
+                                f.close()
                             except:
-                                alpha = 1000
-                                print('Alpha missing. Ussing default value: {}'.format(alpha))
-                        else:
-                            alpha = set_alpha
-                            print('Ussing pre-set alpha value: {}'.format(alpha))
+                                Permutations_test = False
 
-                        # Empiezo el KFold de test
-                        kf_test = KFold(n_folds, shuffle=False)
-                        for fold, (train_val_index, test_index) in enumerate(kf_test.split(eeg)):
-                            eeg_train_val, eeg_test = eeg[train_val_index], eeg[test_index]
+                            # TEST ESTADISTICO
+                            Rcorr_fake = Correlaciones_fake[fold]
+                            Rmse_fake = Errores_fake[fold]
 
-                            dstims_train_val = list()
-                            dstims_test = list()
+                            p_corr = ((Rcorr_fake > Rcorr).sum(0) + 1) / (iteraciones + 1)
+                            p_rmse = ((Rmse_fake < Rmse).sum(0) + 1) / (iteraciones + 1)
 
-                            for stimulus in list(dstims):
-                                dstims_train_val.append(stimulus[train_val_index])
-                                dstims_test.append(stimulus[test_index])
+                            # Umbral
+                            umbral = 0.05/128
+                            Prob_Corr_ronda_canales[fold][p_corr < umbral] = p_corr[p_corr < umbral]
+                            Prob_Rmse_ronda_canales[fold][p_rmse < umbral] = p_rmse[p_rmse < umbral]
+                            # p-value topographic distribution
+                            topo_pvalues_corr[fold] = p_corr
+                            topo_pvalues_rmse[fold] = p_rmse
 
-                            axis = 0
-                            porcent = 5
-                            eeg_train_val, eeg_test, dstims_train_val, dstims_test = \
-                                Processing.standarize_normalize(eeg_train_val, eeg_test, dstims_train_val, dstims_test,
-                                                                Stims_preprocess, EEG_preprocess, axis, porcent)
+                    if Save_Results:
+                        # Save Model Weights and Correlations
+                        os.makedirs(Path_original, exist_ok=True)
+                        f = open(Path_original + 'Corr_Rmse_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto), 'wb')
+                        pickle.dump([Corr_buenas_ronda_canal, Rmse_buenos_ronda_canal], f)
+                        f.close()
 
-                            # Ajusto el modelo y guardo
-                            if model == 'Ridge':
-                                Model = Models.Ridge(alpha)
-                                Model.fit(dstims_train_val, eeg_train_val)
-                                Pesos_ronda_canales[fold] = Model.coefs
+                        f = open(Path_original + 'Pesos_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto), 'wb')
+                        pickle.dump(Pesos_ronda_canales.mean(0), f)
+                        f.close()
 
-                                # Predigo en test set y guardo
-                                predicted = Model.predict(dstims_test)
-                                Predicciones[fold] = predicted
+                    # Tomo promedio de pesos Corr y Rmse entre los folds para todos los canales
+                    Pesos_promedio = Pesos_ronda_canales.mean(0)
+                    Corr_promedio = Corr_buenas_ronda_canal.mean(0)
+                    Rmse_promedio = Rmse_buenos_ronda_canal.mean(0)
 
-                            # Calculo Correlacion y guardo
-                            Rcorr = np.array(
-                                [np.corrcoef(eeg_test[:, ii].ravel(), np.array(predicted[:, ii]).ravel())[0, 1] for ii in
-                                 range(eeg_test.shape[1])])
-                            Corr_buenas_ronda_canal[fold] = Rcorr
+                    Canales_sobrevivientes_corr = []
+                    Canales_sobrevivientes_rmse = []
+                    if Permutations_test:
+                        # Armo lista con canales que pasan el test
+                        Canales_sobrevivientes_corr, = np.where(np.all((Prob_Corr_ronda_canales < 1), axis=0))
+                        Canales_sobrevivientes_rmse, = np.where(np.all((Prob_Rmse_ronda_canales < 1), axis=0))
 
-                            # Calculo Error y guardo
-                            Rmse = np.array(np.sqrt(np.power((predicted - eeg_test), 2).mean(0)))
-                            Rmse_buenos_ronda_canal[fold] = Rmse
+                        # Guardo los canales sobrevivientes de cada sujeto
+                        Canales_repetidos_corr_sujeto[Canales_sobrevivientes_corr] += 1
+                        Canales_repetidos_rmse_sujeto[Canales_sobrevivientes_rmse] += 1
 
-                            if Permutations_test:
-                                try:
-                                    f = open(
-                                        Path_it + 'Corr_Rmse_fake_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto),
-                                        'rb')
-                                    Correlaciones_fake, Errores_fake = pickle.load(f)
-                                    f.close()
-                                except:
-                                    Permutations_test = False
+                    # Adapt to yield p-values
+                    topo_pval_corr_sujeto = topo_pvalues_corr.mean(0)
+                    topo_pval_rmse_sujeto = topo_pvalues_rmse.mean(0)
 
-                                # TEST ESTADISTICO
-                                Rcorr_fake = Correlaciones_fake[fold]
-                                Rmse_fake = Errores_fake[fold]
+                    # Grafico cabezas y canales
+                    Plot.plot_cabezas_canales(info.ch_names, info, sesion, sujeto, Corr_promedio, Display_Ind_Figures,
+                                              info['nchan'], 'Correlación', Save_Ind_Figures, Run_graficos_path,
+                                              Canales_sobrevivientes_corr)
+                    Plot.plot_cabezas_canales(info.ch_names, info, sesion, sujeto, Rmse_promedio, Display_Ind_Figures,
+                                              info['nchan'], 'Rmse', Save_Ind_Figures, Run_graficos_path,
+                                              Canales_sobrevivientes_rmse)
 
-                                p_corr = ((Rcorr_fake > Rcorr).sum(0) + 1) / (iteraciones + 1)
-                                p_rmse = ((Rmse_fake < Rmse).sum(0) + 1) / (iteraciones + 1)
+                    # Grafico Pesos
+                    Plot.plot_grafico_pesos(Display_Ind_Figures, sesion, sujeto, alpha, Pesos_promedio,
+                                            info, times, Corr_promedio, Rmse_promedio, Save_Ind_Figures,
+                                            Run_graficos_path, Len_Estimulos, stim)
 
-                                # Umbral
-                                umbral = 0.05/128
-                                Prob_Corr_ronda_canales[fold][p_corr < umbral] = p_corr[p_corr < umbral]
-                                Prob_Rmse_ronda_canales[fold][p_rmse < umbral] = p_rmse[p_rmse < umbral]
-                                # p-value topographic distribution
-                                topo_pvalues_corr[fold] = p_corr
-                                topo_pvalues_rmse[fold] = p_rmse
+                    # Guardo las correlaciones y los pesos promediados entre folds de cada canal del sujeto y lo adjunto a lista
+                    # para promediar entre canales de sujetos
+                    if not sujeto_total:
+                        # Save TRFs for all subjects
+                        Pesos_totales_sujetos_todos_canales = Pesos_promedio
+                        # Save topographic distribution of correlation and rmse for all subjects
+                        Correlaciones_totales_sujetos = Corr_promedio
+                        Rmse_totales_sujetos = Rmse_promedio
+                        # Save p-values for all subjects
+                        pvalues_corr_subjects = topo_pval_corr_sujeto
+                        pvalues_rmse_subjects = topo_pval_rmse_sujeto
+                        # Save significant channels for all subjects
+                        Canales_repetidos_corr_sujetos = Canales_repetidos_corr_sujeto
+                        Canales_repetidos_rmse_sujetos = Canales_repetidos_rmse_sujeto
+                    else:
+                        # Save TRFs for all subjects
+                        Pesos_totales_sujetos_todos_canales = np.dstack((Pesos_totales_sujetos_todos_canales, Pesos_promedio))
+                        # Save topographic distribution of correlation and rmse for all subjects
+                        Correlaciones_totales_sujetos = np.vstack((Correlaciones_totales_sujetos, Corr_promedio))
+                        Rmse_totales_sujetos = np.vstack((Rmse_totales_sujetos, Rmse_promedio))
+                        # Save p-values for all subjects
+                        pvalues_corr_subjects = np.vstack((pvalues_corr_subjects, topo_pval_corr_sujeto))
+                        pvalues_rmse_subjects = np.vstack((pvalues_rmse_subjects, topo_pval_rmse_sujeto))
+                        # Save significant channels for all subjects
+                        Canales_repetidos_corr_sujetos = np.vstack((Canales_repetidos_corr_sujetos, Canales_repetidos_corr_sujeto))
+                        Canales_repetidos_rmse_sujetos = np.vstack((Canales_repetidos_rmse_sujetos, Canales_repetidos_rmse_sujeto))
+                    sujeto_total += 1
 
-                        if Save_Results:
-                            # Save Model Weights and Correlations
-                            os.makedirs(Path_original, exist_ok=True)
-                            f = open(Path_original + 'Corr_Rmse_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto), 'wb')
-                            pickle.dump([Corr_buenas_ronda_canal, Rmse_buenos_ronda_canal], f)
-                            f.close()
+                del Pesos_promedio, Rmse_promedio, Corr_promedio, Corr_buenas_ronda_canal, Rmse_buenos_ronda_canal, Rcorr, Rmse, \
+                    eeg_train_val, eeg_test, dstims_train_val, dstims_test, eeg, dstims, dstims_para_sujeto_1, \
+                    dstims_para_sujeto_2, Sujeto_1, Sujeto_2, eeg_sujeto_1, eeg_sujeto_2
 
-                            f = open(Path_original + 'Pesos_Sesion{}_Sujeto{}.pkl'.format(sesion, sujeto), 'wb')
-                            pickle.dump(Pesos_ronda_canales.mean(0), f)
-                            f.close()
+            # Armo cabecita con correlaciones promedio entre sujetos
+            (corr_total, std_total), lat_test_results_corr = Plot.Cabezas_corr_promedio(Correlaciones_totales_sujetos, info,
+                                                                  Display_Total_Figures, Save_Total_Figures,
+                                                                  Run_graficos_path, title='Correlation')
 
-                        # Tomo promedio de pesos Corr y Rmse entre los folds para todos los canales
-                        Pesos_promedio = Pesos_ronda_canales.mean(0)
-                        Corr_promedio = Corr_buenas_ronda_canal.mean(0)
-                        Rmse_promedio = Rmse_buenos_ronda_canal.mean(0)
+            _, lat_test_results_rmse = Plot.Cabezas_corr_promedio(Rmse_totales_sujetos, info,
+                                                                  Display_Total_Figures, Save_Total_Figures,
+                                                                  Run_graficos_path, title='Rmse')
 
-                        Canales_sobrevivientes_corr = []
-                        Canales_sobrevivientes_rmse = []
-                        if Permutations_test:
-                            # Armo lista con canales que pasan el test
-                            Canales_sobrevivientes_corr, = np.where(np.all((Prob_Corr_ronda_canales < 1), axis=0))
-                            Canales_sobrevivientes_rmse, = np.where(np.all((Prob_Rmse_ronda_canales < 1), axis=0))
+            # Armo cabecita con canales repetidos
+            if Permutations_test:
+                Plot.topo_pval(pvalues_corr_subjects.mean(0), info, Display_Total_Figures,
+                                         Save_Total_Figures, Run_graficos_path, title='Correlation')
+                Plot.topo_pval(pvalues_rmse_subjects.mean(0), info, Display_Total_Figures,
+                               Save_Total_Figures, Run_graficos_path, title='Rmse')
 
-                            # Guardo los canales sobrevivientes de cada sujeto
-                            Canales_repetidos_corr_sujeto[Canales_sobrevivientes_corr] += 1
-                            Canales_repetidos_rmse_sujeto[Canales_sobrevivientes_rmse] += 1
+                Plot.Cabezas_canales_rep(Canales_repetidos_corr_sujetos.sum(0), info, Display_Total_Figures,
+                                         Save_Total_Figures, Run_graficos_path, title='Correlation')
+                Plot.Cabezas_canales_rep(Canales_repetidos_corr_sujetos.sum(0), info, Display_Total_Figures,
+                                         Save_Total_Figures, Run_graficos_path, title='Rmse')
 
-                        # Adapt to yield p-values
-                        topo_pval_corr_sujeto = topo_pvalues_corr.mean(0)
-                        topo_pval_rmse_sujeto = topo_pvalues_rmse.mean(0)
+            # TFCE across subjects
+            t_tfce, clusters, p_tfce, H0, trf_subjects, n_permutations = Statistics.tfce(
+                Pesos_totales_sujetos_todos_canales, times, Len_Estimulos, n_permutations=4096)
 
-                        # Grafico cabezas y canales
-                        Plot.plot_cabezas_canales(info.ch_names, info, sesion, sujeto, Corr_promedio, Display_Ind_Figures,
-                                                  info['nchan'], 'Correlación', Save_Ind_Figures, Run_graficos_path,
-                                                  Canales_sobrevivientes_corr)
-                        Plot.plot_cabezas_canales(info.ch_names, info, sesion, sujeto, Rmse_promedio, Display_Ind_Figures,
-                                                  info['nchan'], 'Rmse', Save_Ind_Figures, Run_graficos_path,
-                                                  Canales_sobrevivientes_rmse)
+            if stim == 'Spectrogram':
+                clusters = Plot.plot_trf_tfce(Pesos_totales_sujetos_todos_canales=Pesos_totales_sujetos_todos_canales, p=p_tfce,
+                                   times=times, title='', mcc=True, shape=trf_subjects.shape,
+                                   n_permutations=n_permutations,
+                                   graficos_save_path=Run_graficos_path, Band=Band, stim=stim,
+                                   pval_trhesh=0.05, fontsize=17, Display=Display_Total_Figures,
+                                   Save=Save_Total_Figures)
 
-                        # Grafico Pesos
-                        Plot.plot_grafico_pesos(Display_Ind_Figures, sesion, sujeto, alpha, Pesos_promedio,
-                                                info, times, Corr_promedio, Rmse_promedio, Save_Ind_Figures,
-                                                Run_graficos_path, Len_Estimulos, stim)
+            # Grafico Pesos
+            Pesos_totales = Plot.regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display_Total_Figures,
+                                                    Save_Total_Figures, Run_graficos_path, Len_Estimulos, stim, ERP=True)
 
-                        # Guardo las correlaciones y los pesos promediados entre folds de cada canal del sujeto y lo adjunto a lista
-                        # para promediar entre canales de sujetos
-                        if not sujeto_total:
-                            # Save TRFs for all subjects
-                            Pesos_totales_sujetos_todos_canales = Pesos_promedio
-                            # Save topographic distribution of correlation and rmse for all subjects
-                            Correlaciones_totales_sujetos = Corr_promedio
-                            Rmse_totales_sujetos = Rmse_promedio
-                            # Save p-values for all subjects
-                            pvalues_corr_subjects = topo_pval_corr_sujeto
-                            pvalues_rmse_subjects = topo_pval_rmse_sujeto
-                            # Save significant channels for all subjects
-                            Canales_repetidos_corr_sujetos = Canales_repetidos_corr_sujeto
-                            Canales_repetidos_rmse_sujetos = Canales_repetidos_rmse_sujeto
-                        else:
-                            # Save TRFs for all subjects
-                            Pesos_totales_sujetos_todos_canales = np.dstack((Pesos_totales_sujetos_todos_canales, Pesos_promedio))
-                            # Save topographic distribution of correlation and rmse for all subjects
-                            Correlaciones_totales_sujetos = np.vstack((Correlaciones_totales_sujetos, Corr_promedio))
-                            Rmse_totales_sujetos = np.vstack((Rmse_totales_sujetos, Rmse_promedio))
-                            # Save p-values for all subjects
-                            pvalues_corr_subjects = np.vstack((pvalues_corr_subjects, topo_pval_corr_sujeto))
-                            pvalues_rmse_subjects = np.vstack((pvalues_rmse_subjects, topo_pval_rmse_sujeto))
-                            # Save significant channels for all subjects
-                            Canales_repetidos_corr_sujetos = np.vstack((Canales_repetidos_corr_sujetos, Canales_repetidos_corr_sujeto))
-                            Canales_repetidos_rmse_sujetos = np.vstack((Canales_repetidos_rmse_sujetos, Canales_repetidos_rmse_sujeto))
-                        sujeto_total += 1
+            Plot.regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, Display_Total_Figures,
+                                           Save_Total_Figures, Run_graficos_path, Len_Estimulos, stim, Band, clusters, ERP=True)
 
-                    del Pesos_promedio, Rmse_promedio, Corr_promedio, Corr_buenas_ronda_canal, Rmse_buenos_ronda_canal, Rcorr, Rmse, \
-                        eeg_train_val, eeg_test, dstims_train_val, dstims_test, eeg, dstims, dstims_para_sujeto_1, \
-                        dstims_para_sujeto_2, Sujeto_1, Sujeto_2, eeg_sujeto_1, eeg_sujeto_2
+            # Matriz de Correlacion
+            Plot.Matriz_corr_channel_wise(Pesos_totales_sujetos_todos_canales, stim, Len_Estimulos, info, times, sesiones,
+                                          Display_Total_Figures, Save_Total_Figures, Run_graficos_path)
+            try:
+                Plot.Plot_instantes_interes(Pesos_totales_sujetos_todos_canales=Pesos_totales_sujetos_todos_canales,
+                                            info=info, times=times, Display=Display_Total_Figures,
+                                            Save=Save_Total_Figures, Run_graficos_path=Run_graficos_path,
+                                            Len_Estimulos=Len_Estimulos, stim=stim,
+                                            fontsize=18)
 
-                # Armo cabecita con correlaciones promedio entre sujetos
-                (corr_total, std_total), lat_test_results_corr = Plot.Cabezas_corr_promedio(Correlaciones_totales_sujetos, info,
-                                                                      Display_Total_Figures, Save_Total_Figures,
-                                                                      Run_graficos_path, title='Correlation')
+                _ = Plot.Plot_cabezas_instantes(Pesos_totales_sujetos_todos_canales, info, Band, stim, times, sr,
+                                                Display_Total_Figures, Save_Total_Figures, Run_graficos_path, Len_Estimulos)
+            except:
+                pass
 
-                _, lat_test_results_rmse = Plot.Cabezas_corr_promedio(Rmse_totales_sujetos, info,
-                                                                      Display_Total_Figures, Save_Total_Figures,
-                                                                      Run_graficos_path, title='Rmse')
+            # Cabezas de correlacion de pesos por canal
+            Plot.Channel_wise_correlation_topomap(Pesos_totales_sujetos_todos_canales, info, Display_Total_Figures,
+                                                  Save_Total_Figures, Run_graficos_path)
 
-                # Armo cabecita con canales repetidos
-                if Permutations_test:
-                    Plot.topo_pval(pvalues_corr_subjects.mean(0), info, Display_Total_Figures,
-                                             Save_Total_Figures, Run_graficos_path, title='Correlation')
-                    Plot.topo_pval(pvalues_rmse_subjects.mean(0), info, Display_Total_Figures,
-                                   Save_Total_Figures, Run_graficos_path, title='Rmse')
+            # SAVE FINAL CORRELATION
+            if Save_Results and sujeto_total == 18 and Permutations_test:
+                os.makedirs(save_path, exist_ok=True)
+                f = open(save_path + '{}_EEG_{}.pkl'.format(stim, Band), 'wb')
+                pickle.dump([Correlaciones_totales_sujetos, Canales_repetidos_corr_sujetos], f)
+                f.close()
 
-                    Plot.Cabezas_canales_rep(Canales_repetidos_corr_sujetos.sum(0), info, Display_Total_Figures,
-                                             Save_Total_Figures, Run_graficos_path, title='Correlation')
-                    Plot.Cabezas_canales_rep(Canales_repetidos_corr_sujetos.sum(0), info, Display_Total_Figures,
-                                             Save_Total_Figures, Run_graficos_path, title='Rmse')
+                # Save final weights
+                f = open(Path_original + 'Pesos_Totales_{}_{}.pkl'.format(stim, Band), 'wb')
+                pickle.dump(Pesos_totales, f)
+                f.close()
 
-                # TFCE across subjects
-                t_tfce, clusters, p_tfce, H0, trf_subjects, n_permutations = Statistics.tfce(
-                    Pesos_totales_sujetos_todos_canales, times, Len_Estimulos, n_permutations=4096)
+            del Pesos_totales
+            del Pesos_ronda_canales, topo_pvalues_corr, topo_pvalues_rmse
+            del Prob_Corr_ronda_canales, Prob_Rmse_ronda_canales, Canales_repetidos_corr_sujeto, Canales_repetidos_rmse_sujeto
+            plt.close('all')
 
-                if stim == 'Spectrogram':
-                    clusters = Plot.plot_trf_tfce(Pesos_totales_sujetos_todos_canales=Pesos_totales_sujetos_todos_canales, p=p_tfce,
-                                       times=times, title='', mcc=True, shape=trf_subjects.shape,
-                                       n_permutations=n_permutations,
-                                       graficos_save_path=Run_graficos_path, Band=Band, stim=stim,
-                                       pval_trhesh=0.05, fontsize=17, Display=Display_Total_Figures,
-                                       Save=Save_Total_Figures)
-
-                # Grafico Pesos
-                Pesos_totales = Plot.regression_weights(Pesos_totales_sujetos_todos_canales, info, times, Display_Total_Figures,
-                                                        Save_Total_Figures, Run_graficos_path, Len_Estimulos, stim, ERP=True)
-
-                Plot.regression_weights_matrix(Pesos_totales_sujetos_todos_canales, info, times, Display_Total_Figures,
-                                               Save_Total_Figures, Run_graficos_path, Len_Estimulos, stim, Band, clusters, ERP=True)
-
-                # Matriz de Correlacion
-                Plot.Matriz_corr_channel_wise(Pesos_totales_sujetos_todos_canales, stim, Len_Estimulos, info, times, sesiones,
-                                              Display_Total_Figures, Save_Total_Figures, Run_graficos_path)
-                try:
-                    Plot.Plot_instantes_interes(Pesos_totales_sujetos_todos_canales=Pesos_totales_sujetos_todos_canales,
-                                                info=info, times=times, Display=Display_Total_Figures,
-                                                Save=Save_Total_Figures, Run_graficos_path=Run_graficos_path,
-                                                Len_Estimulos=Len_Estimulos, stim=stim,
-                                                fontsize=18)
-
-                    _ = Plot.Plot_cabezas_instantes(Pesos_totales_sujetos_todos_canales, info, Band, stim, times, sr,
-                                                    Display_Total_Figures, Save_Total_Figures, Run_graficos_path, Len_Estimulos)
-                except:
-                    pass
-
-                # Cabezas de correlacion de pesos por canal
-                Plot.Channel_wise_correlation_topomap(Pesos_totales_sujetos_todos_canales, info, Display_Total_Figures,
-                                                      Save_Total_Figures, Run_graficos_path)
-
-                # SAVE FINAL CORRELATION
-                if Save_Results and sujeto_total == 18:
-                    os.makedirs(save_path, exist_ok=True)
-                    f = open(save_path + '{}_EEG_{}.pkl'.format(stim, Band), 'wb')
-                    pickle.dump([Correlaciones_totales_sujetos, Canales_repetidos_corr_sujetos], f)
-                    f.close()
-
-                    # Save final weights
-                    f = open(Path_original + 'Pesos_Totales_{}_{}.pkl'.format(stim, Band), 'wb')
-                    pickle.dump(Pesos_totales, f)
-                    f.close()
-
-                del Pesos_totales
-                del Pesos_ronda_canales, topo_pvalues_corr, topo_pvalues_rmse
-                del Prob_Corr_ronda_canales, Prob_Rmse_ronda_canales, Canales_repetidos_corr_sujeto, Canales_repetidos_rmse_sujeto
-                plt.close('all')
-
-                total_correlations.append(corr_total)
-                total_stds.append(std_total)
-
-    print(datetime.now() - startTime)
-
-# import matplotlib.pyplot as plt
-# tmeans = [(tmin + tmax)/2 for (tmin, tmax) in zip(tmins, tmaxs)]
-# plt.plot(tmeans[:len(total_correlations)], total_correlations, 'o-')
-# plt.fill_between(tmeans[:len(total_correlations)], np.array(total_correlations) - np.array(total_stds), np.array(total_correlations) + np.array(total_stds), alpha=.5)
-# plt.xlabel('Delay (s)')
-# plt.ylabel('Mean correlation')
+print(datetime.now() - startTime)
